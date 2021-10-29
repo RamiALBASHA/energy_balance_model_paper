@@ -205,6 +205,11 @@ if __name__ == '__main__':
                                                all_cases_absorbed_irradiance=(irradiance, irradiance_object),
                                                all_cases_temperature=temperature, figure_path=figs_path)
 
+    for hour in (6, 12):
+        plots.plot_temperature_one_hour_comparison2(hour=hour, hourly_weather=weather_data,
+                                                    all_cases_absorbed_irradiance=(irradiance, irradiance_object),
+                                                    all_cases_temperature=temperature, figure_path=figs_path)
+
     plots.plot_canopy_variable(all_cases_solver=solver_group, variable_to_plot='source_temperature',
                                figure_path=figs_path)
 

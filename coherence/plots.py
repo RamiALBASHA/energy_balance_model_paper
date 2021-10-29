@@ -176,6 +176,55 @@ def plot_temperature_one_hour_comparison(hour: int,
     plt.close()
 
 
+def plot_temperature_one_hour_comparison2(hour: int,
+                                          hourly_weather: pd.DataFrame,
+                                          all_cases_absorbed_irradiance: (dict, irradiance_canopy),
+                                          all_cases_temperature: dict,
+                                          figure_path: Path):
+    assert all_cases_temperature.keys() == all_cases_absorbed_irradiance[0].keys()
+
+    cases = all_cases_temperature.keys()
+
+    fig, axes = plt.subplots(nrows=2, ncols=2, sharex='row', sharey='col', figsize=(8, 7))
+    for case in cases:
+        i = 0 if 'bigleaf' in case else 1
+        is_lumped = 'lumped' in case
+        plot_temperature_at_one_hour(
+            ax=axes[0, i],
+            hour=hour,
+            temperature_air=hourly_weather.loc[:, 'air_temperature'],
+            simulation_case=case,
+            all_cases_data=all_cases_temperature,
+            plot_air_temperature=is_lumped)
+        plot_irradiance_at_one_hour(
+            ax=axes[1, i],
+            hour=hour,
+            incident_direct=hourly_weather.loc[:, 'incident_direct_irradiance'],
+            incident_diffuse=hourly_weather.loc[:, 'incident_diffuse_irradiance'],
+            simulation_case=case,
+            all_cases_data=all_cases_absorbed_irradiance,
+            plot_incident=is_lumped,
+            set_title=False)
+
+    for i, ax in enumerate(axes.flatten()):
+        ax.set_ylabel('Component index [-]')
+        ax.text(0.075, 0.9, f'({ascii_lowercase[i]})', transform=ax.transAxes)
+    for ax in axes[:, 0]:
+        ax.legend(loc='upper right')
+    for ax in axes[0, :]:
+        ax.set_title(ax.get_title().split(' ')[0])
+
+    y_ticks = []
+    for tick_label in axes[0, 0].yaxis.get_ticklabels():
+        tick_label.set_text('0') if tick_label.get_text() == '0.00' else tick_label.set_text('')
+        y_ticks.append(tick_label)
+    axes[0, 0].yaxis.set_ticklabels(y_ticks)
+
+    fig.tight_layout()
+    fig.savefig(str(figure_path / f'coherence_temperature_at_{hour}h.png'))
+    plt.close()
+
+
 def plot_temperature_at_one_hour(ax: plt.axis,
                                  hour: int,
                                  temperature_air: pd.Series,
