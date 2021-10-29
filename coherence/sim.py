@@ -7,9 +7,7 @@ from crop_energy_balance import (
 from crop_irradiance.uniform_crops import (
     inputs as irradiance_inputs, params as irradiance_params, shoot as irradiance_canopy)
 
-from coherence.plots import plot_irradiance_dynamic_comparison, plot_temperature_dynamic_comparison, plot_leaf_profile, \
-    plot_temperature_one_hour_comparison, plot_canopy_variable, plot_energy_balance, plot_stability_terms, \
-    plot_universal_functions
+from coherence import plots
 from sources.demo import get_weather_data
 
 with open('inputs.json', mode='r') as f:
@@ -62,7 +60,7 @@ def calc_absorbed_irradiance(
         is_lumped: bool,
         incident_direct_par_irradiance: float,
         incident_diffuse_par_irradiance: float,
-        solar_inclination_angle: float) -> dict:
+        solar_inclination_angle: float) -> (dict, irradiance_canopy):
     inputs, params = get_irradiance_sim_inputs_and_params(**locals())
     leaves_category = 'lumped' if is_lumped else 'sunlit-shaded'
     canopy = irradiance_canopy.Shoot(
@@ -77,7 +75,7 @@ def calc_absorbed_irradiance(
         {-1: {'lumped': sum([incident_direct_par_irradiance, incident_diffuse_par_irradiance]) - (
             sum([sum(v.absorbed_irradiance.values()) for v in canopy.values()]))}})
 
-    return absorbed_par_irradiance
+    return absorbed_par_irradiance, canopy
 
 
 def get_energy_balance_inputs_and_params(
@@ -139,7 +137,9 @@ if __name__ == '__main__':
     weather_data = get_weather_data()
     correct_for_stability = False
     irradiance = {}
+    irradiance_object = {}
     temperature = {}
+    irradiance_object = {}
     layers = {}
     solver_group = {}
 
@@ -152,6 +152,7 @@ if __name__ == '__main__':
         canopy_layers = {0: sum(LEAF_LAYERS.values())} if canopy_type == 'bigleaf' else LEAF_LAYERS
         layers.update({f'{canopy_type} {leaves_type}': canopy_layers})
         hourly_absorbed_irradiance = []
+        hourly_irradiance_obj = []
         hourly_temperature = []
         hourly_solver = []
 
@@ -164,7 +165,7 @@ if __name__ == '__main__':
             vapor_pressure = w_data['vapor_pressure']
             air_temperature = w_data['air_temperature']
             print(date)
-            absorbed_irradiance = calc_absorbed_irradiance(
+            absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
                 is_bigleaf=(canopy_type == 'bigleaf'),
                 is_lumped=(leaves_type == 'lumped'),
                 incident_direct_par_irradiance=incident_direct_irradiance,
@@ -172,7 +173,7 @@ if __name__ == '__main__':
                 solar_inclination_angle=solar_inclination)
 
             hourly_absorbed_irradiance.append(absorbed_irradiance)
-
+            hourly_irradiance_obj.append(irradiance_obj)
             energy_balance_solver = solve_energy_balance(
                 vegetative_layers=canopy_layers,
                 leaf_class_type=leaves_type,
@@ -187,26 +188,29 @@ if __name__ == '__main__':
                 leaf_class_type=leaves_type))
 
         irradiance[f'{canopy_type}_{leaves_type}'] = hourly_absorbed_irradiance
+        irradiance_object[f'{canopy_type}_{leaves_type}'] = hourly_irradiance_obj
         temperature[f'{canopy_type}_{leaves_type}'] = hourly_temperature
         solver_group[f'{canopy_type}_{leaves_type}'] = hourly_solver
 
-    plot_leaf_profile(vegetative_layers=layers, figure_path=figs_path)
+    plots.plot_leaf_profile(vegetative_layers=layers, figure_path=figs_path)
 
-    plot_irradiance_dynamic_comparison(
+    plots.plot_irradiance_dynamic_comparison(
         incident_irradiance=(weather_data.loc[:, ['incident_direct_irradiance', 'incident_diffuse_irradiance']]).sum(
             axis=1), all_cases_absorbed_irradiance=irradiance, figure_path=figs_path)
 
-    plot_temperature_dynamic_comparison(temperature_air=weather_data.loc[:, 'air_temperature'],
-                                        all_cases_temperature=temperature, figure_path=figs_path)
+    plots.plot_temperature_dynamic_comparison(temperature_air=weather_data.loc[:, 'air_temperature'],
+                                              all_cases_temperature=temperature, figure_path=figs_path)
 
-    plot_temperature_one_hour_comparison(hour=12, hourly_weather=weather_data, all_cases_absorbed_irradiance=irradiance,
-                                         all_cases_temperature=temperature, figure_path=figs_path)
+    plots.plot_temperature_one_hour_comparison(hour=12, hourly_weather=weather_data,
+                                               all_cases_absorbed_irradiance=(irradiance, irradiance_object),
+                                               all_cases_temperature=temperature, figure_path=figs_path)
 
-    plot_canopy_variable(all_cases_solver=solver_group, variable_to_plot='source_temperature', figure_path=figs_path)
+    plots.plot_canopy_variable(all_cases_solver=solver_group, variable_to_plot='source_temperature',
+                               figure_path=figs_path)
 
-    plot_energy_balance(solvers=solver_group, figure_path=figs_path)
+    plots.plot_energy_balance(solvers=solver_group, figure_path=figs_path)
 
-    plot_stability_terms(solvers=solver_group, figs_path=figs_path)
+    plots.plot_stability_terms(solvers=solver_group, figs_path=figs_path)
 
     if correct_for_stability:
-        plot_universal_functions(solvers=solver_group, measurement_height=2, figure_path=figs_path)
+        plots.plot_universal_functions(solvers=solver_group, measurement_height=2, figure_path=figs_path)

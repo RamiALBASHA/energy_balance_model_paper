@@ -1,7 +1,9 @@
 from pathlib import Path
+from string import ascii_lowercase
 
 import pandas as pd
 from crop_energy_balance import crop as eb_canopy
+from crop_irradiance.uniform_crops import shoot as irradiance_canopy
 from matplotlib import pyplot as plt
 
 UNITS_MAP = {
@@ -38,7 +40,7 @@ def plot_irradiance_dynamic_comparison(incident_irradiance: pd.Series,
             ax.set_ylabel(r'$\mathregular{W_{PAR} \cdot m^{-2}_{ground}}$')
 
     fig.tight_layout()
-    fig.savefig(figure_path / 'coherence_irradiance.png')
+    fig.savefig(str(figure_path / 'coherence_irradiance.png'))
     plt.close()
 
 
@@ -63,7 +65,7 @@ def plot_temperature_dynamic_comparison(temperature_air: pd.Series,
             ax.set_ylabel(r'$\mathregular{temperature\/[^\circ C]}$')
 
     fig.tight_layout()
-    fig.savefig(figure_path / 'coherence_temperature.png')
+    fig.savefig(str(figure_path / 'coherence_temperature.png'))
     plt.close()
 
 
@@ -72,10 +74,11 @@ def plot_leaf_profile(vegetative_layers: {int, dict}, figure_path: Path):
     for i, (k, v) in enumerate(vegetative_layers.items()):
         layer_indices = list(v.keys())
         axs[i].plot(list(v.values()), layer_indices, 'o-')
-        axs[i].set(title=k, xlabel=r'$\mathregular{m^2_{leaf} \cdot m^{-2}_{ground}}$', ylabel='layer index [-]',
+        axs[i].set(title=handle_sim_name(k),
+                   xlabel=r'$\mathregular{m^2_{leaf} \cdot m^{-2}_{ground}}$', ylabel='layer index [-]',
                    yticks=layer_indices)
     fig.tight_layout()
-    fig.savefig(figure_path / 'coherence_layers.png')
+    fig.savefig(str(figure_path / 'coherence_layers.png'))
     plt.close()
 
 
@@ -87,7 +90,7 @@ def plot_irradiance_dynamics(ax: plt.axis,
     _, leaf_class = simulation_case.split('_')
     component_indexes = summary_data.keys()
 
-    ax.set_title(simulation_case.replace('_', ' '))
+    ax.set_title(handle_sim_name(simulation_case))
     ax.plot(range(24), incident_par_irradiance, label='incident', color='k', linestyle='--', linewidth=2)
 
     for component_index in component_indexes:
@@ -111,7 +114,7 @@ def plot_temperature_dynamics(ax: plt.axis,
     _, leaf_class = simulation_case.split('_')
     component_indexes = summary_data.keys()
 
-    ax.set_title(simulation_case.replace('_', ' '))
+    ax.set_title(handle_sim_name(simulation_case))
 
     hours = range(24)
     ax.plot(hours, temperature_air, label='air', color='k', linestyle='--', linewidth=2)
@@ -138,10 +141,10 @@ def plot_temperature_dynamics(ax: plt.axis,
 
 def plot_temperature_one_hour_comparison(hour: int,
                                          hourly_weather: pd.DataFrame,
-                                         all_cases_absorbed_irradiance: dict,
+                                         all_cases_absorbed_irradiance: (dict, irradiance_canopy),
                                          all_cases_temperature: dict,
                                          figure_path: Path):
-    assert all_cases_temperature.keys() == all_cases_absorbed_irradiance.keys()
+    assert all_cases_temperature.keys() == all_cases_absorbed_irradiance[0].keys()
 
     cases = all_cases_temperature.keys()
 
@@ -163,12 +166,13 @@ def plot_temperature_one_hour_comparison(hour: int,
 
     for i, ax in enumerate(axes.flatten()):
         ax.legend()
+        ax.text(0.075, 0.95, f'({ascii_lowercase[i]})', transform=ax.transAxes)
 
     for ax in axes[:, 0]:
         ax.set_ylabel('Component index [-]')
 
     fig.tight_layout()
-    fig.savefig(figure_path / 'coherence_temperature_at_one_hour.png')
+    fig.savefig(str(figure_path / 'coherence_temperature_at_one_hour.png'))
     plt.close()
 
 
@@ -176,12 +180,15 @@ def plot_temperature_at_one_hour(ax: plt.axis,
                                  hour: int,
                                  temperature_air: pd.Series,
                                  simulation_case: str,
-                                 all_cases_data: dict):
+                                 all_cases_data: dict,
+                                 plot_air_temperature: bool = True,
+                                 set_title: bool = True):
     summary_data = get_summary_data(simulation_case, all_cases_data)
-    _, leaf_class = simulation_case.split('_')
+    canopy_class, leaf_class = simulation_case.split('_')
     component_indexes = summary_data.keys()
 
-    ax.axvline(temperature_air[hour], label='air', color='k', linestyle='--', linewidth=2)
+    if plot_air_temperature:
+        ax.axvline(temperature_air[hour], label='air', color='k', linestyle='--', linewidth=2)
 
     if leaf_class == 'lumped':
         y, x = zip(*[(i, summary_data[i][hour]) for i in component_indexes if i != -1])
@@ -195,6 +202,8 @@ def plot_temperature_at_one_hour(ax: plt.axis,
         ax.plot([(v - 273.15 if v > 273.15 else None) for v in x_sh], y, 'o-', color='brown', label='shaded')
 
     ax.set_xlabel(r'$\mathregular{[^\circ C]}$')
+    if set_title:
+        ax.set_title(handle_sim_name(canopy_class))
     return
 
 
@@ -203,14 +212,19 @@ def plot_irradiance_at_one_hour(ax: plt.axis,
                                 incident_direct: pd.Series,
                                 incident_diffuse: pd.Series,
                                 simulation_case: str,
-                                all_cases_data: dict):
-    summary_data = get_summary_data(simulation_case, all_cases_data)
-    _, leaf_class = simulation_case.split('_')
+                                all_cases_data: dict,
+                                plot_incident: bool = True,
+                                set_title: bool = True):
+    summary_data = get_summary_data(simulation_case, all_cases_data[0])
+    canopy_class, leaf_class = simulation_case.split('_')
     component_indexes = summary_data.keys()
 
-    ax.set_title(simulation_case.replace('_', ' '))
-    ax.axvline(incident_direct[hour], label='incident direct', color='y', linestyle='--', linewidth=2)
-    ax.axvline(incident_diffuse[hour], label='incident diffuse', color='red', linestyle='--', linewidth=2)
+    if set_title:
+        ax.set_title(handle_sim_name(simulation_case))
+
+    if plot_incident:
+        ax.axvline(incident_direct[hour], label='incident direct', color='y', linestyle='--', linewidth=2)
+        ax.axvline(incident_diffuse[hour], label='incident diffuse', color='red', linestyle='--', linewidth=2)
 
     if leaf_class == 'lumped':
         y, x = zip(*[(i, summary_data[i][hour]) for i in component_indexes if i != -1])
@@ -223,7 +237,16 @@ def plot_irradiance_at_one_hour(ax: plt.axis,
         ax.plot(x_sun, y, 'o-', color='y', label='sunlit')
         ax.plot(x_sh, y, 'o-', color='brown', label='shaded')
 
-    ax.set_xlabel(r'$\mathregular{[W \cdot m^{-2}_{ground}]}$')
+        if canopy_class == 'bigleaf':
+            ax.text(0.45, 0.25, (r'$\mathregular{\phi_{shaded}}$' +
+                                 f'={round(all_cases_data[1][simulation_case][hour][0].shaded_fraction, 2)}'),
+                    transform=ax.transAxes)
+        else:
+            for layer in all_cases_data[1][simulation_case][hour].keys():
+                ax.text(0.8 * incident_direct[hour], layer, (
+                        r'$\mathregular{\phi_{shaded}}$' + f'={round(all_cases_data[1][simulation_case][hour][layer].shaded_fraction, 2)}'))
+
+    ax.set_xlabel(r'$\mathregular{[W_{PAR} \cdot m^{-2}_{ground}]}$')
     return
 
 
@@ -247,7 +270,7 @@ def plot_canopy_variable(
     else:
         [ax.set_xlabel('hours') for ax in axes[:]]
         plt.suptitle(variable_to_plot)
-        plt.savefig(figure_path / f'coherence_{variable_to_plot}.png')
+        plt.savefig(str(figure_path / f'coherence_{variable_to_plot}.png'))
         plt.close()
 
 
@@ -274,7 +297,7 @@ def plot_energy_balance_components(
         ax.set_xlabel('hours')
         fig = ax.get_figure()
         fig.suptitle(variable_to_plot)
-        fig.savefig(figure_path / f'coherence_{variable_to_plot}.png')
+        fig.savefig(str(figure_path / f'coherence_{variable_to_plot}.png'))
         plt.close()
 
 
@@ -288,10 +311,11 @@ def plot_energy_balance(solvers: dict, figure_path: Path):
         for eb_component in eb_components:
             ax = plot_energy_balance_components(h_solver=solvers[model], variable_to_plot=eb_component, ax=ax,
                                                 figure_path=figure_path, return_ax=True)
+            ax.set_title(handle_sim_name(model))
         ax.grid()
         ax.legend()
     axes[0].set_ylabel(r'$\mathregular{Energy\/[W\/m^{-2}_{ground}]}$')
-    fig.savefig(figure_path / 'coherence_energy_balance.png')
+    fig.savefig(str(figure_path / 'coherence_energy_balance.png'))
     pass
 
 
@@ -331,7 +355,7 @@ def plot_universal_functions(solvers, figure_path: Path, measurement_height: flo
     for ax in axes:
         ax.set_xlabel(r'$\mathregular{\frac{z_m-d}{L}\/[m]}$')
         ax.grid()
-    plt.savefig(figure_path / 'coherence_universal_functions.png')
+    plt.savefig(str(figure_path / 'coherence_universal_functions.png'))
     plt.close('all')
 
 
@@ -361,3 +385,11 @@ def get_summary_data(simulation_case: str,
                 else:
                     summary_data[component_index].append(data_dynamic[hour][component_index]['lumped'])
     return summary_data
+
+
+def handle_sim_name(sim_name: str) -> str:
+    return sim_name.replace('_', ' ').lower().replace(
+        'bigleaf', 'BigLeaf').replace(
+        'sunlit-shaded', 'Sunlit-Shaded').replace(
+        'lumped', 'Lumped').replace(
+        'layered', 'Layered')
