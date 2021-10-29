@@ -209,6 +209,10 @@ if __name__ == '__main__':
         plots.plot_temperature_one_hour_comparison2(hour=hour, hourly_weather=weather_data,
                                                     all_cases_absorbed_irradiance=(irradiance, irradiance_object),
                                                     all_cases_temperature=temperature, figure_path=figs_path)
+        plots.plot_properties_profile(
+            solver_data=solver_group['layered_sunlit-shaded'], hours=[6, 12],
+            component_props=['available_energy-penman_monteith_evaporative_energy', 'boundary_resistance'],
+            figure_path=figs_path)
 
     plots.plot_canopy_variable(all_cases_solver=solver_group, variable_to_plot='source_temperature',
                                figure_path=figs_path)

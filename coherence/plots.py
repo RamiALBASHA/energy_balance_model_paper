@@ -15,7 +15,10 @@ UNITS_MAP = {
     'richardson_number': ('Ri', '[-]'),
     'stability_correction_for_momentum': (r'$\mathregular{\Phi_m}$', '[m]'),
     'stability_correction_for_heat': (r'$\mathregular{\Phi_h}$', '[m]'),
-    'monin_obukhov_length': ('L', '[m]')
+    'monin_obukhov_length': ('L', '[m]'),
+    'available_energy': ('A', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
+    'penman_monteith_evaporative_energy': (r'$\mathregular{\lambda E}$', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
+    'boundary_resistance': (r'$\mathregular{r_a}$', r'$\mathregular{[h\/m^{-1}]}$')
 }
 
 
@@ -213,12 +216,6 @@ def plot_temperature_one_hour_comparison2(hour: int,
         ax.legend(loc='upper right')
     for ax in axes[0, :]:
         ax.set_title(ax.get_title().split(' ')[0])
-
-    y_ticks = []
-    for tick_label in axes[0, 0].yaxis.get_ticklabels():
-        tick_label.set_text('0') if tick_label.get_text() == '0.00' else tick_label.set_text('')
-        y_ticks.append(tick_label)
-    axes[0, 0].yaxis.set_ticklabels(y_ticks)
 
     fig.tight_layout()
     fig.savefig(str(figure_path / f'coherence_temperature_at_{hour}h.png'))
@@ -442,3 +439,33 @@ def handle_sim_name(sim_name: str) -> str:
         'sunlit-shaded', 'Sunlit-Shaded').replace(
         'lumped', 'Lumped').replace(
         'layered', 'Layered')
+
+
+def plot_properties_profile(solver_data: dict, hours: list, component_props: [str], figure_path: Path):
+    layers_idx = [k for k in solver_data[hours[0]].crop.keys() if k != -1]
+    n_rows = len(hours)
+    fig, axs = plt.subplots(nrows=n_rows, ncols=len(component_props), sharey='all')
+    for i, hour in enumerate(hours):
+        crop = solver_data[hour].crop
+        for j, prop in enumerate(component_props):
+            ax = axs[i, j]
+            if '-' in prop:
+                prop1, prop2 = prop.split('-')
+                prop_ls1 = [getattr(crop[layer]['sunlit'], prop1) for layer in layers_idx]
+                prop_ls2 = [getattr(crop[layer]['sunlit'], prop2) for layer in layers_idx]
+                y = [(y1 - y2) for y1, y2 in zip(prop_ls1, prop_ls2)]
+                xlabel = f'{UNITS_MAP[prop1][0]} - {UNITS_MAP[prop2][0]} {UNITS_MAP[prop2][1]}'
+            else:
+                y = [getattr(crop[layer]['sunlit'], prop) for layer in layers_idx]
+                xlabel = f'{UNITS_MAP[prop][0]} {UNITS_MAP[prop][1]}'
+            ax.plot(y, layers_idx)
+            if j == 0:
+                ax.set_ylabel('Component index [-]')
+                ax.text(0.7, 0.1, f'(hour: {hour})', transform=ax.transAxes)
+            if i == n_rows - 1:
+                ax.set_xlabel(xlabel)
+
+    fig.tight_layout()
+    plt.savefig(str(figure_path / 'coherence_sunlit_props.png'))
+    plt.close('all')
+    return fig
