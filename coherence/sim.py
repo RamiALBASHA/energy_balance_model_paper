@@ -139,7 +139,6 @@ if __name__ == '__main__':
     irradiance = {}
     irradiance_object = {}
     temperature = {}
-    irradiance_object = {}
     layers = {}
     solver_group = {}
 
