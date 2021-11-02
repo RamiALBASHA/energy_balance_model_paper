@@ -18,7 +18,10 @@ UNITS_MAP = {
     'monin_obukhov_length': ('L', '[m]'),
     'available_energy': ('A', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
     'penman_monteith_evaporative_energy': (r'$\mathregular{\lambda E}$', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
-    'boundary_resistance': (r'$\mathregular{r_a}$', r'$\mathregular{[h\/m^{-1}]}$')
+    'boundary_resistance': (r'$\mathregular{r_a}$', r'$\mathregular{[h\/m^{-1}]}$'),
+    'source_temperature': (r'$\mathregular{T_m}$', r'$\mathregular{[^\circ C]}$'),
+    'PAR_direct': r'$\mathregular{R_{inc,\/PAR,\/direct}}$',
+    'PAR_diffuse': r'$\mathregular{R_{inc,\/PAR,\/diffuse}}$',
 }
 
 
@@ -187,8 +190,9 @@ def plot_temperature_one_hour_comparison2(hour: int,
     assert all_cases_temperature.keys() == all_cases_absorbed_irradiance[0].keys()
 
     cases = all_cases_temperature.keys()
+    component_indices = all_cases_temperature['layered_lumped'][hour].keys()
 
-    fig, axes = plt.subplots(nrows=2, ncols=2, sharex='row', sharey='col', figsize=(8, 7))
+    fig, axes = plt.subplots(nrows=2, ncols=2, sharex='row', sharey='all', figsize=(8, 7))
     for case in cases:
         i = 0 if 'bigleaf' in case else 1
         is_lumped = 'lumped' in case
@@ -198,7 +202,8 @@ def plot_temperature_one_hour_comparison2(hour: int,
             temperature_air=hourly_weather.loc[:, 'air_temperature'],
             simulation_case=case,
             all_cases_data=all_cases_temperature,
-            plot_air_temperature=is_lumped)
+            plot_air_temperature=is_lumped,
+            plot_soil_temperature=is_lumped)
         plot_irradiance_at_one_hour(
             ax=axes[1, i],
             hour=hour,
@@ -207,15 +212,18 @@ def plot_temperature_one_hour_comparison2(hour: int,
             simulation_case=case,
             all_cases_data=all_cases_absorbed_irradiance,
             plot_incident=is_lumped,
+            plot_soil=is_lumped,
             set_title=False)
 
     for i, ax in enumerate(axes.flatten()):
-        ax.set_ylabel('Component index [-]')
-        ax.text(0.075, 0.9, f'({ascii_lowercase[i]})', transform=ax.transAxes)
+        ax.text(0.025, 0.025, f'({ascii_lowercase[i]})', transform=ax.transAxes)
     for ax in axes[:, 0]:
-        ax.legend(loc='upper right')
+        ax.set_ylabel('Component index [-]')
+        ax.legend()
     for ax in axes[0, :]:
         ax.set_title(ax.get_title().split(' ')[0])
+
+    axes[0, 0].set_yticks(list(component_indices))
 
     fig.tight_layout()
     fig.savefig(str(figure_path / f'coherence_temperature_at_{hour}h.png'))
@@ -228,26 +236,38 @@ def plot_temperature_at_one_hour(ax: plt.axis,
                                  simulation_case: str,
                                  all_cases_data: dict,
                                  plot_air_temperature: bool = True,
+                                 plot_soil_temperature: bool = True,
                                  set_title: bool = True):
     summary_data = get_summary_data(simulation_case, all_cases_data)
     canopy_class, leaf_class = simulation_case.split('_')
     component_indexes = summary_data.keys()
 
-    if plot_air_temperature:
-        ax.axvline(temperature_air[hour], label='air', color='k', linestyle='--', linewidth=2)
+    style = 'o-' if max(component_indexes) > 0 else 'o'
+    y = None
 
     if leaf_class == 'lumped':
         y, x = zip(*[(i, summary_data[i][hour]) for i in component_indexes if i != -1])
-        ax.plot([(v - 273.15 if v > 273.15 else None) for v in x], y, 'o-', label='lumped')
+        ax.plot([(v - 273.15 if v > 273.15 else None) for v in x], y, style, label='lumped')
     else:
         y, x_sun, x_sh = zip(
             *[(i, summary_data[i]['sunlit'][hour], summary_data[i]['shaded'][hour]) for i in component_indexes if
               i != -1])
 
-        ax.plot([(v - 273.15 if v > 273.15 else None) for v in x_sun], y, 'o-', color='y', label='sunlit')
-        ax.plot([(v - 273.15 if v > 273.15 else None) for v in x_sh], y, 'o-', color='brown', label='shaded')
+        ax.plot([(v - 273.15 if v > 273.15 else None) for v in x_sun], y, style, color='y', label='sunlit')
+        ax.plot([(v - 273.15 if v > 273.15 else None) for v in x_sh], y, style, color='darkgreen', label='shaded')
+
+    if plot_soil_temperature:
+        ax.plot(summary_data[-1][hour] - 273.15, -1, 's', color='brown', label='soil')
 
     ax.set_xlabel(r'$\mathregular{[^\circ C]}$')
+
+    if plot_air_temperature:
+        y_text = max(y)
+        ax.scatter(temperature_air[hour], y_text + 1, alpha=0)
+        ax.annotate(r'$\mathregular{T_{a}}$', xy=(temperature_air[hour], y_text + 0.25),
+                    xytext=(temperature_air[hour], y_text + 0.75),
+                    arrowprops=dict(arrowstyle="->"), ha='center')
+
     if set_title:
         ax.set_title(handle_sim_name(canopy_class))
     return
@@ -260,6 +280,7 @@ def plot_irradiance_at_one_hour(ax: plt.axis,
                                 simulation_case: str,
                                 all_cases_data: dict,
                                 plot_incident: bool = True,
+                                plot_soil: bool = False,
                                 set_title: bool = True):
     summary_data = get_summary_data(simulation_case, all_cases_data[0])
     canopy_class, leaf_class = simulation_case.split('_')
@@ -267,10 +288,6 @@ def plot_irradiance_at_one_hour(ax: plt.axis,
 
     if set_title:
         ax.set_title(handle_sim_name(simulation_case))
-
-    if plot_incident:
-        ax.axvline(incident_direct[hour], label='incident direct', color='y', linestyle='--', linewidth=2)
-        ax.axvline(incident_diffuse[hour], label='incident diffuse', color='red', linestyle='--', linewidth=2)
 
     if leaf_class == 'lumped':
         y, x = zip(*[(i, summary_data[i][hour]) for i in component_indexes if i != -1])
@@ -281,16 +298,27 @@ def plot_irradiance_at_one_hour(ax: plt.axis,
               i != -1])
 
         ax.plot(x_sun, y, 'o-', color='y', label='sunlit')
-        ax.plot(x_sh, y, 'o-', color='brown', label='shaded')
+        ax.plot(x_sh, y, 'o-', color='darkgreen', label='shaded')
 
         if canopy_class == 'bigleaf':
-            ax.text(0.45, 0.25, (r'$\mathregular{\phi_{shaded}}$' +
-                                 f'={round(all_cases_data[1][simulation_case][hour][0].shaded_fraction, 2)}'),
-                    transform=ax.transAxes)
+            ax.text(0.35 * (incident_direct[hour] + incident_diffuse[hour]), 1.5,
+                    (r'$\mathregular{\phi_{shaded}}$' +
+                     f'={round(all_cases_data[1][simulation_case][hour][0].shaded_fraction, 2)}'))
         else:
             for layer in all_cases_data[1][simulation_case][hour].keys():
-                ax.text(0.8 * incident_direct[hour], layer, (
+                ax.text(0.35 * (incident_direct[hour] + incident_diffuse[hour]), layer, (
                         r'$\mathregular{\phi_{shaded}}$' + f'={round(all_cases_data[1][simulation_case][hour][layer].shaded_fraction, 2)}'))
+
+    if plot_soil:
+        ax.plot(summary_data[-1][hour], -1, 's', color='brown', label=f'{leaf_class} soil')
+
+    if plot_incident:
+        y_text = max(y)
+        for s, (v, ha) in ({'PAR_direct': (incident_direct[hour], 'right'),
+                            'PAR_diffuse': (incident_diffuse[hour], 'left')}).items():
+            ax.scatter(v, y_text + 1, alpha=0)
+            ax.annotate('', xy=(v, y_text + 0.25), xytext=(v, y_text + 0.75), arrowprops=dict(arrowstyle="->"))
+            ax.text(v, y_text + 0.75, UNITS_MAP[s], ha=ha)
 
     ax.set_xlabel(r'$\mathregular{[W_{PAR} \cdot m^{-2}_{ground}]}$')
     return
@@ -304,17 +332,22 @@ def plot_canopy_variable(
         return_axes: bool = False):
     hours = range(24)
     cases = all_cases_solver.keys()
-
+    conv = - 273.15 if 'temperature' in variable_to_plot else 0
     if axes is None:
         _, axes = plt.subplots(ncols=len(cases), sharex='all', sharey='all', figsize=(15, 5))
 
     for i, case in enumerate(cases):
         ax = axes[i]
-        ax.plot(hours, [getattr(all_cases_solver[case][h].crop.state_variables, variable_to_plot) for h in hours])
+        y_ls = []
+        for h in hours:
+            y = getattr(all_cases_solver[case][h].crop.state_variables, variable_to_plot)
+            y_ls.append(y + conv if y is not None else y)
+        ax.plot(hours, y_ls)
     if return_axes:
         return axes
     else:
         [ax.set_xlabel('hours') for ax in axes[:]]
+        axes[0].set_ylabel(f'{UNITS_MAP[variable_to_plot][0]} {UNITS_MAP[variable_to_plot][1]}')
         plt.suptitle(variable_to_plot)
         plt.savefig(str(figure_path / f'coherence_{variable_to_plot}.png'))
         plt.close()
@@ -359,7 +392,7 @@ def plot_energy_balance(solvers: dict, figure_path: Path):
                                                 figure_path=figure_path, return_ax=True)
             ax.set_title(handle_sim_name(model))
         ax.grid()
-        ax.legend()
+    axes[0].legend()
     axes[0].set_ylabel(r'$\mathregular{Energy\/[W\/m^{-2}_{ground}]}$')
     fig.savefig(str(figure_path / 'coherence_energy_balance.png'))
     pass
@@ -469,3 +502,10 @@ def plot_properties_profile(solver_data: dict, hours: list, component_props: [st
     plt.savefig(str(figure_path / 'coherence_sunlit_props.png'))
     plt.close('all')
     return fig
+
+
+def compare_energy_balance_terms(s1, s2):
+    fig, ax = plt.subplots()
+    for s in (s1, s2):
+        y, x_ls = zip(*list(s['temperature']['layered_lumped'][12].items()))
+        ax.plot([x['lumped'] for x in x_ls], y, label='0.1 m')
