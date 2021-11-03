@@ -132,10 +132,11 @@ def get_variable(
 
 
 if __name__ == '__main__':
-    figs_path = Path(__file__).parents[1] / 'figs'
-    figs_path.mkdir(exist_ok=True)
+    figs_path = Path(__file__).parents[1] / 'figs/coherence'
+    figs_path.mkdir(exist_ok=True, parents=True)
     weather_data = get_weather_data()
     correct_for_stability = False
+
     irradiance = {}
     irradiance_object = {}
     temperature = {}
@@ -203,18 +204,6 @@ if __name__ == '__main__':
     plots.plot_temperature_one_hour_comparison(hour=12, hourly_weather=weather_data,
                                                all_cases_absorbed_irradiance=(irradiance, irradiance_object),
                                                all_cases_temperature=temperature, figure_path=figs_path)
-
-    for hour in (6, 12):
-        plots.plot_temperature_one_hour_comparison2(hour=hour, hourly_weather=weather_data,
-                                                    all_cases_absorbed_irradiance=(irradiance, irradiance_object),
-                                                    all_cases_temperature=temperature, figure_path=figs_path)
-        plots.plot_properties_profile(
-            solver_data=solver_group['layered_sunlit-shaded'], hours=[6, 12],
-            component_props=['available_energy-penman_monteith_evaporative_energy', 'boundary_resistance'],
-            figure_path=figs_path)
-
-    plots.plot_canopy_variable(all_cases_solver=solver_group, variable_to_plot='source_temperature',
-                               figure_path=figs_path)
 
     plots.plot_energy_balance(solvers=solver_group, figure_path=figs_path)
 

@@ -6,6 +6,7 @@ import pandas as pd
 from crop_energy_balance import crop as eb_canopy
 from crop_irradiance.uniform_crops import shoot as irradiance_canopy
 from matplotlib import pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
 UNITS_MAP = {
     'net_radiation': (r'$\mathregular{R_n}$', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
@@ -312,7 +313,7 @@ def plot_irradiance_at_one_hour(ax: plt.axis,
                         r'$\mathregular{\phi_{shaded}}$' + f'={round(all_cases_data[1][simulation_case][hour][layer].shaded_fraction, 2)}'))
 
     if plot_soil:
-        ax.plot(summary_data[-1][hour], -1, 's', color='brown', label=f'{leaf_class} soil')
+        ax.plot(summary_data[-1][hour], -1, 's', color='brown', label='soil')
 
     if plot_incident:
         y_text = max(y)
@@ -382,20 +383,38 @@ def plot_energy_balance_components(
         plt.close()
 
 
-def plot_energy_balance(solvers: dict, figure_path: Path):
+def plot_energy_balance(solvers: dict, figure_path: Path, plot_iteration_nb: bool = False):
     eb_components = [
         'net_radiation', 'sensible_heat_flux', 'total_penman_monteith_evaporative_energy', 'soil_heat_flux',
         'energy_balance']
     models = solvers.keys()
-    fig, axes = plt.subplots(ncols=len(models), sharex='all', sharey='all', figsize=(15, 5))
-    for model, ax in zip(models, axes):
+
+    if plot_iteration_nb:
+        n_rows = 2
+        kwargs = {'gridspec_kw': {'height_ratios': [4, 1]}}
+    else:
+        n_rows = 1
+        kwargs = {}
+    fig, axes = plt.subplots(ncols=len(models), nrows=n_rows, sharex='all', sharey='row', figsize=(15, 5), **kwargs)
+    for model, ax in zip(models, axes[0, :] if plot_iteration_nb else axes):
         for eb_component in eb_components:
             ax = plot_energy_balance_components(h_solver=solvers[model], variable_to_plot=eb_component, ax=ax,
                                                 figure_path=figure_path, return_ax=True)
             ax.set_title(handle_sim_name(model))
         ax.grid()
-    axes[0].legend()
-    axes[0].set_ylabel(r'$\mathregular{Energy\/[W\/m^{-2}_{ground}]}$')
+    if plot_iteration_nb:
+        for model, ax_it in zip(models, axes[1, :]):
+            ax_it.plot([solvers[model][h].iterations_number for h in range(24)])
+            ax_it.grid()
+        axes[1, 0].yaxis.set_major_locator(MaxNLocator(integer=True))
+        axes[1, 0].set_ylabel('iteration\nnumber')
+        axes[0, 0].legend()
+        axes[0, 0].set_ylabel(r'$\mathregular{[W\/m^{-2}_{ground}]}$')
+    else:
+        axes[0].legend()
+        axes[0].set_ylabel(r'$\mathregular{[W\/m^{-2}_{ground}]}$')
+
+    fig.tight_layout()
     fig.savefig(str(figure_path / 'coherence_energy_balance.png'))
     pass
 
