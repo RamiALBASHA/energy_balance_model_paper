@@ -1,3 +1,4 @@
+from math import degrees
 from pathlib import Path
 from string import ascii_lowercase
 
@@ -225,6 +226,7 @@ def plot_temperature_one_hour_comparison2(hour: int,
 
     axes[0, 0].set_yticks(list(component_indices))
 
+    fig.suptitle(f"Solar inclination =  {round(degrees(hourly_weather['solar_declination'][hour]), 2)} °")
     fig.tight_layout()
     fig.savefig(str(figure_path / f'coherence_temperature_at_{hour}h.png'))
     plt.close()
