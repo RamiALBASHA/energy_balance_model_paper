@@ -48,7 +48,7 @@ def plot_irradiance_dynamic_comparison(incident_irradiance: pd.Series,
             ax.set_ylabel(r'$\mathregular{W_{PAR} \cdot m^{-2}_{ground}}$')
 
     fig.tight_layout()
-    fig.savefig(str(figure_path / 'coherence_irradiance.png'))
+    fig.savefig(str(figure_path / 'irradiance.png'))
     plt.close()
 
 
@@ -73,7 +73,7 @@ def plot_temperature_dynamic_comparison(temperature_air: pd.Series,
             ax.set_ylabel(r'$\mathregular{temperature\/[^\circ C]}$')
 
     fig.tight_layout()
-    fig.savefig(str(figure_path / 'coherence_temperature.png'))
+    fig.savefig(str(figure_path / 'temperature.png'))
     plt.close()
 
 
@@ -86,7 +86,7 @@ def plot_leaf_profile(vegetative_layers: {int, dict}, figure_path: Path):
                    xlabel=r'$\mathregular{m^2_{leaf} \cdot m^{-2}_{ground}}$', ylabel='layer index [-]',
                    yticks=layer_indices)
     fig.tight_layout()
-    fig.savefig(str(figure_path / 'coherence_layers.png'))
+    fig.savefig(str(figure_path / 'layers.png'))
     plt.close()
 
 
@@ -180,7 +180,7 @@ def plot_temperature_one_hour_comparison(hour: int,
         ax.set_ylabel('Component index [-]')
 
     fig.tight_layout()
-    fig.savefig(str(figure_path / 'coherence_temperature_at_one_hour.png'))
+    fig.savefig(str(figure_path / 'temperature_at_one_hour.png'))
     plt.close()
 
 
@@ -229,7 +229,7 @@ def plot_temperature_one_hour_comparison2(hour: int,
 
     fig.suptitle(f"Solar inclination =  {round(degrees(hourly_weather['solar_declination'][hour]), 2)} °")
     fig.tight_layout()
-    fig.savefig(str(figure_path / f'coherence_temperature_at_{hour}h.png'))
+    fig.savefig(str(figure_path / f'temperature_at_{hour}h.png'))
     plt.close()
 
 
@@ -352,7 +352,7 @@ def plot_canopy_variable(
         [ax.set_xlabel('hours') for ax in axes[:]]
         axes[0].set_ylabel(f'{UNITS_MAP[variable_to_plot][0]} {UNITS_MAP[variable_to_plot][1]}')
         plt.suptitle(variable_to_plot)
-        plt.savefig(str(figure_path / f'coherence_{variable_to_plot}.png'))
+        plt.savefig(str(figure_path / f'{variable_to_plot}.png'))
         plt.close()
 
 
@@ -379,7 +379,7 @@ def plot_energy_balance_components(
         ax.set_xlabel('hours')
         fig = ax.get_figure()
         fig.suptitle(variable_to_plot)
-        fig.savefig(str(figure_path / f'coherence_{variable_to_plot}.png'))
+        fig.savefig(str(figure_path / f'{variable_to_plot}.png'))
         plt.close()
 
 
@@ -416,7 +416,7 @@ def plot_energy_balance(solvers: dict, figure_path: Path, plot_iteration_nb: boo
     ax.set_ylabel(r'$\mathregular{[W\/m^{-2}_{ground}]}$')
 
     fig.tight_layout()
-    fig.savefig(str(figure_path / 'coherence_energy_balance.png'))
+    fig.savefig(str(figure_path / 'energy_balance.png'))
     pass
 
 
@@ -433,7 +433,7 @@ def plot_stability_terms(solvers: dict, figs_path: Path):
         axes[i, 0].set_ylabel(' '.join(UNITS_MAP[term]))
 
     [ax.set_xlabel('hour') for ax in axes[-1, :]]
-    fig.savefig(figs_path / 'coherence_stability_terms.png')
+    fig.savefig(figs_path / 'stability_terms.png')
     plt.close('all')
 
 
@@ -456,7 +456,7 @@ def plot_universal_functions(solvers, figure_path: Path, measurement_height: flo
     for ax in axes:
         ax.set_xlabel(r'$\mathregular{\frac{z_m-d}{L}\/[m]}$')
         ax.grid()
-    plt.savefig(str(figure_path / 'coherence_universal_functions.png'))
+    plt.savefig(str(figure_path / 'universal_functions.png'))
     plt.close('all')
 
 
@@ -521,7 +521,7 @@ def plot_properties_profile(solver_data: dict, hours: list, component_props: [st
                 ax.set_xlabel(xlabel)
 
     fig.tight_layout()
-    plt.savefig(str(figure_path / 'coherence_sunlit_props.png'))
+    plt.savefig(str(figure_path / 'sunlit_props.png'))
     plt.close('all')
     return fig
 
