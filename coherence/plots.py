@@ -24,6 +24,7 @@ UNITS_MAP = {
     'source_temperature': (r'$\mathregular{T_m}$', r'$\mathregular{[^\circ C]}$'),
     'PAR_direct': r'$\mathregular{R_{inc,\/PAR,\/direct}}$',
     'PAR_diffuse': r'$\mathregular{R_{inc,\/PAR,\/diffuse}}$',
+    'LAI': (r'$\mathregular{L_t}$', r'$\mathregular{[m^{2}_{leaf}\/m^{-2}_{ground}]}$')
 }
 
 
@@ -533,10 +534,10 @@ def compare_energy_balance_terms(s1, s2):
         ax.plot([x['lumped'] for x in x_ls], y, label='0.1 m')
 
 
-def compare_sunlit_shaded_temperatures(hourly_temperature: list, figure_path: Path):
+def compare_sunlit_shaded_temperatures(temperature_data: list, figure_path: Path, **kwargs):
     fig, ax = plt.subplots()
-    x, temp = zip(*hourly_temperature)
-    component_keys = [k for k in hourly_temperature[0][1].keys() if k != -1]
+    x, temp = zip(*temperature_data)
+    component_keys = [k for k in temperature_data[0][1].keys() if k != -1]
     upper_layer = []
     lower_layer = []
     for item in temp:
@@ -544,9 +545,8 @@ def compare_sunlit_shaded_temperatures(hourly_temperature: list, figure_path: Pa
         lower_layer.append(item[min(component_keys)]['sunlit'] - item[min(component_keys)]['shaded'])
     for label, y in {'upper_layer': upper_layer, 'lower_layer': lower_layer}.items():
         ax.plot(x, y, label=label)
-        ax.set(xlabel='diffuse ratio [-]',
-               ylabel=r'$\mathregular{T_{sunlit}-T_{shaded}}$' + f" {UNITS_MAP['source_temperature'][1]}")
+        ax.set(ylabel=r'$\mathregular{T_{sunlit}-T_{shaded}}$' + f" {UNITS_MAP['source_temperature'][1]}", **kwargs)
         ax.legend()
     fig.tight_layout()
-    fig.savefig(figure_path / 'temperature_difference_sunlit_vs_shaded.png')
+    fig.savefig(figure_path)
     plt.close('all')
