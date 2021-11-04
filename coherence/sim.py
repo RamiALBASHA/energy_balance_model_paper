@@ -201,11 +201,12 @@ if __name__ == '__main__':
     plots.plot_temperature_dynamic_comparison(temperature_air=weather_data.loc[:, 'air_temperature'],
                                               all_cases_temperature=temperature, figure_path=figs_path)
 
-    plots.plot_temperature_one_hour_comparison(hour=12, hourly_weather=weather_data,
-                                               all_cases_absorbed_irradiance=(irradiance, irradiance_object),
-                                               all_cases_temperature=temperature, figure_path=figs_path)
+    for hour in range(24):
+        plots.plot_temperature_one_hour_comparison2(hour=hour, hourly_weather=weather_data,
+                                                    all_cases_absorbed_irradiance=(irradiance, irradiance_object),
+                                                    all_cases_temperature=temperature, figure_path=figs_path)
 
-    plots.plot_energy_balance(solvers=solver_group, figure_path=figs_path)
+    plots.plot_energy_balance(solvers=solver_group, figure_path=figs_path, plot_iteration_nb=True)
 
     plots.plot_stability_terms(solvers=solver_group, figs_path=figs_path)
 
