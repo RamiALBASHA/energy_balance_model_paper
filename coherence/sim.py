@@ -8,7 +8,7 @@ from crop_irradiance.uniform_crops import (
     inputs as irradiance_inputs, params as irradiance_params, shoot as irradiance_canopy)
 
 from coherence import plots
-from sources.demo import get_weather_data
+from sources.demo import get_sq2_weather_data
 
 with open('inputs.json', mode='r') as f:
     json_inputs = load(f)
@@ -134,7 +134,7 @@ def get_variable(
 if __name__ == '__main__':
     figs_path = Path(__file__).parents[1] / 'figs/coherence'
     figs_path.mkdir(exist_ok=True, parents=True)
-    weather_data = get_weather_data()
+    weather_data = get_sq2_weather_data('weather_maricopa_sunny.csv')
     correct_for_stability = False
 
     irradiance = {}
