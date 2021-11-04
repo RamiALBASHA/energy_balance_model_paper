@@ -1,7 +1,7 @@
 air_temperature [degree C]
 relative_humidity [percentage]
-wind_speed [m / s-1]
-global_radiation [W / m-2]
+wind_speed [m s-1]
+global_radiation [W m-2]
 solar_declination [rad]
 
 time;air_temperature;relative_humidity;wind_speed;incident_global_irradiance;solar_declination
