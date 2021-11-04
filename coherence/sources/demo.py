@@ -34,9 +34,9 @@ def get_sq2_weather_data(filename: str) -> pd.DataFrame:
     vapour_pressure_conversion = convert_unit(1, 'hPa', 'kPa')
     latitude = None
     with open(str(Path(__file__).parent / filename), mode='r') as f:
-        for l in f.readlines():
-            if 'latitude' in l:
-                latitude = float(l.split(':')[-1].replace(' ', '').replace('\n', ''))
+        for line in f.readlines():
+            if 'latitude' in line:
+                latitude = float(line.split(':')[-1].replace(' ', '').replace('\n', ''))
                 break
 
     raw_data = pd.read_csv(Path(__file__).parent / filename, decimal='.', sep=';', skiprows=12)
@@ -92,7 +92,8 @@ def plot_weather(actual_weather: pd.DataFrame, figure_path: Path):
 
 
 if __name__ == '__main__':
-    figs_path = Path(__file__).parents[2] / 'figs'
+    figs_path = Path(__file__).parent
     plot_weather(actual_weather=get_weather_data(), figure_path=figs_path / 'coherence_weather.png')
-    plot_weather(actual_weather=get_sq2_weather_data('weather_maricopa_sunny.csv'),
-                 figure_path=figs_path / 'weather_maricopa_sunny.png')
+    for weather_source in ('weather_maricopa_sunny', 'weather_maricopa_cloudy'):
+        plot_weather(actual_weather=get_sq2_weather_data(f'{weather_source}.csv'),
+                     figure_path=figs_path / f'{weather_source}.png')
