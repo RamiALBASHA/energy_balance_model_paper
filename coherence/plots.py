@@ -404,15 +404,16 @@ def plot_energy_balance(solvers: dict, figure_path: Path, plot_iteration_nb: boo
         ax.grid()
     if plot_iteration_nb:
         for model, ax_it in zip(models, axes[1, :]):
-            ax_it.plot([solvers[model][h].iterations_number for h in range(24)])
+            ax_it.plot([solvers[model][h].iterations_number for h in range(24)], 'k-')
             ax_it.grid()
         axes[1, 0].yaxis.set_major_locator(MaxNLocator(integer=True))
+        axes[1, 0].set_ylim((0, 1.2 * max(axes[1, 0].get_ylim())))
         axes[1, 0].set_ylabel('iteration\nnumber')
-        axes[0, 0].legend()
-        axes[0, 0].set_ylabel(r'$\mathregular{[W\/m^{-2}_{ground}]}$')
+        ax = axes[0, 0]
     else:
-        axes[0].legend()
-        axes[0].set_ylabel(r'$\mathregular{[W\/m^{-2}_{ground}]}$')
+        ax = axes[0]
+    ax.legend()
+    ax.set_ylabel(r'$\mathregular{[W\/m^{-2}_{ground}]}$')
 
     fig.tight_layout()
     fig.savefig(str(figure_path / 'coherence_energy_balance.png'))
