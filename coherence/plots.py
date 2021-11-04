@@ -531,3 +531,22 @@ def compare_energy_balance_terms(s1, s2):
     for s in (s1, s2):
         y, x_ls = zip(*list(s['temperature']['layered_lumped'][12].items()))
         ax.plot([x['lumped'] for x in x_ls], y, label='0.1 m')
+
+
+def compare_sunlit_shaded_temperatures(hourly_temperature: list, figure_path: Path):
+    fig, ax = plt.subplots()
+    x, temp = zip(*hourly_temperature)
+    component_keys = [k for k in hourly_temperature[0][1].keys() if k != -1]
+    upper_layer = []
+    lower_layer = []
+    for item in temp:
+        upper_layer.append(item[max(component_keys)]['sunlit'] - item[max(component_keys)]['shaded'])
+        lower_layer.append(item[min(component_keys)]['sunlit'] - item[min(component_keys)]['shaded'])
+    for label, y in {'upper_layer': upper_layer, 'lower_layer': lower_layer}.items():
+        ax.plot(x, y, label=label)
+        ax.set(xlabel='diffuse ratio [-]',
+               ylabel=r'$\mathregular{T_{sunlit}-T_{shaded}}$' + f" {UNITS_MAP['source_temperature'][1]}")
+        ax.legend()
+    fig.tight_layout()
+    fig.savefig(figure_path / 'temperature_difference_sunlit_vs_shaded.png')
+    plt.close('all')
