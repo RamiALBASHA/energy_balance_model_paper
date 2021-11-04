@@ -23,6 +23,7 @@ LEAF_LAYERS = {3: 1.0,
 
 
 def get_irradiance_sim_inputs_and_params(
+        leaf_layers: dict,
         is_bigleaf: bool,
         is_lumped: bool,
         incident_direct_par_irradiance: float,
@@ -30,7 +31,7 @@ def get_irradiance_sim_inputs_and_params(
         solar_inclination_angle: float) -> (
         irradiance_inputs.LumpedInputs or irradiance_inputs.SunlitShadedInputs,
         irradiance_params.LumpedParams or irradiance_params.SunlitShadedInputs):
-    vegetative_layers = {0: sum(LEAF_LAYERS.values())} if is_bigleaf else LEAF_LAYERS.copy()
+    vegetative_layers = {0: sum(leaf_layers.values())} if is_bigleaf else leaf_layers.copy()
 
     common_inputs = dict(
         leaf_layers=vegetative_layers,
@@ -56,6 +57,7 @@ def get_irradiance_sim_inputs_and_params(
 
 
 def calc_absorbed_irradiance(
+        leaf_layers: dict,
         is_bigleaf: bool,
         is_lumped: bool,
         incident_direct_par_irradiance: float,
@@ -166,6 +168,7 @@ if __name__ == '__main__':
             air_temperature = w_data['air_temperature']
             print(date)
             absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
+                leaf_layers=LEAF_LAYERS,
                 is_bigleaf=(canopy_type == 'bigleaf'),
                 is_lumped=(leaves_type == 'lumped'),
                 incident_direct_par_irradiance=incident_direct_irradiance,
