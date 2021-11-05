@@ -36,7 +36,7 @@ def examine_diffuse_ratio_effect():
             incident_direct_par_irradiance=w_data['incident_direct_irradiance'],
             incident_diffuse_par_irradiance=w_data['incident_diffuse_irradiance'],
             solar_inclination_angle=w_data['solar_declination'])
-        energy_balance_solver = sim.solve_energy_balance(
+        energy_balance_solver, _ = sim.solve_energy_balance(
             vegetative_layers=canopy_layers,
             leaf_class_type=leaf_class_type,
             absorbed_par_irradiance=absorbed_irradiance,
@@ -73,7 +73,7 @@ def examine_lai_effect():
             incident_direct_par_irradiance=w_data['incident_direct_irradiance'],
             incident_diffuse_par_irradiance=w_data['incident_diffuse_irradiance'],
             solar_inclination_angle=w_data['solar_declination'])
-        energy_balance_solver = sim.solve_energy_balance(
+        energy_balance_solver, _ = sim.solve_energy_balance(
             vegetative_layers=canopy_layers,
             leaf_class_type=leaf_class_type,
             absorbed_par_irradiance=absorbed_irradiance,
@@ -98,11 +98,12 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, weather_file_n
     figures_path.mkdir(parents=True, exist_ok=True)
     weather_data = get_sq2_weather_data(weather_file_name)
 
+    layers = {}
     irradiance = {}
     irradiance_object = {}
     temperature = {}
-    layers = {}
     solver_group = {}
+    execution_time = {}
 
     for canopy_type, leaves_type in canopy_representations:
         print('-' * 50)
@@ -113,6 +114,7 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, weather_file_n
         hourly_irradiance_obj = []
         hourly_temperature = []
         hourly_solver = []
+        hourly_exe_time = []
 
         for date, w_data in weather_data.iterrows():
             print(date)
@@ -123,7 +125,7 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, weather_file_n
                 incident_direct_par_irradiance=w_data['incident_direct_irradiance'],
                 incident_diffuse_par_irradiance=w_data['incident_diffuse_irradiance'],
                 solar_inclination_angle=w_data['solar_declination'])
-            energy_balance_solver = solve_energy_balance(
+            energy_balance_solver, exe_time = solve_energy_balance(
                 vegetative_layers=canopy_layers,
                 leaf_class_type=leaves_type,
                 absorbed_par_irradiance=absorbed_irradiance,
@@ -133,6 +135,7 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, weather_file_n
             hourly_absorbed_irradiance.append(absorbed_irradiance)
             hourly_irradiance_obj.append(irradiance_obj)
             hourly_solver.append(energy_balance_solver)
+            hourly_exe_time.append(exe_time)
             hourly_temperature.append(get_variable(
                 var_to_get='temperature',
                 one_step_solver=energy_balance_solver,
@@ -142,6 +145,7 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, weather_file_n
         irradiance_object[f'{canopy_type}_{leaves_type}'] = hourly_irradiance_obj
         temperature[f'{canopy_type}_{leaves_type}'] = hourly_temperature
         solver_group[f'{canopy_type}_{leaves_type}'] = hourly_solver
+        execution_time[f'{canopy_type}_{leaves_type}'] = hourly_exe_time
 
     plots.plot_leaf_profile(vegetative_layers=layers, figure_path=figures_path)
 
@@ -164,6 +168,7 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, weather_file_n
     if correct_for_stability:
         plots.plot_universal_functions(solvers=solver_group, measurement_height=2, figure_path=figures_path)
 
+    plots.plot_execution_time(execution_time_data=execution_time, figure_path=figures_path)
     pass
 
 

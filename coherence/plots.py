@@ -550,3 +550,14 @@ def compare_sunlit_shaded_temperatures(temperature_data: list, figure_path: Path
     fig.tight_layout()
     fig.savefig(figure_path)
     plt.close('all')
+
+
+def plot_execution_time(execution_time_data: dict, figure_path: Path):
+    fig, ax = plt.subplots()
+    for k, v in execution_time_data.items():
+        ax.plot(*zip(*enumerate(v)),
+                label=f'{handle_sim_name(k)} (mean (7:00 to 19:00)={round(sum(v[6:20]) / len(v[6:20]), 4)})')
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, -0.6))
+    ax.set(xlabel='hours', ylabel='execution time [s]')
+    fig.tight_layout()
+    fig.savefig(figure_path / 'execution_time.png')
