@@ -414,7 +414,7 @@ def plot_energy_balance(solvers: dict, figure_path: Path, plot_iteration_nb: boo
     else:
         ax = axes[0]
     ax.legend()
-    ax.set(ylim=(0, 1000), ylabel=r'$\mathregular{[W\/m^{-2}_{ground}]}$')
+    ax.set(ylim=(-275, 1050), ylabel=r'$\mathregular{[W\/m^{-2}_{ground}]}$')
 
     fig.tight_layout()
     fig.savefig(str(figure_path / 'energy_balance.png'))
