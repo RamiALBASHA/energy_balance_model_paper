@@ -1,5 +1,4 @@
 from json import load
-from pathlib import Path
 
 import pandas as pd
 from crop_energy_balance import (
@@ -7,19 +6,11 @@ from crop_energy_balance import (
 from crop_irradiance.uniform_crops import (
     inputs as irradiance_inputs, params as irradiance_params, shoot as irradiance_canopy)
 
-from coherence import plots
-from sources.demo import get_sq2_weather_data
-
 with open('inputs.json', mode='r') as f:
     json_inputs = load(f)
 
 with open('params.json', mode='r') as f:
     json_params = load(f)
-
-LEAF_LAYERS = {3: 1.0,
-               2: 1.0,
-               1: 1.0,
-               0: 1.0}
 
 
 def get_irradiance_sim_inputs_and_params(
@@ -131,87 +122,3 @@ def get_variable(
                for index, layer in one_step_solver.crop.items() if index != -1}
         res.update({-1: {'lumped': getattr(one_step_solver.crop[-1], var_to_get)}})
     return res
-
-
-if __name__ == '__main__':
-    figs_path = Path(__file__).parents[1] / 'figs/coherence'
-    figs_path.mkdir(exist_ok=True, parents=True)
-    weather_data = get_sq2_weather_data('weather_maricopa_sunny.csv')
-    correct_for_stability = False
-
-    irradiance = {}
-    irradiance_object = {}
-    temperature = {}
-    layers = {}
-    solver_group = {}
-
-    for canopy_type, leaves_type in (('bigleaf', 'lumped'),
-                                     ('bigleaf', 'sunlit-shaded'),
-                                     ('layered', 'lumped'),
-                                     ('layered', 'sunlit-shaded')):
-        print('-' * 50)
-        print(f"{canopy_type} - {leaves_type}")
-        canopy_layers = {0: sum(LEAF_LAYERS.values())} if canopy_type == 'bigleaf' else LEAF_LAYERS
-        layers.update({f'{canopy_type} {leaves_type}': canopy_layers})
-        hourly_absorbed_irradiance = []
-        hourly_irradiance_obj = []
-        hourly_temperature = []
-        hourly_solver = []
-
-        for date, w_data in weather_data.iterrows():
-            incident_direct_irradiance = w_data['incident_direct_irradiance']
-            incident_diffuse_irradiance = w_data['incident_diffuse_irradiance']
-            solar_inclination = w_data['solar_declination']
-            wind_speed = w_data['wind_speed']
-            vapor_pressure_deficit = w_data['vapor_pressure_deficit']
-            vapor_pressure = w_data['vapor_pressure']
-            air_temperature = w_data['air_temperature']
-            print(date)
-            absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
-                leaf_layers=LEAF_LAYERS,
-                is_bigleaf=(canopy_type == 'bigleaf'),
-                is_lumped=(leaves_type == 'lumped'),
-                incident_direct_par_irradiance=incident_direct_irradiance,
-                incident_diffuse_par_irradiance=incident_diffuse_irradiance,
-                solar_inclination_angle=solar_inclination)
-
-            hourly_absorbed_irradiance.append(absorbed_irradiance)
-            hourly_irradiance_obj.append(irradiance_obj)
-            energy_balance_solver = solve_energy_balance(
-                vegetative_layers=canopy_layers,
-                leaf_class_type=leaves_type,
-                absorbed_par_irradiance=absorbed_irradiance,
-                actual_weather_data=w_data,
-                correct_stability=correct_for_stability)
-
-            hourly_solver.append(energy_balance_solver)
-            hourly_temperature.append(get_variable(
-                var_to_get='temperature',
-                one_step_solver=energy_balance_solver,
-                leaf_class_type=leaves_type))
-
-        irradiance[f'{canopy_type}_{leaves_type}'] = hourly_absorbed_irradiance
-        irradiance_object[f'{canopy_type}_{leaves_type}'] = hourly_irradiance_obj
-        temperature[f'{canopy_type}_{leaves_type}'] = hourly_temperature
-        solver_group[f'{canopy_type}_{leaves_type}'] = hourly_solver
-
-    plots.plot_leaf_profile(vegetative_layers=layers, figure_path=figs_path)
-
-    plots.plot_irradiance_dynamic_comparison(
-        incident_irradiance=(weather_data.loc[:, ['incident_direct_irradiance', 'incident_diffuse_irradiance']]).sum(
-            axis=1), all_cases_absorbed_irradiance=irradiance, figure_path=figs_path)
-
-    plots.plot_temperature_dynamic_comparison(temperature_air=weather_data.loc[:, 'air_temperature'],
-                                              all_cases_temperature=temperature, figure_path=figs_path)
-
-    for hour in range(24):
-        plots.plot_temperature_one_hour_comparison2(hour=hour, hourly_weather=weather_data,
-                                                    all_cases_absorbed_irradiance=(irradiance, irradiance_object),
-                                                    all_cases_temperature=temperature, figure_path=figs_path)
-
-    plots.plot_energy_balance(solvers=solver_group, figure_path=figs_path, plot_iteration_nb=True)
-
-    plots.plot_stability_terms(solvers=solver_group, figs_path=figs_path)
-
-    if correct_for_stability:
-        plots.plot_universal_functions(solvers=solver_group, measurement_height=2, figure_path=figs_path)
