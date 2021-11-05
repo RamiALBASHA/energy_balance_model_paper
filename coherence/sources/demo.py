@@ -69,23 +69,27 @@ def get_sq2_weather_data(filename: str) -> pd.DataFrame:
     return raw_data
 
 
-def plot_weather(actual_weather: pd.DataFrame, figure_path: Path):
+def plot_weather(weather_data: {str: pd.DataFrame}, figure_path: Path):
+    if not isinstance(weather_data, dict):
+        weather_data = {'': weather_data}
     fig, ((ax_irradiance, ax_temperature), (ax_wind_speed, ax_vpd)) = plt.subplots(ncols=2, nrows=2, sharex='all')
 
-    day_hours = range(24)
-    ax_irradiance.plot(
-        day_hours, actual_weather.loc[:, ['incident_direct_irradiance', 'incident_diffuse_irradiance']].sum(axis=1))
-    ax_irradiance.set_ylabel(r'$\mathregular{R_{inc,\/PAR}\/[W_{PAR} \cdot m^{-2}_{ground}]}$')
+    hours = range(24)
 
-    ax_temperature.plot(day_hours, actual_weather.loc[:, 'air_temperature'])
+    for k, w in weather_data.items():
+        ax_irradiance.plot(hours, w.loc[:, ['incident_direct_irradiance', 'incident_diffuse_irradiance']].sum(axis=1),
+                           label=k)
+        ax_temperature.plot(hours, w.loc[:, 'air_temperature'], label=k)
+        ax_wind_speed.plot(hours, w.loc[:, 'wind_speed'] / 3600., label=k)
+        ax_vpd.plot(hours, w.loc[:, 'vapor_pressure_deficit'], label=k)
+
+    ax_irradiance.set_ylabel(r'$\mathregular{R_{inc,\/PAR}\/[W\/m^{-2}_{ground}]}$')
     ax_temperature.set_ylabel(r'$\mathregular{T_a\/[^\circ C]}$')
-
-    ax_wind_speed.plot(day_hours, actual_weather.loc[:, 'wind_speed'] / 3600.)
-    ax_wind_speed.set(xlabel='hour', ylabel=r'$\mathregular{u\/[m \cdot s^{-1}]}$')
-
-    ax_vpd.plot(day_hours, actual_weather.loc[:, 'vapor_pressure_deficit'])
+    ax_wind_speed.set(xlabel='hour', ylabel=r'$\mathregular{u\/[m\/s^{-1}]}$')
     ax_vpd.set(xlabel='hour', ylabel=r'$\mathregular{D_a\/[kPa]}$')
 
+    if len(weather_data) > 1:
+        ax_irradiance.legend()
     fig.tight_layout()
     fig.savefig(str(figure_path))
     plt.close()
@@ -93,7 +97,9 @@ def plot_weather(actual_weather: pd.DataFrame, figure_path: Path):
 
 if __name__ == '__main__':
     figs_path = Path(__file__).parent
-    plot_weather(actual_weather=get_weather_data(), figure_path=figs_path / 'coherence_weather.png')
-    for weather_source in ('weather_maricopa_sunny', 'weather_maricopa_cloudy'):
-        plot_weather(actual_weather=get_sq2_weather_data(f'{weather_source}.csv'),
-                     figure_path=figs_path / f'{weather_source}.png')
+    plot_weather(weather_data=get_weather_data(), figure_path=figs_path / 'coherence_weather.png')
+    plot_weather(
+        weather_data={
+            'sunny': get_sq2_weather_data('weather_maricopa_sunny.csv'),
+            'cloudy': get_sq2_weather_data('weather_maricopa_cloudy.csv')},
+        figure_path=figs_path / 'weather_maricopa.png')
