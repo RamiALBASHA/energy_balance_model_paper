@@ -2,7 +2,7 @@ from pathlib import Path
 
 from coherence import sim, plots
 from coherence.sim import calc_absorbed_irradiance, solve_energy_balance, get_variable
-from coherence.sources.demo import get_sq2_weather_data
+from coherence.sources.demo import get_sq2_weather_data, plot_weather
 
 
 def examine_diffuse_ratio_effect():
@@ -170,8 +170,12 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, weather_file_n
 def run_four_canopy_sims():
     figs_path = Path(__file__).parents[1] / 'figs/coherence'
     figs_path.mkdir(exist_ok=True, parents=True)
+    weather_files = {'sunny': 'weather_maricopa_sunny.csv', 'cloudy': 'weather_maricopa_cloudy.csv'}
+    plot_weather(
+        weather_data={k: get_sq2_weather_data(v) for k, v in weather_files.items()},
+        figure_path=figs_path / 'weather_maricopa.png')
 
-    for weather_file in ('weather_maricopa_sunny.csv', 'weather_maricopa_cloudy.csv'):
+    for weather_file in weather_files.values():
         sim_general(
             canopy_representations=(('bigleaf', 'lumped'),
                                     ('bigleaf', 'sunlit-shaded'),
