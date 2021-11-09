@@ -220,7 +220,7 @@ def plot_temperature_one_hour_comparison2(hour: int,
             set_title=False)
 
     for i, ax in enumerate(axes.flatten()):
-        ax.text(0.025, 0.025, f'({ascii_lowercase[i]})', transform=ax.transAxes)
+        ax.text(0.925, 0.025, f'({ascii_lowercase[i]})', transform=ax.transAxes)
     for ax in axes[:, 0]:
         ax.set_ylabel('Component index [-]')
         ax.legend()
