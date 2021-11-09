@@ -1,5 +1,9 @@
 from pathlib import Path
 
+from crop_energy_balance.formalisms import irradiance
+from crop_energy_balance.formalisms.leaf import calc_stomatal_conductance
+from crop_energy_balance.utils import discretize_linearly
+
 from coherence import sim, plots
 from coherence.sim import calc_absorbed_irradiance, solve_energy_balance, get_variable
 from coherence.sources.demo import get_sq2_weather_data, plot_weather
@@ -193,7 +197,53 @@ def run_four_canopy_sims():
     pass
 
 
+def demonstrate_surface_conductance_conceptual_difference():
+    figs_path = Path(__file__).parents[1] / 'figs/coherence'
+    figs_path.mkdir(exist_ok=True, parents=True)
+    leaves_categories = ('sunlit', 'shaded', 'lumped')
+    surface_conductance = {}
+    for leaves_category in leaves_categories:
+        leaf_surface_conductance_per_layer = []
+        for cumulative_leaf_area_index in discretize_linearly(0, 4, 10):
+            absorbed_irradiance = irradiance.calc_absorbed_irradiance(
+                leaves_category=leaves_category,
+                incident_direct_irradiance=225.16396909386614,
+                incident_diffuse_irradiance=96.16936423946721,
+                cumulative_leaf_area_index=cumulative_leaf_area_index,
+                leaf_scattering_coefficient=0.15,
+                canopy_reflectance_to_direct_irradiance=0.039585456879637215,
+                canopy_reflectance_to_diffuse_irradiance=0.057,
+                direct_extinction_coefficient=0.9121479255999952,
+                direct_black_extinction_coefficient=0.9893633354937225,
+                diffuse_extinction_coefficient=0.6204302130699697)
+
+            lumped_leaf_surface_conductance = calc_stomatal_conductance(
+                residual_stomatal_conductance=4.0,
+                maximum_stomatal_conductance=39.6,
+                absorbed_irradiance=absorbed_irradiance,
+                shape_parameter=105,
+                stomatal_sensibility_to_water_status=0.6274303009403469)
+
+            if leaves_category == 'lumped':
+                leaf_fraction = 1
+            else:
+                leaf_fraction = irradiance.calc_leaf_fraction(
+                    leaves_category=leaves_category,
+                    cumulative_leaf_area_index=cumulative_leaf_area_index,
+                    direct_black_extinction_coefficient=0.9893633354937225)
+
+            leaf_surface_conductance_per_layer.append(
+                (lumped_leaf_surface_conductance * leaf_fraction, cumulative_leaf_area_index))
+        surface_conductance.update({leaves_category: leaf_surface_conductance_per_layer})
+
+    plots.plot_surface_conductance_profile(
+        surface_conductance=surface_conductance,
+        figure_path=figs_path)
+    pass
+
+
 if __name__ == '__main__':
     run_four_canopy_sims()
     examine_diffuse_ratio_effect()
     examine_lai_effect()
+    demonstrate_surface_conductance_conceptual_difference()

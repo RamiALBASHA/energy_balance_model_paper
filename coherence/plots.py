@@ -24,7 +24,8 @@ UNITS_MAP = {
     'source_temperature': (r'$\mathregular{T_m}$', r'$\mathregular{[^\circ C]}$'),
     'PAR_direct': r'$\mathregular{R_{inc,\/PAR,\/direct}}$',
     'PAR_diffuse': r'$\mathregular{R_{inc,\/PAR,\/diffuse}}$',
-    'LAI': (r'$\mathregular{L_t}$', r'$\mathregular{[m^{2}_{leaf}\/m^{-2}_{ground}]}$')
+    'LAI': (r'$\mathregular{L_t}$', r'$\mathregular{[m^{2}_{leaf}\/m^{-2}_{ground}]}$'),
+    'surface_conductance': (r'$\mathregular{g_{s,\/l}}$', r'$\mathregular{[m\/h^{-1}]}$')
 }
 
 
@@ -561,3 +562,17 @@ def plot_execution_time(execution_time_data: dict, figure_path: Path):
     ax.set(xlabel='hours', ylabel='execution time [s]')
     fig.tight_layout()
     fig.savefig(figure_path / 'execution_time.png')
+
+
+def plot_surface_conductance_profile(surface_conductance: dict, figure_path: Path):
+    fig, ax = plt.subplots()
+    ax.invert_yaxis()
+    for k, v in surface_conductance.items():
+        ax.plot(*zip(*v), label=k)
+    x_shaded, _ = zip(*surface_conductance['sunlit'])
+    x_sunlit, y = zip(*surface_conductance['shaded'])
+    ax.plot([xsun + xshade for xsun, xshade in zip(x_sunlit, x_shaded)], y, label='sunlit+shaded')
+    ax.set(xlabel=' '.join(UNITS_MAP['surface_conductance']),
+           ylabel=f'Cumulative leaf area index {UNITS_MAP["LAI"][1]}')
+    ax.legend()
+    fig.savefig(figure_path / 'effect_surface_conductance.png')
