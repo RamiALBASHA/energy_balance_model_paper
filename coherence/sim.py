@@ -100,9 +100,12 @@ def solve_energy_balance(
         vegetative_layers: dict,
         leaf_class_type: str,
         absorbed_par_irradiance: dict,
-        actual_weather_data: pd.Series) -> (eb_solver.Solver, float):
-    kwargs = {k: v for k, v in locals().items() if k not in ('leaf_class_type', 'correct_stability')}
+        actual_weather_data: pd.Series,
+        inputs_update: dict = None) -> (eb_solver.Solver, float):
+    kwargs = {k: v for k, v in locals().items() if k not in ('leaf_class_type', 'correct_stability', 'inputs_update')}
     inputs_dict, params_dict = get_energy_balance_inputs_and_params(**kwargs)
+    if inputs_update is not None:
+        inputs_dict.update(inputs_update)
 
     time_start = time.time()
     solver = eb_solver.Solver(leaves_category=leaf_class_type,
