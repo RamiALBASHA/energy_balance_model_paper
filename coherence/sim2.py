@@ -4,6 +4,7 @@ from crop_energy_balance.formalisms import irradiance
 from crop_energy_balance.formalisms.leaf import calc_stomatal_conductance
 from crop_energy_balance.params import Constants
 from crop_energy_balance.utils import discretize_linearly
+from pandas import DataFrame
 
 from coherence import sim, plots
 from coherence.sim import calc_absorbed_irradiance, solve_energy_balance, get_variable
@@ -97,11 +98,14 @@ def examine_lai_effect():
         xlabel=' '.join(plots.UNITS_MAP['LAI']))
 
 
-def sim_general(canopy_representations: tuple, leaf_layers: dict, weather_file_name: str, correct_for_stability: bool,
-                figures_path: Path):
-    figures_path = figures_path / weather_file_name.split('.')[0]
-    figures_path.mkdir(parents=True, exist_ok=True)
-    weather_data = get_sq2_weather_data(weather_file_name)
+def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_stability: bool, figures_path: Path,
+                weather_data: DataFrame = None, weather_file_name: str = None, generate_plots: bool = True,
+                return_results: bool = False):
+    if weather_data is None:
+        if weather_file_name is not None:
+            weather_data = get_sq2_weather_data(weather_file_name)
+        else:
+            raise ValueError(f"one of 'weather_data' or 'weather_file_name' must be provided.")
 
     layers = {}
     irradiance = {}
@@ -152,45 +156,51 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, weather_file_n
         solver_group[f'{canopy_type}_{leaves_type}'] = hourly_solver
         execution_time[f'{canopy_type}_{leaves_type}'] = hourly_exe_time
 
-    plots.plot_leaf_profile(vegetative_layers=layers, figure_path=figures_path)
+    if generate_plots:
+        figures_path.mkdir(parents=True, exist_ok=True)
 
-    plots.plot_irradiance_dynamic_comparison(
-        incident_irradiance=(weather_data.loc[:, ['incident_direct_irradiance', 'incident_diffuse_irradiance']]).sum(
-            axis=1), all_cases_absorbed_irradiance=irradiance, figure_path=figures_path)
+        plots.plot_leaf_profile(vegetative_layers=layers, figure_path=figures_path)
 
-    plots.plot_temperature_dynamic_comparison(temperature_air=weather_data.loc[:, 'air_temperature'],
-                                              all_cases_temperature=temperature, figure_path=figures_path)
+        plots.plot_irradiance_dynamic_comparison(
+            incident_irradiance=(
+                weather_data.loc[:, ['incident_direct_irradiance', 'incident_diffuse_irradiance']]).sum(
+                axis=1), all_cases_absorbed_irradiance=irradiance, figure_path=figures_path)
 
-    plots.plot_dynamic_comparison(
-        solvers=solver_group, variable_to_plot='source_temperature', ylim=(5, 40), figure_path=figures_path)
-    plots.plot_dynamic_comparison(
-        solvers=solver_group, variable_to_plot='total_penman_monteith_evaporative_energy', ylim=(0, 900),
-        figure_path=figures_path)
+        plots.plot_temperature_dynamic_comparison(temperature_air=weather_data.loc[:, 'air_temperature'],
+                                                  all_cases_temperature=temperature, figure_path=figures_path)
 
-    for hour in range(24):
-        plots.plot_temperature_one_hour_comparison2(hour=hour, hourly_weather=weather_data,
-                                                    all_cases_absorbed_irradiance=(irradiance, irradiance_object),
-                                                    all_cases_temperature=temperature, figure_path=figures_path)
+        plots.plot_dynamic_comparison(
+            solvers=solver_group, variable_to_plot='source_temperature', ylim=(5, 40), figure_path=figures_path)
+        plots.plot_dynamic_comparison(
+            solvers=solver_group, variable_to_plot='total_penman_monteith_evaporative_energy', ylim=(0, 900),
+            figure_path=figures_path)
 
-    plots.plot_energy_balance(solvers=solver_group, figure_path=figures_path, plot_iteration_nb=True)
+        for hour in range(24):
+            plots.plot_temperature_one_hour_comparison2(hour=hour, hourly_weather=weather_data,
+                                                        all_cases_absorbed_irradiance=(irradiance, irradiance_object),
+                                                        all_cases_temperature=temperature, figure_path=figures_path)
 
-    plots.plot_stability_terms(solvers=solver_group, figs_path=figures_path)
+        plots.plot_energy_balance(solvers=solver_group, figure_path=figures_path, plot_iteration_nb=True)
 
-    if correct_for_stability:
-        plots.plot_universal_functions(solvers=solver_group, measurement_height=2, figure_path=figures_path)
+        plots.plot_stability_terms(solvers=solver_group, figs_path=figures_path)
 
-    plots.plot_execution_time(execution_time_data=execution_time, figure_path=figures_path)
+        if correct_for_stability:
+            plots.plot_universal_functions(solvers=solver_group, measurement_height=2, figure_path=figures_path)
 
-    plots.plot_properties_profile(
-        solver_data=solver_group['layered_sunlit-shaded'],
-        hours=[14],
-        add_muliplicaiton_ax=True,
-        component_props=['available_energy-penman_monteith_evaporative_energy', 'boundary_resistance'],
-        multiply_by=[1, 1 / (Constants().air_density * Constants().air_specific_heat_capacity)],
-        xlabels=[None, r'$\mathregular{\frac{r_a}{\rho\/C_{p}}\/[-]}$',
-                 r'$\mathregular{\frac{r_a}{\rho\/C_{p}}\/({A\/-\/\lambda E})\/[^\circ C]}$'],
-        figure_path=figures_path)
-    pass
+        plots.plot_execution_time(execution_time_data=execution_time, figure_path=figures_path)
+
+        plots.plot_properties_profile(
+            solver_data=solver_group['layered_sunlit-shaded'],
+            hours=[14],
+            add_muliplicaiton_ax=True,
+            component_props=['available_energy-penman_monteith_evaporative_energy', 'boundary_resistance'],
+            multiply_by=[1, 1 / (Constants().air_density * Constants().air_specific_heat_capacity)],
+            xlabels=[None, r'$\mathregular{\frac{r_a}{\rho\/C_{p}}\/[-]}$',
+                     r'$\mathregular{\frac{r_a}{\rho\/C_{p}}\/({A\/-\/\lambda E})\/[^\circ C]}$'],
+            figure_path=figures_path)
+
+    if return_results:
+        return layers, irradiance, irradiance_object, temperature, solver_group, execution_time
 
 
 def run_four_canopy_sims():
@@ -210,7 +220,7 @@ def run_four_canopy_sims():
             leaf_layers={3: 1.0, 2: 1.0, 1: 1.0, 0: 1.0},
             weather_file_name=weather_file,
             correct_for_stability=False,
-            figures_path=figs_path)
+            figures_path=figs_path / weather_file)
     pass
 
 
