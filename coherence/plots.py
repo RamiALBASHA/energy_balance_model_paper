@@ -1,4 +1,4 @@
-from math import degrees
+from math import degrees, prod
 from pathlib import Path
 from string import ascii_lowercase
 
@@ -22,11 +22,19 @@ UNITS_MAP = {
     'penman_monteith_evaporative_energy': (r'$\mathregular{\lambda E}$', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
     'boundary_resistance': (r'$\mathregular{r_a}$', r'$\mathregular{[h\/m^{-1}]}$'),
     'source_temperature': (r'$\mathregular{T_m}$', r'$\mathregular{[^\circ C]}$'),
+    'temperature': (r'$\mathregular{T_s}$', r'$\mathregular{[^\circ C]}$'),
     'PAR_direct': r'$\mathregular{R_{inc,\/PAR,\/direct}}$',
     'PAR_diffuse': r'$\mathregular{R_{inc,\/PAR,\/diffuse}}$',
     'LAI': (r'$\mathregular{L_t}$', r'$\mathregular{[m^{2}_{leaf}\/m^{-2}_{ground}]}$'),
     'surface_conductance': (r'$\mathregular{g_{s,\/l}}$', r'$\mathregular{[m\/h^{-1}]}$')
 }
+
+
+def cumsum(it):
+    total = 0
+    for x in it:
+        total += x
+        yield total
 
 
 def plot_irradiance_dynamic_comparison(incident_irradiance: pd.Series,
@@ -47,7 +55,7 @@ def plot_irradiance_dynamic_comparison(incident_irradiance: pd.Series,
         ax.legend()
         ax.set(xlabel='hour')
         if i == 0:
-            ax.set_ylabel(r'$\mathregular{W_{PAR} \cdot m^{-2}_{ground}}$')
+            ax.set_ylabel(r'$\mathregular{W_{PAR} \/ m^{-2}_{ground}}$')
 
     fig.tight_layout()
     fig.savefig(str(figure_path / 'irradiance.png'))
@@ -79,13 +87,28 @@ def plot_temperature_dynamic_comparison(temperature_air: pd.Series,
     plt.close()
 
 
+def plot_dynamic_comparison(solvers: dict,
+                            figure_path: Path,
+                            variable_to_plot: str,
+                            **kwargs):
+    fig, ax = plt.subplots()
+    plot_canopy_variable(all_cases_solver=solvers, variable_to_plot=variable_to_plot, y_cumsum=False,
+                         axes=[ax, ax, ax, ax], figure_path=figure_path, return_axes=True)
+    ax.set(xlabel='hour', ylabel=' '.join(UNITS_MAP[variable_to_plot]), **kwargs)
+    ax.legend()
+
+    fig.tight_layout()
+    fig.savefig(figure_path / f'{variable_to_plot}_comparison.png')
+    plt.close('all')
+
+
 def plot_leaf_profile(vegetative_layers: {int, dict}, figure_path: Path):
     fig, axs = plt.subplots(ncols=4, figsize=(15, 5))
     for i, (k, v) in enumerate(vegetative_layers.items()):
         layer_indices = list(v.keys())
         axs[i].plot(list(v.values()), layer_indices, 'o-')
         axs[i].set(title=handle_sim_name(k),
-                   xlabel=r'$\mathregular{m^2_{leaf} \cdot m^{-2}_{ground}}$', ylabel='layer index [-]',
+                   xlabel=r'$\mathregular{m^2_{leaf} \/ m^{-2}_{ground}}$', ylabel='layer index [-]',
                    yticks=layer_indices)
     fig.tight_layout()
     fig.savefig(str(figure_path / 'layers.png'))
@@ -325,7 +348,7 @@ def plot_irradiance_at_one_hour(ax: plt.axis,
             ax.annotate('', xy=(v, y_text + 0.25), xytext=(v, y_text + 0.75), arrowprops=dict(arrowstyle="->"))
             ax.text(v, y_text + 0.75, UNITS_MAP[s], ha=ha)
 
-    ax.set_xlabel(r'$\mathregular{[W_{PAR} \cdot m^{-2}_{ground}]}$')
+    ax.set_xlabel(r'$\mathregular{[W_{PAR} \/ m^{-2}_{ground}]}$')
     return
 
 
@@ -333,6 +356,7 @@ def plot_canopy_variable(
         all_cases_solver: eb_canopy,
         variable_to_plot: str,
         figure_path: Path,
+        y_cumsum: bool = False,
         axes: plt.axis = None,
         return_axes: bool = False):
     hours = range(24)
@@ -347,7 +371,7 @@ def plot_canopy_variable(
         for h in hours:
             y = getattr(all_cases_solver[case][h].crop.state_variables, variable_to_plot)
             y_ls.append(y + conv if y is not None else y)
-        ax.plot(hours, y_ls)
+        ax.plot(hours, list(cumsum(y_ls)) if y_cumsum else y_ls, label=handle_sim_name(case))
     if return_axes:
         return axes
     else:
@@ -498,14 +522,20 @@ def handle_sim_name(sim_name: str) -> str:
         'layered', 'Layered')
 
 
-def plot_properties_profile(solver_data: dict, hours: list, component_props: [str], figure_path: Path):
+def plot_properties_profile(solver_data: dict, hours: list, component_props: [str], multiply_by: [float], xlabels: [],
+                            figure_path: Path, add_muliplicaiton_ax: bool = True):
     layers_idx = [k for k in solver_data[hours[0]].crop.keys() if k != -1]
     n_rows = len(hours)
-    fig, axs = plt.subplots(nrows=n_rows, ncols=len(component_props), sharey='all')
+    ncols = len(component_props)
+    if add_muliplicaiton_ax:
+        ncols += 1
+        y_ls = []
+
+    fig, axs = plt.subplots(nrows=n_rows, ncols=ncols, sharey='all')
     for i, hour in enumerate(hours):
         crop = solver_data[hour].crop
         for j, prop in enumerate(component_props):
-            ax = axs[i, j]
+            ax = axs[i, j] if n_rows > 1 else axs[j]
             if '-' in prop:
                 prop1, prop2 = prop.split('-')
                 prop_ls1 = [getattr(crop[layer]['sunlit'], prop1) for layer in layers_idx]
@@ -515,12 +545,21 @@ def plot_properties_profile(solver_data: dict, hours: list, component_props: [st
             else:
                 y = [getattr(crop[layer]['sunlit'], prop) for layer in layers_idx]
                 xlabel = f'{UNITS_MAP[prop][0]} {UNITS_MAP[prop][1]}'
+            y = [v * multiply_by[j] for v in y]
             ax.plot(y, layers_idx)
             if j == 0:
                 ax.set_ylabel('Component index [-]')
-                ax.text(0.7, 0.1, f'(hour: {hour})', transform=ax.transAxes)
+                if n_rows > 1:
+                    ax.text(0.7, 0.1, f'(hour: {hour})', transform=ax.transAxes)
             if i == n_rows - 1:
-                ax.set_xlabel(xlabel)
+                ax.set_xlabel(xlabel if xlabels[j] is None else xlabels[j])
+            if add_muliplicaiton_ax:
+                y_ls.append(y)
+
+        if add_muliplicaiton_ax:
+            ax_multi = axs[i, -1] if n_rows > 1 else axs[-1]
+            ax_multi.plot([prod(v) for v in zip(*y_ls)], layers_idx)
+            ax_multi.set_xlabel(xlabels[-1])
 
     fig.tight_layout()
     plt.savefig(str(figure_path / 'sunlit_props.png'))
@@ -576,3 +615,39 @@ def plot_surface_conductance_profile(surface_conductance: dict, figure_path: Pat
            ylabel=f'Cumulative leaf area index {UNITS_MAP["LAI"][1]}')
     ax.legend()
     fig.savefig(figure_path / 'effect_surface_conductance.png')
+
+
+def examine_soil_saturation_effect(temperature: list, latent_heat: list, figure_path: Path):
+    fig, ax_temperature = plt.subplots()
+    ax_latent_heat = ax_temperature.twinx()
+    ax_temperature.plot(*zip(*temperature), 'r-', label=UNITS_MAP['source_temperature'][0])
+    ax_temperature.set_ylabel(' '.join(UNITS_MAP['source_temperature']))
+
+    ax_latent_heat.plot(*zip(*latent_heat), 'b-', label=UNITS_MAP['total_penman_monteith_evaporative_energy'][0])
+    ax_latent_heat.set_ylabel(' '.join(UNITS_MAP['total_penman_monteith_evaporative_energy']))
+
+    h1, l1 = ax_temperature.get_legend_handles_labels()
+    h2, l2 = ax_latent_heat.get_legend_handles_labels()
+    ax_temperature.legend(h1 + h2, l1 + l2, loc='right')
+    ax_temperature.set_xlabel(' '.join(['soil saturation ratio', r'$\mathregular{\frac{\Theta}{\Theta{sat}}}$', '[-]']))
+
+    fig.tight_layout()
+    fig.savefig(figure_path / 'effect_soil_saturation_ratio.png')
+    plt.close('all')
+    pass
+
+
+def examine_shift_effect(lumped_temperature_ls: list, figure_path: Path):
+    component_indices = list(reversed(lumped_temperature_ls[0][1].keys()))
+    fig, ax = plt.subplots()
+    for saturation_rate, temp_profile in lumped_temperature_ls:
+        ax.plot([temp_profile[k]['lumped'] - 273.15 for k in component_indices], component_indices, 'o-',
+                label='='.join([r'$\mathregular{\frac{\Theta}{Theta_{sat}}}$', f'{saturation_rate}']))
+
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.set(xlabel=' '.join(UNITS_MAP['temperature']), ylabel='Component index [-]')
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(figure_path / 'effect_shift.png')
+    plt.close('all')
+    pass

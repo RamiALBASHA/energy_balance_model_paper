@@ -2,6 +2,7 @@ from pathlib import Path
 
 from crop_energy_balance.formalisms import irradiance
 from crop_energy_balance.formalisms.leaf import calc_stomatal_conductance
+from crop_energy_balance.params import Constants
 from crop_energy_balance.utils import discretize_linearly
 
 from coherence import sim, plots
@@ -160,6 +161,12 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, weather_file_n
     plots.plot_temperature_dynamic_comparison(temperature_air=weather_data.loc[:, 'air_temperature'],
                                               all_cases_temperature=temperature, figure_path=figures_path)
 
+    plots.plot_dynamic_comparison(
+        solvers=solver_group, variable_to_plot='source_temperature', ylim=(5, 40), figure_path=figures_path)
+    plots.plot_dynamic_comparison(
+        solvers=solver_group, variable_to_plot='total_penman_monteith_evaporative_energy', ylim=(0, 900),
+        figure_path=figures_path)
+
     for hour in range(24):
         plots.plot_temperature_one_hour_comparison2(hour=hour, hourly_weather=weather_data,
                                                     all_cases_absorbed_irradiance=(irradiance, irradiance_object),
@@ -173,6 +180,16 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, weather_file_n
         plots.plot_universal_functions(solvers=solver_group, measurement_height=2, figure_path=figures_path)
 
     plots.plot_execution_time(execution_time_data=execution_time, figure_path=figures_path)
+
+    plots.plot_properties_profile(
+        solver_data=solver_group['layered_sunlit-shaded'],
+        hours=[14],
+        add_muliplicaiton_ax=True,
+        component_props=['available_energy-penman_monteith_evaporative_energy', 'boundary_resistance'],
+        multiply_by=[1, 1 / (Constants().air_density * Constants().air_specific_heat_capacity)],
+        xlabels=[None, r'$\mathregular{\frac{r_a}{\rho\/C_{p}}\/[-]}$',
+                 r'$\mathregular{\frac{r_a}{\rho\/C_{p}}\/({A\/-\/\lambda E})\/[^\circ C]}$'],
+        figure_path=figures_path)
     pass
 
 
@@ -242,8 +259,84 @@ def demonstrate_surface_conductance_conceptual_difference():
     pass
 
 
+def examine_soil_humidity_effect():
+    figs_path = Path(__file__).parents[1] / 'figs/coherence'
+    figs_path.mkdir(exist_ok=True, parents=True)
+
+    leaf_class_type = 'sunlit-shaded'
+    w_data = get_sq2_weather_data(filename='weather_maricopa_sunny.csv').loc[13]
+
+    canopy_layers = {3: 1.0, 2: 1.0, 1: 1.0, 0: 1.0}
+    saturation_ratios = [v / 100 for v in range(0, 110, 10)]
+    absorbed_irradiance, _ = sim.calc_absorbed_irradiance(
+        leaf_layers=canopy_layers,
+        is_bigleaf=False,
+        is_lumped=leaf_class_type == 'lumped',
+        incident_direct_par_irradiance=w_data['incident_direct_irradiance'],
+        incident_diffuse_par_irradiance=w_data['incident_diffuse_irradiance'],
+        solar_inclination_angle=w_data['solar_declination'])
+
+    temperature_ls = []
+    latent_heat_ls = []
+    for saturation_ratio in saturation_ratios:
+        print(saturation_ratio)
+        energy_balance_solver, _ = sim.solve_energy_balance(
+            vegetative_layers=canopy_layers,
+            leaf_class_type=leaf_class_type,
+            absorbed_par_irradiance=absorbed_irradiance,
+            actual_weather_data=w_data,
+            correct_stability=False,
+            inputs_update={"soil_saturation_ratio": saturation_ratio})
+        temperature_ls.append(
+            (saturation_ratio, energy_balance_solver.crop.state_variables.source_temperature - 273.15))
+        latent_heat_ls.append(
+            (saturation_ratio, energy_balance_solver.crop.state_variables.total_penman_monteith_evaporative_energy))
+
+    plots.examine_soil_saturation_effect(temperature=temperature_ls, latent_heat=latent_heat_ls,
+                                         figure_path=figs_path)
+
+
+def examine_shift_effect():
+    figs_path = Path(__file__).parents[1] / 'figs/coherence'
+    figs_path.mkdir(exist_ok=True, parents=True)
+
+    leaf_class_type = 'lumped'
+    w_data = get_sq2_weather_data(filename='weather_maricopa_sunny.csv').loc[13]
+
+    canopy_layers = {3: 1.0, 2: 1.0, 1: 1.0, 0: 1.0}
+    saturation_ratios = [v / 100 for v in range(0, 125, 25)]
+    absorbed_irradiance, _ = sim.calc_absorbed_irradiance(
+        leaf_layers=canopy_layers,
+        is_bigleaf=False,
+        is_lumped=leaf_class_type == 'lumped',
+        incident_direct_par_irradiance=w_data['incident_direct_irradiance'],
+        incident_diffuse_par_irradiance=w_data['incident_diffuse_irradiance'],
+        solar_inclination_angle=w_data['solar_declination'])
+
+    temperature_ls = []
+    for saturation_ratio in saturation_ratios:
+        print(saturation_ratio)
+        energy_balance_solver, _ = sim.solve_energy_balance(
+            vegetative_layers=canopy_layers,
+            leaf_class_type=leaf_class_type,
+            absorbed_par_irradiance=absorbed_irradiance,
+            actual_weather_data=w_data,
+            correct_stability=False,
+            inputs_update={"soil_saturation_ratio": saturation_ratio})
+        temperature_ls.append(
+            (saturation_ratio,
+             sim.get_variable(
+                 var_to_get='temperature',
+                 one_step_solver=energy_balance_solver,
+                 leaf_class_type=leaf_class_type)))
+
+    plots.examine_shift_effect(lumped_temperature_ls=temperature_ls, figure_path=figs_path)
+
+
 if __name__ == '__main__':
     run_four_canopy_sims()
     examine_diffuse_ratio_effect()
     examine_lai_effect()
+    examine_soil_humidity_effect()
+    examine_shift_effect()
     demonstrate_surface_conductance_conceptual_difference()
