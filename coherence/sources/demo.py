@@ -29,7 +29,7 @@ def get_weather_data() -> pd.DataFrame:
     return raw_data
 
 
-def get_sq2_weather_data(filename: str) -> pd.DataFrame:
+def get_sq2_weather_data(filename: str, adapt_irradiance: bool = True) -> pd.DataFrame:
     radiation_conversion = convert_unit(1, 'MJ/h', 'W')
     vapour_pressure_conversion = convert_unit(1, 'hPa', 'kPa')
     latitude = None
@@ -55,7 +55,7 @@ def get_sq2_weather_data(filename: str) -> pd.DataFrame:
 
     raw_data.loc[:, 'incident_direct_irradiance'] = raw_data.apply(
         lambda x: weather.convert_global_irradiance_into_photosynthetically_active_radiation(
-            x['Radiation'] * max(1.e-12, (1 - x['diffuse_ratio'])) if x['Hour'] < 12 else
+            x['Radiation'] * max(1.e-12, (1 - x['diffuse_ratio'])) if (adapt_irradiance and x['Hour'] < 12) else
             x['Radiation'] * (1 - x['diffuse_ratio'])), axis=1)
     raw_data.loc[:, 'incident_diffuse_irradiance'] = raw_data.apply(
         lambda x: weather.convert_global_irradiance_into_photosynthetically_active_radiation(
