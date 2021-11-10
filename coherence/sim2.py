@@ -220,7 +220,7 @@ def run_four_canopy_sims():
             leaf_layers={3: 1.0, 2: 1.0, 1: 1.0, 0: 1.0},
             weather_file_name=weather_file,
             correct_for_stability=False,
-            figures_path=figs_path / weather_file)
+            figures_path=figs_path / weather_file.split('.')[0])
     pass
 
 
