@@ -1,4 +1,5 @@
 from math import degrees, prod
+from numpy import median, mean
 from pathlib import Path
 from string import ascii_lowercase
 
@@ -6,7 +7,7 @@ import pandas as pd
 from crop_energy_balance import crop as eb_canopy
 from crop_irradiance.uniform_crops import shoot as irradiance_canopy
 from matplotlib import pyplot as plt
-from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MaxNLocator, MultipleLocator
 
 UNITS_MAP = {
     'net_radiation': (r'$\mathregular{R_n}$', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
@@ -650,4 +651,37 @@ def examine_shift_effect(lumped_temperature_ls: list, figure_path: Path):
     fig.tight_layout()
     fig.savefig(figure_path / 'effect_shift.png')
     plt.close('all')
+    pass
+
+
+def evaluate_execution_time(time_data: dict, figure_path: Path):
+    cases = list(time_data.keys())
+    models = list(time_data[cases[0]].keys())
+    run_times = range(len(time_data[cases[0]][models[0]][0]))
+    steps = range(len(time_data[cases[0]][models[0]]))
+
+    fig, axs = plt.subplots(nrows=len(cases), ncols=len(models), sharex='all', sharey='all')
+    for i, case in enumerate(cases):
+        row_axs = axs[i, :]
+        for ax, model in zip(row_axs, models):
+            ax.grid()
+            med = []
+            avg = []
+            for run_time in run_times:
+                y = [time_data[case][model][step][run_time] for step in steps]
+                ax.plot(steps, y, 'lightsteelblue', alpha=0.25)
+            for v in time_data[case][model]:
+                med.append(median(v))
+                avg.append(mean(v))
+            ax.plot(*zip(*enumerate(med)), label='median')
+            ax.plot(*zip(*enumerate(avg)), label='mean')
+    for j, model in enumerate(models):
+        axs[0, j].set_title(handle_sim_name(model).replace(' ', '\n'))
+        axs[-1, j].set_xlabel('hour')
+        axs[-1, j].xaxis.set_major_locator(MultipleLocator(6))
+
+    [ax.set(ylabel=f'{case}\nexecution time [s]') for case, ax in zip(cases, axs[:, 0])]
+    axs[0, 0].legend()
+    fig.tight_layout()
+    fig.savefig(figure_path / 'execution_time.png')
     pass

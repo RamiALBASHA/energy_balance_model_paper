@@ -15,6 +15,8 @@ def examine_diffuse_ratio_effect():
     """Examines the effect of incident irradiance diffusion ratio on the temperature difference between sunlit and
     shaded leaves.
     """
+    print('running examine_diffuse_ratio_effect()...')
+
     canopy_layers = {3: 1.0, 2: 1.0, 1: 1.0, 0: 1.0}
     leaf_class_type = 'sunlit-shaded'
 
@@ -34,7 +36,6 @@ def examine_diffuse_ratio_effect():
 
     temperature_ls = []
     for i, w_data in weather_data.iterrows():
-        print(i)
         absorbed_irradiance, _ = sim.calc_absorbed_irradiance(
             leaf_layers=canopy_layers,
             is_bigleaf=False,
@@ -64,13 +65,14 @@ def examine_diffuse_ratio_effect():
 
 
 def examine_lai_effect():
+    print('running examine_lai_effect()...')
+
     leaf_class_type = 'sunlit-shaded'
     w_data = get_sq2_weather_data(filename='weather_maricopa_sunny.csv').loc[13]
     layers_number = 4
 
     temperature_ls = []
     for lai in [0.1, 0.5] + list(range(1, 8)):
-        print(lai)
         canopy_layers = {k: lai / layers_number for k in reversed(range(layers_number))}
         absorbed_irradiance, _ = sim.calc_absorbed_irradiance(
             leaf_layers=canopy_layers,
@@ -115,8 +117,6 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_st
     execution_time = {}
 
     for canopy_type, leaves_type in canopy_representations:
-        print('-' * 50)
-        print(f"{canopy_type} - {leaves_type}")
         canopy_layers = {0: sum(leaf_layers.values())} if canopy_type == 'bigleaf' else leaf_layers
         layers.update({f'{canopy_type} {leaves_type}': canopy_layers})
         hourly_absorbed_irradiance = []
@@ -126,7 +126,6 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_st
         hourly_exe_time = []
 
         for date, w_data in weather_data.iterrows():
-            print(date)
             absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
                 leaf_layers=leaf_layers,
                 is_bigleaf=(canopy_type == 'bigleaf'),
@@ -225,6 +224,8 @@ def run_four_canopy_sims():
 
 
 def demonstrate_surface_conductance_conceptual_difference():
+    print('running demonstrate_surface_conductance_conceptual_difference()...')
+
     figs_path = Path(__file__).parents[1] / 'figs/coherence'
     figs_path.mkdir(exist_ok=True, parents=True)
     leaves_categories = ('sunlit', 'shaded', 'lumped')
@@ -270,6 +271,8 @@ def demonstrate_surface_conductance_conceptual_difference():
 
 
 def examine_soil_humidity_effect():
+    print('running examine_soil_humidity_effect()...')
+
     figs_path = Path(__file__).parents[1] / 'figs/coherence'
     figs_path.mkdir(exist_ok=True, parents=True)
 
@@ -289,7 +292,6 @@ def examine_soil_humidity_effect():
     temperature_ls = []
     latent_heat_ls = []
     for saturation_ratio in saturation_ratios:
-        print(saturation_ratio)
         energy_balance_solver, _ = sim.solve_energy_balance(
             vegetative_layers=canopy_layers,
             leaf_class_type=leaf_class_type,
@@ -307,6 +309,8 @@ def examine_soil_humidity_effect():
 
 
 def examine_shift_effect():
+    print('running examine_shift_effect()...')
+
     figs_path = Path(__file__).parents[1] / 'figs/coherence'
     figs_path.mkdir(exist_ok=True, parents=True)
 
@@ -325,7 +329,6 @@ def examine_shift_effect():
 
     temperature_ls = []
     for saturation_ratio in saturation_ratios:
-        print(saturation_ratio)
         energy_balance_solver, _ = sim.solve_energy_balance(
             vegetative_layers=canopy_layers,
             leaf_class_type=leaf_class_type,
@@ -343,6 +346,42 @@ def examine_shift_effect():
     plots.examine_shift_effect(lumped_temperature_ls=temperature_ls, figure_path=figs_path)
 
 
+def evaluate_execution_time():
+    figs_path = Path(__file__).parents[1] / 'figs/coherence'
+    figs_path.mkdir(exist_ok=True, parents=True)
+
+    canopy_representations = (('bigleaf', 'lumped'),
+                              ('bigleaf', 'sunlit-shaded'),
+                              ('layered', 'lumped'),
+                              ('layered', 'sunlit-shaded'))
+
+    weather_files = {'sunny': 'weather_maricopa_sunny.csv', 'cloudy': 'weather_maricopa_cloudy.csv'}
+    time_data = {}
+    for case, weather_file in weather_files.items():
+        weather_data = get_sq2_weather_data(filename='weather_maricopa_sunny.csv')
+        run_times = 1000
+        res = {'_'.join([k, v]): [[] for _ in range(len(weather_data.index))] for (k, v) in canopy_representations}
+        for i in range(run_times):
+            print(i)
+            execution_time = sim_general(
+                canopy_representations=canopy_representations,
+                leaf_layers={3: 1.0, 2: 1.0, 1: 1.0, 0: 1.0},
+                weather_data=weather_data,
+                correct_for_stability=False,
+                figures_path=figs_path / weather_file.split('.')[0],
+                return_results=True,
+                generate_plots=False)[-1]
+            for k, v in res.items():
+                for j, hourly_v in enumerate(v):
+                    hourly_v.append(execution_time[k][j])
+
+        time_data.update({case: res})
+
+    plots.evaluate_execution_time(time_data=time_data, figure_path=figs_path)
+
+    pass
+
+
 if __name__ == '__main__':
     run_four_canopy_sims()
     examine_diffuse_ratio_effect()
@@ -350,3 +389,4 @@ if __name__ == '__main__':
     examine_soil_humidity_effect()
     examine_shift_effect()
     demonstrate_surface_conductance_conceptual_difference()
+    evaluate_execution_time()
