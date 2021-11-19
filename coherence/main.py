@@ -186,8 +186,6 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_st
         if correct_for_stability:
             plots.plot_universal_functions(solvers=solver_group, measurement_height=2, figure_path=figures_path)
 
-        plots.plot_execution_time(execution_time_data=execution_time, figure_path=figures_path)
-
         plots.plot_properties_profile(
             solver_data=solver_group['layered_sunlit-shaded'],
             hours=[14],
