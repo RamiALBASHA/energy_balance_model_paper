@@ -69,6 +69,47 @@ def get_sq2_weather_data(filename: str, adapt_irradiance: bool = True) -> pd.Dat
     return raw_data
 
 
+def get_grignon_weather_data(filename: str, adapt_irradiance: bool = True) -> pd.DataFrame:
+    radiation_conversion = convert_unit(1, 'J/h/cm2', 'W/m2')
+    latitude = None
+    with open(str(Path(__file__).parent / filename), mode='r') as f:
+        for i, line in enumerate(f.readlines()):
+            if 'latitude' in line:
+                latitude = float(line.split(':')[-1].replace(' ', '').replace('\n', ''))
+            if 'date' in line:
+                break
+
+    raw_data = pd.read_csv(Path(__file__).parent / filename, decimal='.', sep=';', skiprows=i)
+
+    raw_data.loc[:, 'date'] = raw_data['date'].apply(lambda x: pd.to_datetime(x, format='%Y%m%d %H:%M:%S'))
+    raw_data.loc[:, 'wind_speed'] = raw_data.apply(lambda x: x['VT'] * 1000, axis=1)
+    raw_data.loc[:, 'RG'] = raw_data.apply(lambda x: x['RG'] * radiation_conversion, axis=1)
+    raw_data.loc[:, 'PAR_H'] = raw_data.apply(lambda x: x['PAR_H'] * radiation_conversion, axis=1)
+    raw_data.loc[:, 'diffuse_ratio'] = raw_data.apply(
+        lambda x: RdRsH(Rg=x['RG'], DOY=x['date'].dayofyear, heureTU=x['date'].hour, latitude=latitude), axis=1)
+    raw_data.loc[:, 'solar_declination'] = raw_data.apply(
+        lambda x: pi / 2. - (Gensun.Gensun()(
+            Rsun=x['RG'] * radiation_conversion, DOY=x['date'].dayofyear, heureTU=x['date'].hour, lat=latitude)).elev,
+        axis=1)
+
+    raw_data.loc[:, 'incident_direct_irradiance'] = raw_data.apply(
+        lambda x:
+        x['PAR_H'] * max(1.e-12, (1 - x['diffuse_ratio'])) if (adapt_irradiance and x['date'].hour < 12) else
+        x['PAR_H'] * (1 - x['diffuse_ratio']), axis=1)
+    raw_data.loc[:, 'incident_diffuse_irradiance'] = raw_data.apply(
+        lambda x: x['PAR_H'] * x['diffuse_ratio'], axis=1)
+    raw_data.loc[:, 'vapor_pressure_deficit'] = raw_data.apply(
+        lambda x: weather.calc_vapor_pressure_deficit(
+            temperature_air=x['T'], temperature_leaf=x['T'], relative_humidity=x['U']), axis=1)
+    raw_data.loc[:, 'vapor_pressure'] = raw_data.apply(
+        lambda x: x['vapor_pressure_deficit'] * x['U'] / 100., axis=1)
+
+    raw_data.rename(columns={'T': 'air_temperature'}, inplace=True)
+    raw_data.drop(['VT', 'RR', 'RG', 'U', 'PAR_H', 'VX'], axis=1, inplace=True)
+
+    return raw_data
+
+
 def plot_weather(weather_data: {str: pd.DataFrame}, figure_path: Path):
     if not isinstance(weather_data, dict):
         weather_data = {'': weather_data}
@@ -96,10 +137,18 @@ def plot_weather(weather_data: {str: pd.DataFrame}, figure_path: Path):
 
 
 if __name__ == '__main__':
-    figs_path = Path(__file__).parent
+    figs_path = Path(__file__).parent / 'figs'
+    figs_path.mkdir(parents=True, exist_ok=True)
     plot_weather(weather_data=get_weather_data(), figure_path=figs_path / 'coherence_weather.png')
     plot_weather(
         weather_data={
             'sunny': get_sq2_weather_data('weather_maricopa_sunny.csv'),
             'cloudy': get_sq2_weather_data('weather_maricopa_cloudy.csv')},
         figure_path=figs_path / 'weather_maricopa.png')
+    plot_weather(
+        weather_data={
+            'HH': get_grignon_weather_data(filename='grignon_high_rad_high_vpd.csv'),
+            'HL': get_grignon_weather_data(filename='grignon_high_rad_low_vpd.csv'),
+            'LH': get_grignon_weather_data(filename='grignon_low_rad_high_vpd.csv'),
+            'LL': get_grignon_weather_data(filename='grignon_low_rad_low_vpd.csv')},
+        figure_path=figs_path / 'weather_grignon.png')
