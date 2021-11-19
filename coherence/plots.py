@@ -343,11 +343,10 @@ def plot_irradiance_at_one_hour(ax: plt.axis,
 
     if plot_incident:
         y_text = max(y)
-        for s, (v, ha) in ({'PAR_direct': (incident_direct[hour], 'right'),
-                            'PAR_diffuse': (incident_diffuse[hour], 'left')}).items():
+        for s, (v, c) in ({'PAR_direct': (incident_direct[hour], 'yellow'),
+                           'PAR_diffuse': (incident_diffuse[hour], 'darkgreen')}).items():
             ax.scatter(v, y_text + 1, alpha=0)
-            ax.annotate('', xy=(v, y_text + 0.25), xytext=(v, y_text + 0.75), arrowprops=dict(arrowstyle="->"))
-            ax.text(v, y_text + 0.75, UNITS_MAP[s], ha=ha)
+            ax.annotate('', xy=(v, y_text + 0.25), xytext=(v, y_text + 0.75), arrowprops=dict(arrowstyle="->", color=c))
 
     ax.set_xlabel(r'$\mathregular{[W_{PAR} \/ m^{-2}_{ground}]}$')
     return
