@@ -8,7 +8,7 @@ from pandas import DataFrame
 
 from coherence import sim, plots
 from coherence.sim import calc_absorbed_irradiance, solve_energy_balance, get_variable
-from coherence.sources.demo import get_sq2_weather_data, plot_weather
+from coherence.sources.demo import plot_weather, get_grignon_weather_data
 
 
 def examine_diffuse_ratio_effect():
@@ -20,7 +20,7 @@ def examine_diffuse_ratio_effect():
     canopy_layers = {3: 1.0, 2: 1.0, 1: 1.0, 0: 1.0}
     leaf_class_type = 'sunlit-shaded'
 
-    weather_data = get_sq2_weather_data(filename='weather_maricopa_sunny.csv')
+    weather_data = get_grignon_weather_data(filename='grignon_high_rad_high_vpd.csv')
     weather_data.drop(index=[i for i in weather_data.index if i != 13], inplace=True)
 
     incident_irradiance = weather_data.loc[13, ['incident_direct_irradiance', 'incident_diffuse_irradiance']].sum()
@@ -68,7 +68,7 @@ def examine_lai_effect():
     print('running examine_lai_effect()...')
 
     leaf_class_type = 'sunlit-shaded'
-    w_data = get_sq2_weather_data(filename='weather_maricopa_sunny.csv').loc[13]
+    w_data = get_grignon_weather_data(filename='grignon_high_rad_high_vpd.csv').loc[13]
     layers_number = 4
 
     temperature_ls = []
@@ -105,7 +105,7 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_st
                 return_results: bool = False):
     if weather_data is None:
         if weather_file_name is not None:
-            weather_data = get_sq2_weather_data(weather_file_name)
+            weather_data = get_grignon_weather_data(weather_file_name)
         else:
             raise ValueError(f"one of 'weather_data' or 'weather_file_name' must be provided.")
 
@@ -205,10 +205,10 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_st
 def run_four_canopy_sims():
     figs_path = Path(__file__).parents[1] / 'figs/coherence'
     figs_path.mkdir(exist_ok=True, parents=True)
-    weather_files = {'sunny': 'weather_maricopa_sunny.csv', 'cloudy': 'weather_maricopa_cloudy.csv'}
+    weather_files = {'sunny': 'grignon_high_rad_high_vpd.csv', 'cloudy': 'grignon_low_rad_low_vpd.csv'}
     plot_weather(
-        weather_data={k: get_sq2_weather_data(v) for k, v in weather_files.items()},
-        figure_path=figs_path / 'weather_maricopa.png')
+        weather_data={k: get_grignon_weather_data(v) for k, v in weather_files.items()},
+        figure_path=figs_path / 'weather.png')
 
     for weather_file in weather_files.values():
         sim_general(
@@ -277,7 +277,7 @@ def examine_soil_humidity_effect():
     figs_path.mkdir(exist_ok=True, parents=True)
 
     leaf_class_type = 'sunlit-shaded'
-    w_data = get_sq2_weather_data(filename='weather_maricopa_sunny.csv').loc[13]
+    w_data = get_grignon_weather_data(filename='grignon_high_rad_high_vpd.csv').loc[13]
 
     canopy_layers = {3: 1.0, 2: 1.0, 1: 1.0, 0: 1.0}
     saturation_ratios = [v / 100 for v in range(0, 110, 10)]
@@ -315,7 +315,7 @@ def examine_shift_effect():
     figs_path.mkdir(exist_ok=True, parents=True)
 
     leaf_class_type = 'lumped'
-    w_data = get_sq2_weather_data(filename='weather_maricopa_sunny.csv').loc[13]
+    w_data = get_grignon_weather_data(filename='grignon_high_rad_high_vpd.csv').loc[13]
 
     canopy_layers = {3: 1.0, 2: 1.0, 1: 1.0, 0: 1.0}
     saturation_ratios = [v / 100 for v in range(0, 125, 25)]
@@ -355,10 +355,10 @@ def evaluate_execution_time():
                               ('layered', 'lumped'),
                               ('layered', 'sunlit-shaded'))
 
-    weather_files = {'sunny': 'weather_maricopa_sunny.csv', 'cloudy': 'weather_maricopa_cloudy.csv'}
+    weather_files = {'sunny': 'grignon_high_rad_high_vpd.csv', 'cloudy': 'grignon_low_rad_low_vpd.csv'}
     time_data = {}
     for case, weather_file in weather_files.items():
-        weather_data = get_sq2_weather_data(filename='weather_maricopa_sunny.csv')
+        weather_data = get_grignon_weather_data(filename='grignon_high_rad_high_vpd.csv')
         run_times = 1000
         res = {'_'.join([k, v]): [[] for _ in range(len(weather_data.index))] for (k, v) in canopy_representations}
         for i in range(run_times):
