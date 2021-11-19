@@ -169,10 +169,9 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_st
                                                   all_cases_temperature=temperature, figure_path=figures_path)
 
         plots.plot_dynamic_comparison(
-            solvers=solver_group, variable_to_plot='source_temperature', ylim=(5, 40), figure_path=figures_path)
+            solvers=solver_group, variable_to_plot='source_temperature', figure_path=figures_path)
         plots.plot_dynamic_comparison(
-            solvers=solver_group, variable_to_plot='total_penman_monteith_evaporative_energy', ylim=(0, 900),
-            figure_path=figures_path)
+            solvers=solver_group, variable_to_plot='total_penman_monteith_evaporative_energy', figure_path=figures_path)
 
         for hour in range(24):
             plots.plot_temperature_one_hour_comparison2(hour=hour, hourly_weather=weather_data,
