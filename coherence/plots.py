@@ -1,5 +1,4 @@
 from math import degrees, prod
-from numpy import median, mean
 from pathlib import Path
 from string import ascii_lowercase
 
@@ -8,6 +7,7 @@ from crop_energy_balance import crop as eb_canopy
 from crop_irradiance.uniform_crops import shoot as irradiance_canopy
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator, MultipleLocator
+from numpy import median, mean
 
 UNITS_MAP = {
     'net_radiation': (r'$\mathregular{R_n}$', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
@@ -247,11 +247,11 @@ def plot_temperature_one_hour_comparison2(hour: int,
         ax.text(0.925, 0.025, f'({ascii_lowercase[i]})', transform=ax.transAxes)
     for ax in axes[:, 0]:
         ax.set_ylabel('Component index [-]')
-        ax.legend()
     for ax in axes[0, :]:
         ax.set_title(ax.get_title().split(' ')[0])
 
     axes[0, 0].set_yticks(list(component_indices))
+    axes[0, 0].legend()
 
     fig.suptitle(f"Solar inclination =  {round(degrees(hourly_weather['solar_declination'][hour]), 2)} °")
     fig.tight_layout()
