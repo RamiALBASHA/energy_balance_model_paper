@@ -156,18 +156,18 @@ def plot_temperature_dynamics(ax: plt.axis,
     for component_index in component_indexes:
         component_temperature = summary_data[component_index]
         if component_index == -1:
-            ax.plot(hours, [(v - 273.15 if v > 273.15 else None) for v in component_temperature],
+            ax.plot(hours, [v - 273.15 for v in component_temperature],
                     label=f'soil', color='k', linewidth=2)
         else:
             if leaf_class == 'lumped':
-                ax.plot(hours, [(v - 273.15 if v > 273.15 else None) for v in summary_data[component_index]],
+                ax.plot(hours, [v - 273.15 for v in summary_data[component_index]],
                         label=f'{component_index}')
             else:
                 ax.plot(hours,
-                        [(v - 273.15 if v > 273.15 else None) for v in summary_data[component_index]['sunlit']],
+                        [v - 273.15 for v in summary_data[component_index]['sunlit']],
                         label=f'sunlit {component_index}')
                 ax.plot(hours,
-                        [(v - 273.15 if v > 273.15 else None) for v in summary_data[component_index]['shaded']],
+                        [v - 273.15 for v in summary_data[component_index]['shaded']],
                         label=f'shaded {component_index}')
 
     pass
@@ -276,14 +276,14 @@ def plot_temperature_at_one_hour(ax: plt.axis,
 
     if leaf_class == 'lumped':
         y, x = zip(*[(i, summary_data[i][hour]) for i in component_indexes if i != -1])
-        ax.plot([(v - 273.15 if v > 273.15 else None) for v in x], y, style, label='lumped')
+        ax.plot([v - 273.15 for v in x], y, style, label='lumped')
     else:
         y, x_sun, x_sh = zip(
             *[(i, summary_data[i]['sunlit'][hour], summary_data[i]['shaded'][hour]) for i in component_indexes if
               i != -1])
 
-        ax.plot([(v - 273.15 if v > 273.15 else None) for v in x_sun], y, style, color='y', label='sunlit')
-        ax.plot([(v - 273.15 if v > 273.15 else None) for v in x_sh], y, style, color='darkgreen', label='shaded')
+        ax.plot([v - 273.15 for v in x_sun], y, style, color='y', label='sunlit')
+        ax.plot([v - 273.15 for v in x_sh], y, style, color='darkgreen', label='shaded')
 
     if plot_soil_temperature:
         ax.plot(summary_data[-1][hour] - 273.15, -1, 's', color='brown', label='soil')
