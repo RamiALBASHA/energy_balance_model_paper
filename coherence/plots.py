@@ -653,6 +653,7 @@ def evaluate_execution_time(time_data: dict, figure_path: Path):
         row_axs = axs[i, :]
         for ax, model in zip(row_axs, models):
             ax.grid()
+            ax.set_yscale('log')
             med = []
             avg = []
             for run_time in run_times:
