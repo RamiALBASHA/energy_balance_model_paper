@@ -7,12 +7,6 @@ from crop_energy_balance import (
 from crop_irradiance.uniform_crops import (
     inputs as irradiance_inputs, params as irradiance_params, shoot as irradiance_canopy)
 
-with open('inputs.json', mode='r') as f:
-    json_inputs = load(f)
-
-with open('params.json', mode='r') as f:
-    json_params = load(f)
-
 
 def get_irradiance_sim_inputs_and_params(
         leaf_layers: dict,
@@ -75,10 +69,17 @@ def calc_absorbed_irradiance(
 def get_energy_balance_inputs_and_params(
         vegetative_layers: dict,
         absorbed_par_irradiance: dict,
-        actual_weather_data: pd.Series) -> (
+        actual_weather_data: pd.Series,
+        raw_inputs: dict = None,
+        json_params: dict = None) -> (
         eb_inputs.Inputs,
         eb_params.Params):
-    raw_inputs = json_inputs.copy()
+    if raw_inputs is None:
+        with open('inputs.json', mode='r') as f:
+            raw_inputs = load(f)
+    if json_params is None:
+        with open('params.json', mode='r') as f:
+            json_params = load(f)
 
     raw_inputs.update(
         {"leaf_layers": vegetative_layers,
