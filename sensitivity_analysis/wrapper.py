@@ -1,4 +1,5 @@
 from json import load
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 from SALib.analyze import fast
@@ -7,6 +8,8 @@ from crop_energy_balance.solver import Solver
 from numpy import array, arange
 
 from coherence.plots import UNITS_MAP
+from coherence.sim import calc_absorbed_irradiance, get_energy_balance_inputs_and_params
+from sources.demo import get_grignon_weather_data
 
 MAP_PARAMS = {
     'vpd_coeff': r'$\mathregular{D_o}$',
@@ -61,7 +64,7 @@ def analyze(problem: dict, outputs: array) -> dict:
             for k, v in outputs.items()}
 
 
-def plot(sa_dict: {str, dict}, shift_bars: bool = False, suptitle: str = None):
+def plot(sa_dict: {str, dict}, path_fig: Path, shift_bars: bool = False, suptitle: str = None):
     fig, axs = plt.subplots(ncols=len(sa_dict.keys()))
     bar_height = 0.4
 
@@ -72,7 +75,7 @@ def plot(sa_dict: {str, dict}, shift_bars: bool = False, suptitle: str = None):
     if suptitle is not None:
         fig.suptitle(suptitle)
     fig.tight_layout()
-    fig.savefig(r'../figs/sensitivity_analysis.png')
+    fig.savefig(path_fig / f'{suptitle}.png')
     plt.close()
     pass
 
@@ -96,13 +99,43 @@ def plot_single(ax, bar_height, k, sa, shift_bars=True):
 
 
 if __name__ == '__main__':
-    input_scenario = 'inputs.json'
-    with open(f'sources/{input_scenario}', mode='r') as f:
+    path_root = Path(__file__).parent
+    path_sources = path_root.parent / 'sources/sensitivity_analysis'
+    path_figs = path_root.parent / 'figs/sensitivity_analysis'
+    path_figs.mkdir(parents=True, exist_ok=True)
+
+    with open(path_sources / 'base_inputs.json', mode='r') as f:
         base_inputs = load(f)
-    with open(r'sources/params.json', mode='r') as f:
+    with open(path_sources / 'base_params.json', mode='r') as f:
         base_params = load(f)
-    problem, param_values = sample(config_path='sources/param_fields.json')
-    outputs = evaluate(inputs=base_inputs, params=base_params, names=problem['names'], scenarios=param_values,
-                       output_variables=['source_temperature', 'total_penman_monteith_evaporative_energy'])
-    sa_result = analyze(problem=problem, outputs=outputs)
-    plot(sa_dict=sa_result, shift_bars=False, suptitle=input_scenario)
+
+    problem, param_values = sample(config_path='../sources/sensitivity_analysis/param_fields.json')
+
+    leaf_layers = {"0": 6.34}
+
+    weather_scenarios = (('grignon_high_rad_high_vpd.csv', 14),
+                         ('grignon_high_rad_low_vpd.csv', 11),
+                         ('grignon_low_rad_high_vpd.csv', 14),
+                         ('grignon_low_rad_low_vpd.csv', 14))
+
+    for weather_scenario, hour in weather_scenarios:
+        weather_data = get_grignon_weather_data(weather_scenario).loc[hour, :]
+        absorbed_irradiance, _ = calc_absorbed_irradiance(
+            leaf_layers=leaf_layers,
+            is_bigleaf=True,
+            is_lumped=True,
+            incident_direct_par_irradiance=weather_data['incident_direct_irradiance'],
+            incident_diffuse_par_irradiance=weather_data['incident_diffuse_irradiance'],
+            solar_inclination_angle=weather_data['solar_declination'])
+
+        eb_inputs, eb_params = get_energy_balance_inputs_and_params(
+            vegetative_layers=leaf_layers,
+            absorbed_par_irradiance=absorbed_irradiance,
+            actual_weather_data=weather_data,
+            raw_inputs=base_inputs,
+            json_params=base_params)
+
+        outputs = evaluate(inputs=eb_inputs, params=eb_params, names=problem['names'], scenarios=param_values,
+                           output_variables=['source_temperature', 'total_penman_monteith_evaporative_energy'])
+        sa_result = analyze(problem=problem, outputs=outputs)
+        plot(sa_dict=sa_result, shift_bars=False, suptitle=weather_scenario.split('.')[0], path_fig=path_figs)
