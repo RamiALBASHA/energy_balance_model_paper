@@ -8,7 +8,7 @@ from pandas import DataFrame
 
 from coherence import sim, plots
 from coherence.sim import calc_absorbed_irradiance, solve_energy_balance, get_variable
-from coherence.sources.demo import plot_weather, get_grignon_weather_data
+from sources.demo import plot_weather, get_grignon_weather_data
 
 
 def examine_diffuse_ratio_effect():
