@@ -61,7 +61,7 @@ def analyze(problem: dict, outputs: array) -> dict:
             for k, v in outputs.items()}
 
 
-def plot(sa_dict: {str, dict}, shift_bars: bool = False):
+def plot(sa_dict: {str, dict}, shift_bars: bool = False, suptitle: str = None):
     fig, axs = plt.subplots(ncols=len(sa_dict.keys()))
     bar_height = 0.4
 
@@ -69,6 +69,8 @@ def plot(sa_dict: {str, dict}, shift_bars: bool = False):
         plot_single(ax, bar_height, k, sa, shift_bars=shift_bars)
 
     axs[0].legend()
+    if suptitle is not None:
+        fig.suptitle(suptitle)
     fig.tight_layout()
     fig.savefig(r'../figs/sensitivity_analysis.png')
     plt.close()
@@ -94,7 +96,8 @@ def plot_single(ax, bar_height, k, sa, shift_bars=True):
 
 
 if __name__ == '__main__':
-    with open(r'sources/inputs.json', mode='r') as f:
+    input_scenario = 'inputs.json'
+    with open(f'sources/{input_scenario}', mode='r') as f:
         base_inputs = load(f)
     with open(r'sources/params.json', mode='r') as f:
         base_params = load(f)
@@ -102,5 +105,4 @@ if __name__ == '__main__':
     outputs = evaluate(inputs=base_inputs, params=base_params, names=problem['names'], scenarios=param_values,
                        output_variables=['source_temperature', 'total_penman_monteith_evaporative_energy'])
     sa_result = analyze(problem=problem, outputs=outputs)
-    plot(sa_dict=sa_result, shift_bars=False)
-
+    plot(sa_dict=sa_result, shift_bars=False, suptitle=input_scenario)
