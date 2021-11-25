@@ -24,7 +24,11 @@ MAP_PARAMS = {
     'leaf_scattering_coefficient': r'$\mathregular{\sigma_s}$',
     'absorbed_par_50': r'$\mathregular{R_{l,\/PAR,\/50}}$',
     'soil_resistance_to_vapor_shape_parameter_1': r'$\mathregular{a_s}$',
-    'soil_resistance_to_vapor_shape_parameter_2': r'$\mathregular{b_s}$'
+    'soil_resistance_to_vapor_shape_parameter_2': r'$\mathregular{b_s}$',
+    'grignon_high_rad_high_vpd.csv': 'HH',
+    'grignon_high_rad_low_vpd.csv': 'HL',
+    'grignon_low_rad_high_vpd.csv': 'LH',
+    'grignon_low_rad_low_vpd.csv': 'LL'
 }
 
 
