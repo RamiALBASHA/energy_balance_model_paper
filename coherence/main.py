@@ -229,7 +229,7 @@ def demonstrate_surface_conductance_conceptual_difference():
     surface_conductance = {}
     for leaves_category in leaves_categories:
         leaf_surface_conductance_per_layer = []
-        for cumulative_leaf_area_index in discretize_linearly(0, 4, 10):
+        for cumulative_leaf_area_index in discretize_linearly(0, 10, 100):
             absorbed_irradiance = irradiance.calc_absorbed_irradiance(
                 leaves_category=leaves_category,
                 incident_direct_irradiance=225.16396909386614,
