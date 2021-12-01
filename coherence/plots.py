@@ -27,7 +27,9 @@ UNITS_MAP = {
     'PAR_direct': r'$\mathregular{R_{inc,\/PAR,\/direct}}$',
     'PAR_diffuse': r'$\mathregular{R_{inc,\/PAR,\/diffuse}}$',
     'LAI': (r'$\mathregular{L_t}$', r'$\mathregular{[m^{2}_{leaf}\/m^{-2}_{ground}]}$'),
-    'surface_conductance': (r'$\mathregular{g_{s,\/l}}$', r'$\mathregular{[m\/h^{-1}]}$')
+    'surface_conductance': (r'$\mathregular{g_{s,\/l}}$', r'$\mathregular{[m\/h^{-1}]}$'),
+    'incident_PAR': (r'$\mathregular{R_{abs}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
+    'shaded_fraction': (r'$\mathregular{\phi_{shaded}}$', '[-]')
 }
 
 
@@ -259,6 +261,78 @@ def plot_temperature_one_hour_comparison2(hour: int,
     plt.close()
 
 
+def plot_radiation_temperature_profiles(hours: list,
+                                        hourly_weather: pd.DataFrame,
+                                        all_cases_absorbed_irradiance: (dict, irradiance_canopy),
+                                        all_cases_temperature_ww: dict,
+                                        all_cases_temperature_wd: dict,
+                                        figure_path: Path):
+    assert all_cases_temperature_ww.keys() == all_cases_absorbed_irradiance[0].keys()
+
+    cases = all_cases_temperature_ww.keys()
+    component_indices = all_cases_temperature_ww['layered_lumped'][hours[0]].keys()
+    component_indices = [comp_index for comp_index in component_indices if comp_index != -1]
+    columns = ['incident_PAR', 'shaded_fraction', 'temperature', 'temperature']
+    fig, axes = plt.subplots(ncols=len(columns), nrows=len(hours), sharex='col', sharey='all', figsize=(7.48, 7.48))
+    for i_hour, hour in enumerate(hours):
+        for i_case, case in enumerate(cases):
+            plot_incident = i_case == 0
+
+            plot_irradiance_at_one_hour_bis(
+                ax=axes[i_hour, 0],
+                hour=hour,
+                incident_direct=hourly_weather.loc[:, 'incident_direct_irradiance'],
+                incident_diffuse=hourly_weather.loc[:, 'incident_diffuse_irradiance'],
+                simulation_case=case,
+                all_cases_data=all_cases_absorbed_irradiance,
+                forced_component_indices=component_indices,
+                plot_incident=plot_incident,
+                plot_soil=plot_incident,
+                set_title=False)
+            if 'sunlit' in case:
+                plot_shaded_fraction(
+                    hour=hour,
+                    simulation_case=case,
+                    ax=axes[i_hour, 1],
+                    all_cases_data=all_cases_absorbed_irradiance,
+                    forced_component_indices=component_indices)
+            for i_data, temperature_data in enumerate((all_cases_temperature_ww, all_cases_temperature_wd)):
+                plot_temperature_at_one_hour_bis(
+                    ax=axes[i_hour, i_data + 2],
+                    hour=hour,
+                    temperature_air=hourly_weather.loc[:, 'air_temperature'],
+                    simulation_case=case,
+                    all_cases_data=temperature_data,
+                    forced_component_indices=component_indices if 'bigleaf' in case else None,
+                    plot_air_temperature=plot_incident,
+                    plot_soil_temperature=plot_incident)
+
+    axes[0, 0].set_ylim((-0.75, max(component_indices) + 1))
+    axes[0, 0].yaxis.set_major_locator(MaxNLocator(integer=True))
+    axes[0, 0].set_yticks(component_indices + [0])
+
+    axes[-1, 1].xaxis.set_major_locator(MultipleLocator(0.5))
+    axes[-1, 1].xaxis.set_minor_locator(MultipleLocator(0.1))
+    axes[-1, 1].set_xlim(0, 1.05)
+
+    for i, ax in enumerate(axes.flatten()):
+        ax.grid(which='both')
+        ax.text(0.85, 0.05, f'({ascii_lowercase[i]})', transform=ax.transAxes)
+    for ax in axes[:, 0]:
+        ax.set_ylabel('Component\nindex [-]', rotation=0, ha='right')
+    for j, col in enumerate(columns):
+        axes[0, j].set_title(UNITS_MAP[col][0])
+        axes[-1, j].set_xlabel(UNITS_MAP[col][1])
+
+    axes[0, 2].set_title(axes[0, 2].get_title() + ' (WW)')
+    axes[0, 3].set_title(axes[0, 3].get_title() + ' (WD)')
+
+    fig.tight_layout()
+    fig.subplots_adjust(wspace=0, hspace=0)
+    fig.savefig(str(figure_path / f'temperature_profiles.png'))
+    plt.close()
+
+
 def plot_temperature_at_one_hour(ax: plt.axis,
                                  hour: int,
                                  temperature_air: pd.Series,
@@ -299,6 +373,54 @@ def plot_temperature_at_one_hour(ax: plt.axis,
 
     if set_title:
         ax.set_title(handle_sim_name(canopy_class))
+    return
+
+
+def plot_temperature_at_one_hour_bis(ax: plt.axis,
+                                     hour: int,
+                                     temperature_air: pd.Series,
+                                     simulation_case: str,
+                                     all_cases_data: dict,
+                                     forced_component_indices: list = None,
+                                     plot_air_temperature: bool = True,
+                                     plot_soil_temperature: bool = True):
+    summary_data = get_summary_data(simulation_case, all_cases_data)
+    canopy_class, leaf_class = simulation_case.split('_')
+    component_indexes = summary_data.keys()
+
+    if canopy_class == 'bigleaf':
+        kwargs = {'linestyle': '--', 'linewidth': 1}
+    else:
+        kwargs = {'marker': '.', 'linestyle': 'None'}
+
+    if leaf_class == 'lumped':
+        y, x = zip(*[(i, summary_data[i][hour]) for i in component_indexes if i != -1])
+        if forced_component_indices:
+            y = forced_component_indices
+            x = [x[0]] * len(forced_component_indices)
+        ax.plot([v - 273.15 for v in x], y, label='lumped', color='blue', **kwargs)
+    else:
+        y, x_sun, x_sh = zip(
+            *[(i, summary_data[i]['sunlit'][hour], summary_data[i]['shaded'][hour]) for i in component_indexes if
+              i != -1])
+        if forced_component_indices:
+            y = forced_component_indices
+            x_sun = [x_sun[0]] * len(forced_component_indices)
+            x_sh = [x_sh[0]] * len(forced_component_indices)
+
+        ax.plot([v - 273.15 for v in x_sun], y, color='orange', label='sunlit', **kwargs)
+        ax.plot([v - 273.15 for v in x_sh], y, color='darkgreen', label='shaded', **kwargs)
+
+    if plot_soil_temperature:
+        ax.plot(summary_data[-1][hour] - 273.15, 0, 's', color='brown', label='soil')
+
+    if plot_air_temperature:
+        y_text = max(y)
+        ax.scatter(temperature_air[hour], y_text + 1, alpha=0)
+        ax.annotate('', xy=(temperature_air[hour], y_text + 0.15),
+                    xytext=(temperature_air[hour], y_text + 1.0),
+                    arrowprops=dict(arrowstyle="->"), ha='center')
+
     return
 
 
@@ -350,6 +472,73 @@ def plot_irradiance_at_one_hour(ax: plt.axis,
 
     ax.set_xlabel(r'$\mathregular{[W_{PAR} \/ m^{-2}_{ground}]}$')
     return
+
+
+def plot_irradiance_at_one_hour_bis(ax: plt.axis,
+                                    hour: int,
+                                    incident_direct: pd.Series,
+                                    incident_diffuse: pd.Series,
+                                    simulation_case: str,
+                                    all_cases_data: dict,
+                                    forced_component_indices: list = None,
+                                    plot_incident: bool = True,
+                                    plot_soil: bool = False,
+                                    set_title: bool = True):
+    summary_data = get_summary_data(simulation_case, all_cases_data[0])
+    canopy_class, leaf_class = simulation_case.split('_')
+    component_indexes = summary_data.keys()
+
+    is_bigleaf = canopy_class == 'bigleaf'
+
+    if is_bigleaf:
+        kwargs = {'linestyle': '--', 'linewidth': 1}
+    else:
+        kwargs = {'marker': '.', 'linestyle': 'None'}
+
+    if set_title:
+        ax.set_title(handle_sim_name(simulation_case))
+
+    if leaf_class == 'lumped':
+        y, x = zip(*[(i, summary_data[i][hour]) for i in component_indexes if i != -1])
+        if forced_component_indices and is_bigleaf:
+            y = forced_component_indices
+            x = [x[0]] * len(forced_component_indices)
+        ax.plot(x, y, color='blue', label='lumped', **kwargs)
+    else:
+        y, x_sun, x_sh = zip(
+            *[(i, summary_data[i]['sunlit'][hour], summary_data[i]['shaded'][hour]) for i in component_indexes if
+              i != -1])
+        if forced_component_indices and is_bigleaf:
+            y = forced_component_indices
+            x_sun = [x_sun[0]] * len(forced_component_indices)
+            x_sh = [x_sh[0]] * len(forced_component_indices)
+        ax.plot(x_sun, y, color='orange', label='sunlit', **kwargs)
+        ax.plot(x_sh, y, color='darkgreen', label='shaded', **kwargs)
+
+    if plot_soil:
+        ax.plot(summary_data[-1][hour], 0, 's', color='brown', label='soil')
+
+    if plot_incident:
+        y_text = max(y)
+        for s, (v, c) in ({'PAR_direct': (incident_direct[hour], 'orange'),
+                           'PAR_diffuse': (incident_diffuse[hour], 'darkgreen')}).items():
+            ax.scatter(v, y_text + 1, alpha=0)
+            ax.annotate('', xy=(v, y_text + 0.15), xytext=(v, y_text + 1.0), arrowprops=dict(arrowstyle="->", color=c))
+
+    return
+
+
+def plot_shaded_fraction(hour: int, simulation_case: str, ax: plt.axis, all_cases_data: dict,
+                         forced_component_indices: list = None):
+    canopy_class, leaf_class = simulation_case.split('_')
+    if canopy_class == 'bigleaf':
+        ax.vlines(all_cases_data[1][simulation_case][hour][0].shaded_fraction,
+                  min(forced_component_indices), max(forced_component_indices),
+                  colors='k', linestyles='--', linewidth=1)
+    else:
+        layers = list(all_cases_data[1][simulation_case][hour].keys())
+        ax.plot([all_cases_data[1][simulation_case][hour][i].shaded_fraction for i in layers], layers, 'k.')
+    pass
 
 
 def plot_canopy_variable(
