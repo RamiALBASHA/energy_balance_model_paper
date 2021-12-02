@@ -102,7 +102,7 @@ def examine_lai_effect():
 
 def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_stability: bool, figures_path: Path,
                 weather_data: DataFrame = None, weather_file_name: str = None, generate_plots: bool = True,
-                return_results: bool = False):
+                inputs_update: dict = None, return_results: bool = False):
     if weather_data is None:
         if weather_file_name is not None:
             weather_data = get_grignon_weather_data(weather_file_name)
@@ -138,7 +138,8 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_st
                 leaf_class_type=leaves_type,
                 absorbed_par_irradiance=absorbed_irradiance,
                 actual_weather_data=w_data,
-                correct_stability=correct_for_stability)
+                correct_stability=correct_for_stability,
+                inputs_update=inputs_update)
 
             hourly_absorbed_irradiance.append(absorbed_irradiance)
             hourly_irradiance_obj.append(irradiance_obj)
