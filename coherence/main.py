@@ -221,6 +221,39 @@ def run_four_canopy_sims():
     pass
 
 
+def run_four_canopy_sims_on_ww_and_ws():
+    figs_path = Path(__file__).parents[1] / 'figs/coherence'
+    figs_path.mkdir(exist_ok=True, parents=True)
+    weather_files = {'sunny': 'grignon_high_rad_high_vpd.csv', 'cloudy': 'grignon_low_rad_low_vpd.csv'}
+    water_conditions = {'ww': 1, 'wd': 0.1}
+    for weather_file in weather_files.values():
+        res = {}
+        weather_data = get_grignon_weather_data(weather_file)
+        for k, v in water_conditions.items():
+            res_sim = sim_general(
+                canopy_representations=(('bigleaf', 'lumped'),
+                                        ('bigleaf', 'sunlit-shaded'),
+                                        ('layered', 'lumped'),
+                                        ('layered', 'sunlit-shaded')),
+                leaf_layers={4: 1.0, 3: 1.0, 2: 1.0, 1: 1.0},
+                weather_data=weather_data,
+                correct_for_stability=False,
+                inputs_update={"soil_saturation_ratio": v},
+                return_results=True,
+                generate_plots=False,
+                figures_path=figs_path / weather_file.split('.')[0])
+            res.update({k: res_sim})
+
+        plots.plot_radiation_temperature_profiles(
+            hours=[6, 10, 12, 15, 19],
+            hourly_weather=weather_data,
+            all_cases_absorbed_irradiance=(res['ww'][1], res['ww'][2]),
+            all_cases_temperature_ww=res['ww'][3],
+            all_cases_temperature_wd=res['wd'][3],
+            figure_path=figs_path / weather_file.split('.')[0])
+    pass
+
+
 def demonstrate_surface_conductance_conceptual_difference():
     print('running demonstrate_surface_conductance_conceptual_difference()...')
 
@@ -382,6 +415,7 @@ def evaluate_execution_time():
 
 if __name__ == '__main__':
     run_four_canopy_sims()
+    run_four_canopy_sims_on_ww_and_ws()
     examine_diffuse_ratio_effect()
     examine_lai_effect()
     examine_soil_humidity_effect()
