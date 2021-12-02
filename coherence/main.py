@@ -214,7 +214,7 @@ def run_four_canopy_sims():
                                     ('bigleaf', 'sunlit-shaded'),
                                     ('layered', 'lumped'),
                                     ('layered', 'sunlit-shaded')),
-            leaf_layers={3: 1.0, 2: 1.0, 1: 1.0, 0: 1.0},
+            leaf_layers={4: 1.0, 3: 1.0, 2: 1.0, 1: 1.0},
             weather_file_name=weather_file,
             correct_for_stability=False,
             figures_path=figs_path / weather_file.split('.')[0])
