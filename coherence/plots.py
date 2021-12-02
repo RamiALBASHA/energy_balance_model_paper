@@ -284,7 +284,7 @@ def plot_radiation_temperature_profiles(hours: list,
                 incident_direct=hourly_weather.loc[:, 'incident_direct_irradiance'],
                 incident_diffuse=hourly_weather.loc[:, 'incident_diffuse_irradiance'],
                 simulation_case=case,
-                all_cases_data=all_cases_absorbed_irradiance,
+                all_cases_data=all_cases_absorbed_irradiance[0],
                 forced_component_indices=component_indices,
                 plot_incident=plot_incident,
                 plot_soil=plot_incident,
@@ -294,7 +294,7 @@ def plot_radiation_temperature_profiles(hours: list,
                     hour=hour,
                     simulation_case=case,
                     ax=axes[i_hour, 1],
-                    all_cases_data=all_cases_absorbed_irradiance,
+                    all_cases_data=all_cases_absorbed_irradiance[1],
                     forced_component_indices=component_indices)
             for i_data, temperature_data in enumerate((all_cases_temperature_ww, all_cases_temperature_wd)):
                 plot_temperature_at_one_hour_bis(
@@ -314,6 +314,14 @@ def plot_radiation_temperature_profiles(hours: list,
     axes[-1, 1].xaxis.set_major_locator(MultipleLocator(0.5))
     axes[-1, 1].xaxis.set_minor_locator(MultipleLocator(0.1))
     axes[-1, 1].set_xlim(0, 1.05)
+
+    xlim_temperature = [ax.get_xlim() for ax in axes[-1, 2:]]
+    xlim_temperature = [item for sublist in xlim_temperature for item in sublist]
+    for ax in axes[-1, 2:]:
+        ax.set_xlim(min(xlim_temperature), max(xlim_temperature))
+
+    for ax in axes[-1, 2:]:
+        ax.set_xlim()
 
     for i, ax in enumerate(axes.flatten()):
         ax.grid(which='both')
@@ -484,7 +492,7 @@ def plot_irradiance_at_one_hour_bis(ax: plt.axis,
                                     plot_incident: bool = True,
                                     plot_soil: bool = False,
                                     set_title: bool = True):
-    summary_data = get_summary_data(simulation_case, all_cases_data[0])
+    summary_data = get_summary_data(simulation_case, all_cases_data)
     canopy_class, leaf_class = simulation_case.split('_')
     component_indexes = summary_data.keys()
 
@@ -532,12 +540,12 @@ def plot_shaded_fraction(hour: int, simulation_case: str, ax: plt.axis, all_case
                          forced_component_indices: list = None):
     canopy_class, leaf_class = simulation_case.split('_')
     if canopy_class == 'bigleaf':
-        ax.vlines(all_cases_data[1][simulation_case][hour][0].shaded_fraction,
+        ax.vlines(all_cases_data[simulation_case][hour][0].shaded_fraction,
                   min(forced_component_indices), max(forced_component_indices),
                   colors='k', linestyles='--', linewidth=1)
     else:
-        layers = list(all_cases_data[1][simulation_case][hour].keys())
-        ax.plot([all_cases_data[1][simulation_case][hour][i].shaded_fraction for i in layers], layers, 'k.')
+        layers = list(all_cases_data[simulation_case][hour].keys())
+        ax.plot([all_cases_data[simulation_case][hour][i].shaded_fraction for i in layers], layers, 'k.')
     pass
 
 
