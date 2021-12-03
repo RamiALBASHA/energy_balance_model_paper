@@ -9,6 +9,8 @@ from pandas import DataFrame
 from coherence import sim, plots
 from coherence.sim import calc_absorbed_irradiance, solve_energy_balance, get_variable
 from sources.demo import plot_weather, get_grignon_weather_data
+from utils.van_genuchten_params import VanGenuchtenParams
+from utils.water_retention import calc_soil_water_potential
 
 
 def examine_diffuse_ratio_effect():
@@ -100,9 +102,11 @@ def examine_lai_effect():
         xlabel=' '.join(plots.UNITS_MAP['LAI']))
 
 
-def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_stability: bool, figures_path: Path,
-                weather_data: DataFrame = None, weather_file_name: str = None, generate_plots: bool = True,
-                inputs_update: dict = None, return_results: bool = False):
+def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_stability: bool,
+                weather_data: DataFrame = None, weather_file_name: str = None,
+                generate_plots: bool = True, figures_path: Path = None,
+                inputs_update: dict = None, params_update: dict = None,
+                return_results: bool = False):
     if weather_data is None:
         if weather_file_name is not None:
             weather_data = get_grignon_weather_data(weather_file_name)
@@ -139,7 +143,8 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_st
                 absorbed_par_irradiance=absorbed_irradiance,
                 actual_weather_data=w_data,
                 correct_stability=correct_for_stability,
-                inputs_update=inputs_update)
+                inputs_update=inputs_update,
+                params_update=params_update)
 
             hourly_absorbed_irradiance.append(absorbed_irradiance)
             hourly_irradiance_obj.append(irradiance_obj)
@@ -224,12 +229,15 @@ def run_four_canopy_sims():
 def run_four_canopy_sims_on_ww_and_ws():
     figs_path = Path(__file__).parents[1] / 'figs/coherence'
     figs_path.mkdir(exist_ok=True, parents=True)
+
+    soil_class = 'Silt'
+    _, theta_sat, *_ = getattr(VanGenuchtenParams, soil_class).value
     weather_files = {'sunny': 'grignon_high_rad_high_vpd.csv', 'cloudy': 'grignon_low_rad_low_vpd.csv'}
-    water_conditions = {'ww': 1, 'wd': 0.1}
+    saturation_ratio = {'ww': 1, 'wd': 0.1}
     for weather_file in weather_files.values():
         res = {}
         weather_data = get_grignon_weather_data(weather_file)
-        for k, v in water_conditions.items():
+        for k, v in saturation_ratio.items():
             res_sim = sim_general(
                 canopy_representations=(('bigleaf', 'lumped'),
                                         ('bigleaf', 'sunlit-shaded'),
@@ -238,10 +246,15 @@ def run_four_canopy_sims_on_ww_and_ws():
                 leaf_layers={4: 1.0, 3: 1.0, 2: 1.0, 1: 1.0},
                 weather_data=weather_data,
                 correct_for_stability=False,
-                inputs_update={"soil_saturation_ratio": v},
+                inputs_update={
+                    "soil_saturation_ratio": v,
+                    "soil_water_potential": calc_soil_water_potential(theta=v * theta_sat, soil_class=soil_class)},
+                params_update={
+                    "stomatal_sensibility": {
+                        "leuning": {"d_0": 7},
+                        "misson": {"psi_half_aperture": -300, "steepness": 4.5}}},  # 1 MPa = 10**4 cm(H2O)
                 return_results=True,
-                generate_plots=False,
-                figures_path=figs_path / weather_file.split('.')[0])
+                generate_plots=False)
             res.update({k: res_sim})
 
         plots.plot_radiation_temperature_profiles(
