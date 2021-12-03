@@ -28,7 +28,8 @@ UNITS_MAP = {
     'PAR_diffuse': r'$\mathregular{R_{inc,\/PAR,\/diffuse}}$',
     'LAI': (r'$\mathregular{L_t}$', r'$\mathregular{[m^{2}_{leaf}\/m^{-2}_{ground}]}$'),
     'surface_conductance': (r'$\mathregular{g_{s,\/l}}$', r'$\mathregular{[m\/h^{-1}]}$'),
-    'incident_PAR': (r'$\mathregular{R_{abs}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
+    'incident_PAR': (r'$\mathregular{R_{inc}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
+    'absorbed_PAR': (r'$\mathregular{R_{abs}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
     'shaded_fraction': (r'$\mathregular{\phi_{shaded}}$', '[-]')
 }
 
@@ -272,8 +273,9 @@ def plot_radiation_temperature_profiles(hours: list,
     cases = all_cases_temperature_ww.keys()
     component_indices = all_cases_temperature_ww['layered_lumped'][hours[0]].keys()
     component_indices = [comp_index for comp_index in component_indices if comp_index != -1]
-    columns = ['incident_PAR', 'shaded_fraction', 'temperature', 'temperature']
-    fig, axes = plt.subplots(ncols=len(columns), nrows=len(hours), sharex='col', sharey='all', figsize=(7.48, 7.48))
+    columns = ['absorbed_PAR', 'shaded_fraction', 'temperature', 'temperature']
+
+    fig, axes = plt.subplots(ncols=len(columns), nrows=len(hours), sharex='col', sharey='all', figsize=(7.48, 10))
     for i_hour, hour in enumerate(hours):
         for i_case, case in enumerate(cases):
             plot_incident = i_case == 0
@@ -307,12 +309,12 @@ def plot_radiation_temperature_profiles(hours: list,
                     plot_air_temperature=plot_incident,
                     plot_soil_temperature=plot_incident)
 
-    axes[0, 0].set_ylim((-0.75, max(component_indices) + 1))
+    axes[0, 0].set_ylim((-0.25, max(component_indices) + 2))
     axes[0, 0].yaxis.set_major_locator(MaxNLocator(integer=True))
     axes[0, 0].set_yticks(component_indices + [0])
+    axes[2, 0].set_ylabel('Layer index [-]', rotation=90, ha='center')
 
     axes[-1, 1].xaxis.set_major_locator(MultipleLocator(0.5))
-    axes[-1, 1].xaxis.set_minor_locator(MultipleLocator(0.1))
     axes[-1, 1].set_xlim(0, 1.05)
 
     xlim_temperature = [ax.get_xlim() for ax in axes[-1, 2:]]
@@ -320,20 +322,14 @@ def plot_radiation_temperature_profiles(hours: list,
     for ax in axes[-1, 2:]:
         ax.set_xlim(min(xlim_temperature), max(xlim_temperature))
 
-    for ax in axes[-1, 2:]:
-        ax.set_xlim()
-
-    for i, ax in enumerate(axes.flatten()):
-        ax.grid(which='both')
-        ax.text(0.85, 0.05, f'({ascii_lowercase[i]})', transform=ax.transAxes)
-    for ax in axes[:, 0]:
-        ax.set_ylabel('Component\nindex [-]', rotation=0, ha='right')
-    for j, col in enumerate(columns):
-        axes[0, j].set_title(UNITS_MAP[col][0])
-        axes[-1, j].set_xlabel(UNITS_MAP[col][1])
-
-    axes[0, 2].set_title(axes[0, 2].get_title() + ' (WW)')
-    axes[0, 3].set_title(axes[0, 3].get_title() + ' (WD)')
+    for i_hour, ax_row in enumerate(axes):
+        for ax in ax_row:
+            ax.text(0.05, 0.875, f'({ascii_lowercase[i_hour]})', transform=ax.transAxes)
+            ax.text(0.95, 0.875, f'{hours[i_hour]:02d}:00', fontsize=9, ha='right', transform=ax.transAxes)
+    for j, col in enumerate(columns[:2]):
+        axes[-1, j].set_xlabel('\n'.join([col.replace('_', ' '), UNITS_MAP[col][-1]]))
+    for ax, col, s in zip(axes[-1, 2:], columns[2:], ('WW', 'WD')):
+        ax.set_xlabel('\n'.join([' '.join((col.replace('_', ' '), f'({s})')), UNITS_MAP[col][-1]]))
 
     fig.tight_layout()
     fig.subplots_adjust(wspace=0, hspace=0)
