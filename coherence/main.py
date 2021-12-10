@@ -248,11 +248,12 @@ def run_four_canopy_sims_on_ww_and_ws():
                 correct_for_stability=False,
                 inputs_update={
                     "soil_saturation_ratio": v,
-                    "soil_water_potential": calc_soil_water_potential(theta=v * theta_sat, soil_class=soil_class)},
+                    "soil_water_potential": calc_soil_water_potential(theta=v * theta_sat, soil_class=soil_class) * (
+                        1.e-4)},
                 params_update={
                     "stomatal_sensibility": {
                         "leuning": {"d_0": 7},
-                        "misson": {"psi_half_aperture": -300, "steepness": 4.5}}},  # 1 MPa = 10**4 cm(H2O)
+                        "misson": {"psi_half_aperture": -0.3, "steepness": 4.5}}},  # 1 MPa = 10**4 cm(H2O)
                 return_results=True,
                 generate_plots=False)
             res.update({k: res_sim})
