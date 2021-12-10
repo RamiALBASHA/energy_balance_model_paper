@@ -12,9 +12,13 @@ from numpy import array, arange
 from coherence.plots import UNITS_MAP
 from coherence.sim import calc_absorbed_irradiance, get_energy_balance_inputs_and_params
 from sources.demo import get_grignon_weather_data
+from utils.van_genuchten_params import VanGenuchtenParams
+from utils.water_retention import calc_soil_water_potential
 
 MAP_PARAMS = {
-    'vpd_coeff': r'$\mathregular{D_o}$',
+    'd_0': r'$\mathregular{D_o}$',
+    'psi_half_aperture': r'$\mathregular{\psi_{50}}$',
+    'steepness': r'$\mathregular{\beta}$',
     'soil_aerodynamic_resistance_shape_parameter': r'$\mathregular{\alpha_w}$',
     'soil_roughness_length_for_momentum': r'$\mathregular{z_{0,\/u}}}$',
     'leaf_characteristic_length': r'$\mathregular{w}$',
@@ -42,10 +46,24 @@ def eb_wrapper(leaves_category: str, inputs: dict, params: dict) -> Solver:
     return solver
 
 
+def get_name_bound(param_fields: dict) -> tuple:
+    names, bounds = [], []
+    for k, v in param_fields.items():
+        if k != 'stomatal_sensibility':
+            names.append(k)
+            bounds.append(v)
+        else:
+            for model, param_dict in v.items():
+                for param_name, param_value in param_dict.items():
+                    names.append('-'.join([k, model, param_name]))
+                    bounds.append(param_value)
+    return names, bounds
+
+
 def sample(config_path: Path) -> (dict, array):
     with open(config_path, mode='r') as f:
         param_fields = load(f)
-    names, bounds = zip(*list(param_fields.items()))
+    names, bounds = get_name_bound(param_fields=param_fields)
     problem = {
         'num_vars': len(names),
         'names': list(names),
@@ -57,7 +75,12 @@ def sample(config_path: Path) -> (dict, array):
 def evaluate(leaves_category: str, inputs: dict, params: dict, names: list, scenarios: array, output_variables: list):
     res = {k: [] for k in output_variables}
     for i, scenario in enumerate(scenarios):
-        params.update({k: v for k, v in zip(names, scenario)})
+        for param_name, param_value in zip(names, scenario):
+            if 'stomatal_sensibility' in param_name:
+                param_keys = param_name.split('-')
+                params[param_keys[0]][param_keys[1]][param_keys[2]] = param_value
+            else:
+                params.update({param_name: param_value})
         solver = eb_wrapper(leaves_category=leaves_category, inputs=inputs, params=params)
         for k in output_variables:
             res[k].append(eval(f'solver.{k}'))
@@ -128,7 +151,7 @@ def handle_var_name(k):
     return ax_title
 
 
-def plot_heatmap(sa_dict: dict, model: str, fig_path: Path, parameter_groups: dict = None):
+def plot_heatmap(sa_dict: dict, model: str, fig_path: Path, parameter_groups: dict = None, name_info: str = ''):
     if parameter_groups is not None:
         params_order = [item for sublist in parameter_groups.values() for item in sublist]
     else:
@@ -136,7 +159,8 @@ def plot_heatmap(sa_dict: dict, model: str, fig_path: Path, parameter_groups: di
 
     s1, st, infos = build_heatmap_arrays(sa_dict=sa_dict, params_order=params_order)
     for s, data in (('s1', s1), ('st', st)):
-        heatmap(data=data, parameter_groups=parameter_groups, infos=infos, path_fig=fig_path / f'{model}_{s}.png')
+        heatmap(data=data, parameter_groups=parameter_groups, infos=infos,
+                path_fig=fig_path / f'{name_info}_{model}_{s}.png')
     pass
 
 
@@ -158,7 +182,7 @@ def heatmap(data: array, infos: dict, parameter_groups: dict, path_fig: Path):
     #    cbar.ax.set_ylabel('', rotation=-90, va="bottom")
 
     ax.set(xticks=arange(data.shape[1]), xticklabels=col_labels,
-           yticks=arange(data.shape[0]), yticklabels=[MAP_PARAMS[s] for s in row_labels])
+           yticks=arange(data.shape[0]), yticklabels=[MAP_PARAMS[s.split('-')[-1]] for s in row_labels])
 
     ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False)
     for j_out, output_var in enumerate(names_output_vars):
@@ -222,6 +246,9 @@ def set_output_variables(is_bigleaf: bool, is_lumped: bool, layers: dict) -> lis
 
 def run_sensitivity_analysis(veg_layers: dict, canopy_type: str, leaf_type: str, base_sa_inputs: dict,
                              base_sa_params: dict, sa_problem: dict, param_scenarios: array, parameter_groups: dict):
+    soil_class = 'Silt'
+    _, theta_sat, *_ = getattr(VanGenuchtenParams, soil_class).value
+
     if canopy_type == 'bigleaf':
         veg_layers = {0: sum(veg_layers.values())}
 
@@ -229,42 +256,49 @@ def run_sensitivity_analysis(veg_layers: dict, canopy_type: str, leaf_type: str,
                          ('grignon_low_rad_high_vpd.csv', 14),
                          ('grignon_high_rad_low_vpd.csv', 11),
                          ('grignon_low_rad_low_vpd.csv', 14))
+    saturation_ratio = {'ww': 1, 'wd': 0.1}
 
-    sa_dict = {}
-    for weather_scenario, hour in weather_scenarios:
-        weather_data = get_grignon_weather_data(weather_scenario).loc[hour, :]
-        absorbed_irradiance, _ = calc_absorbed_irradiance(
-            leaf_layers=veg_layers,
-            is_bigleaf=canopy_type == 'bigleaf',
-            is_lumped=leaf_type == 'lumped',
-            incident_direct_par_irradiance=weather_data['incident_direct_irradiance'],
-            incident_diffuse_par_irradiance=weather_data['incident_diffuse_irradiance'],
-            solar_inclination_angle=weather_data['solar_declination'])
-
-        base_sa_inputs, base_sa_params = get_energy_balance_inputs_and_params(
-            vegetative_layers=veg_layers,
-            absorbed_par_irradiance=absorbed_irradiance,
-            actual_weather_data=weather_data,
-            raw_inputs=base_sa_inputs,
-            json_params=base_sa_params)
-
-        outputs = evaluate(
-            leaves_category=leaf_type,
-            inputs=base_sa_inputs,
-            params=base_sa_params,
-            names=sa_problem['names'],
-            scenarios=param_scenarios,
-            output_variables=set_output_variables(
+    for soil_water_status, soil_saturation_ratio in saturation_ratio.items():
+        sa_dict = {}
+        for weather_scenario, hour in weather_scenarios:
+            weather_data = get_grignon_weather_data(weather_scenario).loc[hour, :]
+            absorbed_irradiance, _ = calc_absorbed_irradiance(
+                leaf_layers=veg_layers,
                 is_bigleaf=canopy_type == 'bigleaf',
                 is_lumped=leaf_type == 'lumped',
-                layers=veg_layers))
-        sa_result = analyze(problem=sa_problem, outputs=outputs)
-        sa_dict.update({MAP_PARAMS[weather_scenario]: sa_result})
+                incident_direct_par_irradiance=weather_data['incident_direct_irradiance'],
+                incident_diffuse_par_irradiance=weather_data['incident_diffuse_irradiance'],
+                solar_inclination_angle=weather_data['solar_declination'])
 
-        plot_barh(sa_dict=sa_result, shift_bars=False, model=f'{canopy_type}_{leaf_type}',
-                  parameter_groups=parameter_groups, suptitle=weather_scenario.split('.')[0], path_fig=path_figs)
-    plot_heatmap(sa_dict=sa_dict, fig_path=path_figs, model=f'{canopy_type}_{leaf_type}',
-                 parameter_groups=parameter_groups)
+            base_sa_inputs, base_sa_params = get_energy_balance_inputs_and_params(
+                vegetative_layers=veg_layers,
+                absorbed_par_irradiance=absorbed_irradiance,
+                actual_weather_data=weather_data,
+                raw_inputs=base_sa_inputs,
+                json_params=base_sa_params)
+
+            base_sa_inputs.update({
+                "soil_saturation_ratio": soil_saturation_ratio,
+                "soil_water_potential": calc_soil_water_potential(
+                    theta=soil_saturation_ratio * theta_sat, soil_class=soil_class) * 1.e-4})
+
+            outputs = evaluate(
+                leaves_category=leaf_type,
+                inputs=base_sa_inputs,
+                params=base_sa_params,
+                names=sa_problem['names'],
+                scenarios=param_scenarios,
+                output_variables=set_output_variables(
+                    is_bigleaf=canopy_type == 'bigleaf',
+                    is_lumped=leaf_type == 'lumped',
+                    layers=veg_layers))
+            sa_result = analyze(problem=sa_problem, outputs=outputs)
+            sa_dict.update({MAP_PARAMS[weather_scenario]: sa_result})
+
+        #        plot_barh(sa_dict=sa_result, shift_bars=False, model=f'{canopy_type}_{leaf_type}',
+        #                  parameter_groups=parameter_groups, suptitle=weather_scenario.split('.')[0], path_fig=path_figs)
+        plot_heatmap(sa_dict=sa_dict, fig_path=path_figs, model=f'{canopy_type}_{leaf_type}',
+                     parameter_groups=parameter_groups, name_info=soil_water_status)
 
 
 if __name__ == '__main__':
@@ -281,7 +315,9 @@ if __name__ == '__main__':
     param_groups = {
         'Leaf surface resistance': ['residual_stomatal_conductance',
                                     'maximum_stomatal_conductance',
-                                    'vpd_coeff',
+                                    'stomatal_sensibility-leuning-d_0',
+                                    'stomatal_sensibility-misson-psi_half_aperture',
+                                    'stomatal_sensibility-misson-steepness',
                                     'absorbed_par_50'],
         'Leaf boundary-layer resistance': ['leaf_boundary_layer_shape_parameter',
                                            'leaf_characteristic_length'],

@@ -1,5 +1,13 @@
 {
-  "vpd_coeff": null,
+  "stomatal_sensibility": {
+    "leuning": {
+      "d_0": null
+    },
+    "misson": {
+      "psi_half_aperture": null,
+      "steepness": null
+    }
+  },
   "soil_aerodynamic_resistance_shape_parameter": null,
   "soil_roughness_length_for_momentum": null,
   "leaf_characteristic_length": null,

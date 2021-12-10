@@ -1,7 +1,8 @@
 {
   "measurement_height": 2,
   "canopy_height": 1.0,
-  "soil_saturation_ratio": 1.0,
+  "soil_saturation_ratio": null,
+  "soil_water_potential": null,
   "leaf_layers": null,
   "incident_photosynthetically_active_radiation": null,
   "absorbed_photosynthetically_active_radiation": null,
