@@ -178,7 +178,7 @@ def heatmap(data: array, infos: dict, parameter_groups: dict, path_fig: Path):
     norm = colors.Normalize(0, vmax=1)
     im = ax.imshow(data, norm=norm, cmap='Oranges')
 
-    cbar = ax.figure.colorbar(im, ax=ax, orientation="horizontal")
+    ax.figure.colorbar(im, ax=ax, orientation="horizontal")
     #    cbar.ax.set_ylabel('', rotation=-90, va="bottom")
 
     ax.set(xticks=arange(data.shape[1]), xticklabels=col_labels,
@@ -295,8 +295,8 @@ def run_sensitivity_analysis(veg_layers: dict, canopy_type: str, leaf_type: str,
             sa_result = analyze(sa_problem=sa_problem, outputs=outputs)
             sa_dict.update({MAP_PARAMS[weather_scenario]: sa_result})
 
-        #        plot_barh(sa_dict=sa_result, shift_bars=False, model=f'{canopy_type}_{leaf_type}',
-        #                  parameter_groups=parameter_groups, suptitle=weather_scenario.split('.')[0], path_fig=path_figs)
+            # plot_barh(sa_dict=sa_result, shift_bars=False, model=f'{canopy_type}_{leaf_type}',
+            #           parameter_groups=parameter_groups, suptitle=weather_scenario.split('.')[0], path_fig=path_figs)
         plot_heatmap(sa_dict=sa_dict, fig_path=path_figs, model=f'{canopy_type}_{leaf_type}',
                      parameter_groups=parameter_groups, name_info=soil_water_status)
 
