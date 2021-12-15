@@ -61,15 +61,15 @@ def get_name_bound(param_fields: dict) -> tuple:
 
 
 def sample(config_path: Path) -> (dict, array):
-    with open(config_path, mode='r') as f:
-        param_fields = load(f)
+    with open(config_path, mode='r') as conf_file:
+        param_fields = load(conf_file)
     names, bounds = get_name_bound(param_fields=param_fields)
-    problem = {
+    sa_problem = {
         'num_vars': len(names),
         'names': list(names),
         'bounds': list(bounds)
     }
-    return problem, fast_sampler.sample(problem=problem, N=2 ** 7)
+    return sa_problem, fast_sampler.sample(problem=sa_problem, N=2 ** 10)
 
 
 def evaluate(leaves_category: str, inputs: dict, params: dict, names: list, scenarios: array, output_variables: list):
@@ -88,8 +88,8 @@ def evaluate(leaves_category: str, inputs: dict, params: dict, names: list, scen
     return {k: array(v) for k, v in res.items()}
 
 
-def analyze(problem: dict, outputs: array) -> dict:
-    return {k: fast.analyze(problem, v, M=4, num_resamples=100, conf_level=0.95, print_to_console=False, seed=None)
+def analyze(sa_problem: dict, outputs: array) -> dict:
+    return {k: fast.analyze(sa_problem, v, M=4, num_resamples=100, conf_level=0.95, print_to_console=False, seed=None)
             for k, v in outputs.items()}
 
 
@@ -292,7 +292,7 @@ def run_sensitivity_analysis(veg_layers: dict, canopy_type: str, leaf_type: str,
                     is_bigleaf=canopy_type == 'bigleaf',
                     is_lumped=leaf_type == 'lumped',
                     layers=veg_layers))
-            sa_result = analyze(problem=sa_problem, outputs=outputs)
+            sa_result = analyze(sa_problem=sa_problem, outputs=outputs)
             sa_dict.update({MAP_PARAMS[weather_scenario]: sa_result})
 
         #        plot_barh(sa_dict=sa_result, shift_bars=False, model=f'{canopy_type}_{leaf_type}',
