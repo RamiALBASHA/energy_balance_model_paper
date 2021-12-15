@@ -29,7 +29,7 @@ UNITS_MAP = {
     'LAI': (r'$\mathregular{L_t}$', r'$\mathregular{[m^{2}_{leaf}\/m^{-2}_{ground}]}$'),
     'surface_conductance': (r'$\mathregular{g_{s,\/l}}$', r'$\mathregular{[m\/h^{-1}]}$'),
     'incident_PAR': (r'$\mathregular{R_{inc}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
-    'absorbed_PAR': (r'$\mathregular{R_{abs}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
+    'absorbed_par': (r'$\mathregular{R_{abs}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
     'shaded_fraction': (r'$\mathregular{\phi_{shaded}}$', '[-]')
 }
 
@@ -273,7 +273,7 @@ def plot_radiation_temperature_profiles(hours: list,
     cases = all_cases_temperature_ww.keys()
     component_indices = all_cases_temperature_ww['layered_lumped'][hours[0]].keys()
     component_indices = [comp_index for comp_index in component_indices if comp_index != -1]
-    columns = ['absorbed_PAR', 'shaded_fraction', 'temperature', 'temperature']
+    columns = ['Absorbed_PAR', 'Shaded_fraction', 'Temperature', 'Temperature']
 
     fig, axes = plt.subplots(ncols=len(columns), nrows=len(hours), sharex='col', sharey='all', figsize=(7.48, 10))
     for i_hour, hour in enumerate(hours):
@@ -325,11 +325,13 @@ def plot_radiation_temperature_profiles(hours: list,
     for i_hour, ax_row in enumerate(axes):
         for ax in ax_row:
             ax.text(0.05, 0.875, f'({ascii_lowercase[i_hour]})', transform=ax.transAxes)
-            ax.text(0.95, 0.875, f'{hours[i_hour]:02d}:00', fontsize=9, ha='right', transform=ax.transAxes)
-    for j, col in enumerate(columns[:2]):
-        axes[-1, j].set_xlabel('\n'.join([col.replace('_', ' '), UNITS_MAP[col][-1]]))
-    for ax, col, s in zip(axes[-1, 2:], columns[2:], ('WW', 'WD')):
-        ax.set_xlabel('\n'.join([' '.join((col.replace('_', ' '), f'({s})')), UNITS_MAP[col][-1]]))
+            ax.text(0.20, 0.875, f'{hours[i_hour]:02d}:00', fontsize=9, ha='left', transform=ax.transAxes)
+    for j, col in enumerate(columns):
+        axes[-1, j].set_xlabel('\n'.join([col.replace('_', ' '), UNITS_MAP[col.lower()][-1]]))
+
+    for col_axs, water_status in zip((axes[:, 2], axes[:, 3]), ('Well Watered', 'Water Deficit')):
+        for ax in col_axs:
+            ax.text(0.95, 0.875, water_status, fontsize=6, ha='right', transform=ax.transAxes)
 
     fig.tight_layout()
     fig.subplots_adjust(wspace=0, hspace=0)
