@@ -256,7 +256,7 @@ def run_sensitivity_analysis(veg_layers: dict, canopy_type: str, leaf_type: str,
                          ('grignon_low_rad_high_vpd.csv', 14),
                          ('grignon_high_rad_low_vpd.csv', 11),
                          ('grignon_low_rad_low_vpd.csv', 14))
-    saturation_ratio = {'ww': 1, 'wd': 0.1}
+    saturation_ratio = {'ww': 1, 'mwd': 0.3, 'wd': 0.1}
 
     for soil_water_status, soil_saturation_ratio in saturation_ratio.items():
         sa_dict = {}
