@@ -130,3 +130,4 @@ dmypy.json
 
 .idea/
 utils/*.png
+sources/hsc/data_raw/
