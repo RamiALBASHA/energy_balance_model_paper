@@ -117,8 +117,8 @@ def estimate_water_status(soil_df: DataFrame, datetime_obs: datetime, plot_id: i
     return soil_saturation_ratio, soil_water_potential
 
 
-def set_inputs_and_params(leaf_layers: dict, is_bigleaf: bool, is_lumped: bool, datetime_obs: datetime,
-                          crop_data: Series, soil_data: DataFrame, weather_data: Series) -> (dict, dict):
+def set_energy_balance_inputs(leaf_layers: dict, is_bigleaf: bool, is_lumped: bool, datetime_obs: datetime,
+                              crop_data: Series, soil_data: DataFrame, weather_data: Series) -> (dict, dict):
     absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
         leaf_layers=leaf_layers,
         is_bigleaf=is_bigleaf,

@@ -5,7 +5,7 @@ from crop_energy_balance.solver import Solver
 from pandas import read_excel
 
 from sim_vs_obs.hsc.config import PathInfos, WeatherInfo
-from sim_vs_obs.hsc.base_functions import get_weather_data, set_inputs_and_params
+from sim_vs_obs.hsc.base_functions import get_weather_data, set_energy_balance_inputs
 from sim_vs_obs.hsc import plots
 
 from matplotlib import pyplot
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
         solvers = []
         for datetime_obs, w_data in crop_weather.iterrows():
-            eb_inputs, eb_params = set_inputs_and_params(
+            eb_inputs, eb_params = set_energy_balance_inputs(
                 leaf_layers=leaf_layers,
                 is_bigleaf=is_bigleaf,
                 is_lumped=is_lumped,
@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
         temp_obs = crop_weather['canopy_temperature']
         temp_sim = [eb_solver.crop.state_variables.source_temperature - 273.15 for eb_solver in solvers]
-        plots.compare_temperature(obs=temp_obs, sim=temp_sim, ax=ax)
+        ax = plots.compare_temperature(obs=temp_obs, sim=temp_sim, ax=ax, return_ax=True)
         x_ls = range(24)
         ax2[0, 0].plot(x_ls, crop_weather['incident_diffuse_par_irradiance'], label='R_diff')
         ax2[0, 0].plot(x_ls, crop_weather['incident_direct_par_irradiance'], label='R_dir')
