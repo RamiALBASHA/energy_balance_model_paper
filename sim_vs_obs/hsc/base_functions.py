@@ -7,7 +7,7 @@ from convert_units.converter import convert_unit
 from pandas import DataFrame, Series
 
 from coherence.sim import calc_absorbed_irradiance
-from sim_vs_obs.config import WeatherInfo, SoilInfo, ParamsInfo
+from sim_vs_obs.hsc.config import WeatherInfo, SoilInfo, ParamsInfo
 from utils.water_retention import calc_soil_water_potential
 
 

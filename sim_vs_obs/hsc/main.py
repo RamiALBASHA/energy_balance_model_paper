@@ -4,7 +4,7 @@ from datetime import timedelta
 from crop_energy_balance.solver import Solver
 from pandas import read_excel
 
-from sim_vs_obs.config import PathInfos, WeatherInfo
+from sim_vs_obs.hsc.config import PathInfos, WeatherInfo
 from sim_vs_obs.hsc.base_functions import get_weather_data, set_inputs_and_params
 from sim_vs_obs.hsc import plots
 
