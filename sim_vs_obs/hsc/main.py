@@ -5,7 +5,7 @@ from crop_energy_balance.solver import Solver
 from pandas import read_excel
 
 from sim_vs_obs.hsc.config import PathInfos, WeatherInfo
-from sim_vs_obs.hsc.base_functions import get_weather_data, set_energy_balance_inputs
+from sim_vs_obs.hsc.base_functions import get_weather_data, set_energy_balance_inputs, calc_apparent_temperature
 from sim_vs_obs.hsc import plots
 
 from matplotlib import pyplot
@@ -89,7 +89,8 @@ if __name__ == '__main__':
             solvers.append(solver)
 
         temp_obs = crop_weather['canopy_temperature']
-        temp_sim = [eb_solver.crop.state_variables.source_temperature - 273.15 for eb_solver in solvers]
+        temp_sim_source = [eb_solver.crop.state_variables.source_temperature - 273.15 for eb_solver in solvers]
+        temp_sim = [calc_apparent_temperature(eb_solver=eb_solver, date_obs=date_obs) for eb_solver in solvers]
         ax = plots.compare_temperature(obs=temp_obs, sim=temp_sim, ax=ax, return_ax=True)
         x_ls = range(24)
         ax2[0, 0].plot(x_ls, crop_weather['incident_diffuse_par_irradiance'], label='R_diff')
@@ -104,6 +105,7 @@ if __name__ == '__main__':
         # ax2[0, 1].plot(x, temp_sim, label='T_can_sim')
         ax2[1, 1].plot(x_ls, crop_weather['vapor_pressure_deficit'], label='VPD')
         ax2[2, 0].plot(x_ls, temp_obs, label='T_obs')
+        # ax2[2, 0].plot(x_ls, temp_sim_source, label='T_sim_source')
         ax2[2, 0].plot(x_ls, temp_sim, label='T_sim')
         ax2[2, 0].set_ylim(-5, 60)
         ax2[2, 1].plot(x_ls, [eb_solver.crop.inputs.soil_water_potential for eb_solver in solvers], label='Psi_soil')
