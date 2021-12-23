@@ -166,7 +166,7 @@ def set_energy_balance_inputs(leaf_layers: dict, is_bigleaf: bool, is_lumped: bo
             }
         },
         "soil_aerodynamic_resistance_shape_parameter": 2.5,
-        "soil_roughness_length_for_momentum": 0.01,
+        "soil_roughness_length_for_momentum": 0.0125,
         "leaf_characteristic_length": 0.01,
         "leaf_boundary_layer_shape_parameter": 0.01,
         "wind_speed_extinction_coef": 0.5,
