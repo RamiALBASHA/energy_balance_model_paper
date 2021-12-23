@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     for _, row in crop_df.iterrows():
         print(_)
-        fig2, ax2 = pyplot.subplots(4, 2, sharex='row')
+        fig2, ax2 = pyplot.subplots(3, 3, sharex='col', figsize=(8, 8))
 
         leaf_layers = {0: row['GAI']} if is_bigleaf else {i: row['GAI'] / number_leaf_layers for i in
                                                           range(1, number_leaf_layers + 1)}
@@ -93,29 +93,34 @@ if __name__ == '__main__':
         temp_sim = [calc_apparent_temperature(eb_solver=eb_solver, date_obs=date_obs) for eb_solver in solvers]
         ax = plots.compare_temperature(obs=temp_obs, sim=temp_sim, ax=ax, return_ax=True)
         x_ls = range(24)
-        ax2[0, 0].plot(x_ls, crop_weather['incident_diffuse_par_irradiance'], label='R_diff')
-        ax2[0, 0].plot(x_ls, crop_weather['incident_direct_par_irradiance'], label='R_dir')
+        ax2[0, 0].plot(x_ls, crop_weather['incident_diffuse_par_irradiance'], label=r'$\mathregular{{PAR}_{diff}}$')
+        ax2[0, 0].plot(x_ls, crop_weather['incident_direct_par_irradiance'], label=r'$\mathregular{{PAR}_{dir}}$')
         ax2[0, 0].set_ylim((0, 500))
+        ax2[0, 0].legend()
 
         ax2[1, 0].plot(x_ls, crop_weather['wind_speed'] / 3600., label='u')
         ax2[1, 0].set_ylim(0, 6)
+        ax2[1, 0].legend()
 
-        ax2[0, 1].plot(x_ls, crop_weather['air_temperature'], label='T_air')
-        ax2[0, 1].plot(x_ls, temp_obs, label='T_can_obs')
-        # ax2[0, 1].plot(x, temp_sim, label='T_can_sim')
-        ax2[1, 1].plot(x_ls, crop_weather['vapor_pressure_deficit'], label='VPD')
-        ax2[2, 0].plot(x_ls, temp_obs, label='T_obs')
-        # ax2[2, 0].plot(x_ls, temp_sim_source, label='T_sim_source')
-        ax2[2, 0].plot(x_ls, temp_sim, label='T_sim')
+        ax2[2, 0].plot(x_ls, crop_weather['air_temperature'], label=r'$\mathregular{T_{air}}$', color='black', linestyle='--')
+        ax2[2, 0].plot(x_ls, temp_obs, label=r'$\mathregular{T_{can,\/obs}}$', color='orange')
+        ax2[2, 0].plot(x_ls, temp_sim, label=r'$\mathregular{T_{can,\/sim}}$', color='blue')
         ax2[2, 0].set_ylim(-5, 60)
-        ax2[2, 1].plot(x_ls, [eb_solver.crop.inputs.soil_water_potential for eb_solver in solvers], label='Psi_soil')
-        # ax2[2, 1].plot(x, [eb_solver.crop.inputs.soil_water_potential for eb_solver in solvers], label='Psi_soil')
+        ax2[2, 0].legend(fontsize='x-small')
 
-        ax2[3, 0] = plots.compare_temperature(obs=temp_obs, sim=temp_sim, ax=ax2[3, 0], return_ax=True)
-        ax2[3, 1].text(0.1, 0.8, f'height={row["pl.height"] / 100.}', transform=ax2[3, 1].transAxes)
-        ax2[3, 1].text(0.1, 0.6, f'LAI={row["LAI"]}', transform=ax2[3, 1].transAxes)
+        ax2[0, 1].text(0.1, 0.8, f'height={row["pl.height"] / 100.}', transform=ax2[0, 1].transAxes)
+        ax2[0, 1].text(0.1, 0.6, f'LAI={row["LAI"]}', transform=ax2[0, 1].transAxes)
 
-        [axi.legend() for axi in ax2[:2, :].flatten()]
+        ax2[1, 1].plot(x_ls, crop_weather['vapor_pressure_deficit'], label='VPD')
+        ax2[1, 1].set_ylim(0, 6)
+        ax2[1, 1].legend()
+
+        ax2[2, 1].plot(x_ls, [eb_solver.crop.inputs.soil_water_potential for eb_solver in solvers], label=r'$\mathregular{\Psi_{soil}}$')
+        ax2[2, 1].legend()
+
+        ax2[0, 2] = plots.compare_temperature(obs=temp_obs, sim=temp_sim, ax=ax2[0, 2], return_ax=True)
+        ax2[0, 2].text(0.95, 0.8, 'sim vs obs',  ha='right', transform=ax2[0, 2].transAxes)
+
         fig2.savefig(path_figs / f'{row["Trt"]}{row["Plot"]}{date_obs.date()}.png')
         pyplot.close(fig2)
 
