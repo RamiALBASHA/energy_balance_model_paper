@@ -176,7 +176,7 @@ def set_energy_balance_inputs(leaf_layers: dict, is_bigleaf: bool, is_lumped: bo
         "leaf_scattering_coefficient": irradiance_obj.params.leaf_scattering_coefficient,
         "leaf_emissivity": None,
         "soil_emissivity": None,
-        "absorbed_par_50": 66,
+        "absorbed_par_50": 43,
         "soil_resistance_to_vapor_shape_parameter_1": 8.206,
         "soil_resistance_to_vapor_shape_parameter_2": 4.255,
         "step_fraction": 0.5,
