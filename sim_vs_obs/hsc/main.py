@@ -2,13 +2,13 @@ import datetime
 from datetime import timedelta
 
 from crop_energy_balance.solver import Solver
+from matplotlib import pyplot
 from pandas import read_excel
 
-from sim_vs_obs.hsc.config import PathInfos, WeatherInfo
-from sim_vs_obs.hsc.base_functions import get_weather_data, set_energy_balance_inputs, calc_apparent_temperature
 from sim_vs_obs.hsc import plots
-
-from matplotlib import pyplot
+from sim_vs_obs.hsc.base_functions import get_weather_data, set_energy_balance_inputs, calc_apparent_temperature
+from sim_vs_obs.hsc.config import PathInfos, WeatherInfo
+from utils import stats
 
 if __name__ == '__main__':
 
@@ -53,8 +53,10 @@ if __name__ == '__main__':
     soil_df = read_excel(path_source_fmt / 'soil_data.xlsx', sheet_name='data')
     soil_df.loc[:, 'datetime'] = soil_df.apply(lambda x: x['DATE'] + timedelta(hours=x['Time']), axis=1)
 
-    for _, row in crop_df.iterrows():
-        print(_)
+    all_sim = []
+    all_obs = []
+    for row_index, row in crop_df.iterrows():
+        print(row_index)
         fig2, ax2 = pyplot.subplots(3, 3, sharex='col', figsize=(8, 8))
 
         leaf_layers = {0: row['GAI']} if is_bigleaf else {i: row['GAI'] / number_leaf_layers for i in
@@ -91,7 +93,12 @@ if __name__ == '__main__':
         temp_obs = crop_weather['canopy_temperature']
         temp_sim_source = [eb_solver.crop.state_variables.source_temperature - 273.15 for eb_solver in solvers]
         temp_sim = [calc_apparent_temperature(eb_solver=eb_solver, date_obs=date_obs) for eb_solver in solvers]
-        ax = plots.compare_temperature(obs=temp_obs, sim=temp_sim, ax=ax, return_ax=True)
+
+        all_sim.append(temp_sim)
+        all_obs.append(temp_obs)
+
+        ax = plots.compare_temperature(obs=temp_obs, sim=temp_sim, ax=ax, return_ax=True,
+                                       plot_colorbar=row_index == crop_df.index[-1])
         x_ls = range(24)
         ax2[0, 0].plot(x_ls, crop_weather['incident_diffuse_par_irradiance'], label=r'$\mathregular{{PAR}_{diff}}$')
         ax2[0, 0].plot(x_ls, crop_weather['incident_direct_par_irradiance'], label=r'$\mathregular{{PAR}_{dir}}$')
@@ -119,9 +126,14 @@ if __name__ == '__main__':
         ax2[2, 1].legend()
 
         ax2[0, 2] = plots.compare_temperature(obs=temp_obs, sim=temp_sim, ax=ax2[0, 2], return_ax=True)
-        ax2[0, 2].text(0.95, 0.8, 'sim vs obs',  ha='right', transform=ax2[0, 2].transAxes)
+        ax2[0, 2].text(0.95, 0.8, 'sim vs obs', ha='right', transform=ax2[0, 2].transAxes)
 
         fig2.savefig(path_figs / f'{row["Trt"]}{row["Plot"]}{date_obs.date()}.png')
         pyplot.close(fig2)
+
+    all_sim = [x for sublist in all_sim for x in sublist]
+    all_obs = [x for sublist in all_obs for x in sublist]
+    ax.text(0.1, 0.9, f"R2 = {stats.calc_r2(all_sim, all_obs):.3f}", transform=ax.transAxes)
+    ax.text(0.1, 0.8, f"RMSE = {stats.calc_rmse(all_sim, all_obs):.3f}", transform=ax.transAxes)
 
     fig.savefig(path_figs / 'sim_vs_obs.png')
