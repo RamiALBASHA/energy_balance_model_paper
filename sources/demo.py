@@ -1,3 +1,4 @@
+from datetime import datetime
 from math import pi
 from pathlib import Path
 
@@ -69,19 +70,33 @@ def get_sq2_weather_data(filename: str, adapt_irradiance: bool = True) -> pd.Dat
     return raw_data
 
 
-def get_grignon_weather_data(filename: str, adapt_irradiance: bool = True) -> pd.DataFrame:
+def get_grignon_weather_data(filename: str = None, file_path: Path = None, latitude: float = None,
+                             adapt_irradiance: bool = True, build_date: bool = False) -> pd.DataFrame:
+    assert not (filename is None and file_path is None), ValueError("One of 'filename' or 'file_path' must be provided")
+
     radiation_conversion = convert_unit(1, 'J/h/cm2', 'W/m2')
-    latitude = None
-    with open(str(Path(__file__).parent / filename), mode='r') as f:
+
+    if filename is not None:
+        file_path = Path(__file__).parent / filename
+
+    with open(str(file_path), mode='r') as f:
         for i, line in enumerate(f.readlines()):
             if 'latitude' in line:
                 latitude = float(line.split(':')[-1].replace(' ', '').replace('\n', ''))
-            if 'date' in line:
+                Warning(f"The value of 'latitude' is overwritten to {latitude:.3f})")
+            if 'date' in line or 'NUM_POSTE' in line:
                 break
 
-    raw_data = pd.read_csv(Path(__file__).parent / filename, decimal='.', sep=';', skiprows=i)
+    raw_data = pd.read_csv(file_path, decimal='.', sep=';', skiprows=i)
 
-    raw_data.loc[:, 'date'] = raw_data['date'].apply(lambda x: pd.to_datetime(x, format='%Y%m%d %H:%M:%S'))
+    if build_date:
+        raw_data.drop(['P', 'DI', "HO"], axis=1, inplace=True)
+        raw_data.dropna(inplace=True)
+        raw_data.loc[:, 'date'] = raw_data.apply(
+            lambda x: datetime(int(x['AN']), int(x['MOIS']), int(x['JOUR']), int(x['HEURE']) - 1), axis=1)
+    else:
+        raw_data.loc[:, 'date'] = raw_data['date'].apply(lambda x: pd.to_datetime(x, format='%Y%m%d %H:%M:%S'))
+
     raw_data.loc[:, 'wind_speed'] = raw_data.apply(lambda x: x['VT'] * 1000, axis=1)
     raw_data.loc[:, 'RG'] = raw_data.apply(lambda x: x['RG'] * radiation_conversion, axis=1)
     raw_data.loc[:, 'PAR_H'] = raw_data.apply(lambda x: x['PAR_H'] * radiation_conversion, axis=1)
