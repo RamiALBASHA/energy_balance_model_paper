@@ -1,8 +1,8 @@
-#  Source: Infos_pour_Pierre_Martre_donnees_archi_2011-2012.xlsx
+# Source: Infos_pour_Pierre_Martre_donnees_archi_2011-2012.xlsx
 # Surfaces en cm2
 # SF: Surface des limbes
-# Strate: Surface strate = surface exposée (i.e. 1/2 surface développée)
-# Le numéro de phytomère (numérotation en partant du sommet de l’axe)
+# Strate: Surface strate = surface exposee (i.e. 1/2 surface developpee)
+# Le numero de phytomere (numerotation en partant du sommet de l'axe)
 # strate3: entre ligules 3 et 4; strate2 ligules 2 et 3, etc.
 date;treatment;repetition;SF1;SF2;SF3;SF4;Strate3;Strate2;Strate1;Strate0;Epi
 2012-06-04;extensive;1;16.83;22.91;20.97;17.9;8.16;8.58;8.92;3.2;13.62
