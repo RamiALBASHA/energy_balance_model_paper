@@ -32,6 +32,19 @@ def convert_gai_percentage_to_gai(gai_percentage: float, shape_param: float) -> 
     return shape_param * log(gap_fraction)
 
 
+def calc_lai_profile(path_obs: Path) -> dict:
+    df = read_csv(path_obs, sep=';', decimal='.', comment='#')
+    measured_leaves = ['SF1', 'SF2', 'SF3', 'SF4']  # from the apex downwards
+    measured_leaves_ratios = [f'{s}toTot' for s in measured_leaves]
+    df.loc[:, 'SFtot'] = df.apply(lambda x: sum(x[measured_leaves]), axis=1)
+    for leaf, leaf_ratio in zip(measured_leaves, measured_leaves_ratios):
+        df.loc[:, leaf_ratio] = df.apply(lambda x: x[leaf] / x['SFtot'], axis=1)
+
+    gdf = df.groupby('treatment').mean()
+
+    return {k: [row[s] for s in measured_leaves_ratios] for k, row in gdf.iterrows()}
+
+
 if __name__ == '__main__':
     path_source = PathInfos.source_fmt.value
 
