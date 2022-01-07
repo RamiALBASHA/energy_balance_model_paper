@@ -79,4 +79,4 @@ class ParamsIrradiance(Enum):
 
     @classmethod
     def to_dict(cls):
-        return {member.name: member.value for member in cls}
+        return {name: member.value for name, member in cls.__members__.items()}
