@@ -132,3 +132,4 @@ dmypy.json
 utils/*.png
 sources/hsc/data_raw/
 /sources/hsc/figs/
+/sources/grignon/data_fmt/figs/
