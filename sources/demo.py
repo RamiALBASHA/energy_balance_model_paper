@@ -114,8 +114,8 @@ def get_grignon_weather_data(filename: str = None, file_path: Path = None, latit
     raw_data.loc[:, 'incident_diffuse_irradiance'] = raw_data.apply(
         lambda x: x['PAR_H'] * x['diffuse_ratio'], axis=1)
     raw_data.loc[:, 'vapor_pressure_deficit'] = raw_data.apply(
-        lambda x: weather.calc_vapor_pressure_deficit(
-            temperature_air=x['T'], temperature_leaf=x['T'], relative_humidity=x['U']), axis=1)
+        lambda x: max(0., weather.calc_vapor_pressure_deficit(
+            temperature_air=x['T'], temperature_leaf=x['T'], relative_humidity=x['U'])), axis=1)
     raw_data.loc[:, 'vapor_pressure'] = raw_data.apply(
         lambda x: x['vapor_pressure_deficit'] * x['U'] / 100., axis=1)
 
