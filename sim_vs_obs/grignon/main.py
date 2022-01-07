@@ -16,7 +16,8 @@ if __name__ == '__main__':
         latitude=WeatherInfo.latitude.value,
         build_date=True).set_index('date')
 
-    temperature_phyllo_all = read_phylloclimate(path_obs=path_source / 'temperatures_phylloclimate.csv')
+    temp_obs_all = read_phylloclimate(path_obs=path_source / 'temperatures_phylloclimate.csv')
+    temp_obs_all = temp_obs_all[temp_obs_all['leaf_level'] != UncertainData.leaf_level.value]
     gai_df = get_gai_data(path_obs=path_source / 'gai_percentage.csv')
 
     solvers = {}
@@ -27,12 +28,11 @@ if __name__ == '__main__':
         solvers.update({k: {} for k in weather_meso.index})
 
         for treatment in ('extensive', 'intensive'):
-            temp_obs = temperature_phyllo_all[
-                (temperature_phyllo_all['time'].dt.date == date_obs) &
-                (temperature_phyllo_all['treatment'] == treatment)]
+            temp_obs = temp_obs_all[
+                (temp_obs_all['time'].dt.date == date_obs) &
+                (temp_obs_all['treatment'] == treatment)]
 
-            leaves_measured = sorted(
-                [leaf for leaf in temp_obs['leaf_level'].unique() if leaf != UncertainData.leaf_level.value])[-4:]
+            leaves_measured = sorted(temp_obs['leaf_level'].unique())[-4:]
 
             gai_profile = build_gai_profile(
                 total_gai=gai_tot,
@@ -51,3 +51,4 @@ if __name__ == '__main__':
                 solver.run(is_stability_considered=True)
                 solvers[datetime_obs].update({treatment: solver})
                 print(f'{datetime_obs}\t{treatment}')
+    x = 1
