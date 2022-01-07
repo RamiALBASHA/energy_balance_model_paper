@@ -30,7 +30,7 @@ def get_gai_data(path_obs: Path) -> DataFrame:
         lambda x: convert_gai_percentage_to_gai(gai_percentage=x['avg'], shape_param=ParamsGapFract2Gai.wheat.value),
         axis=1)
     df.loc[:, 'date'] = df.apply(lambda x: datetime.strptime(x['date'], '%Y-%m-%d').date(), axis=1)
-    return df.set_index('date')
+    return df
 
 
 def build_gai_profile(total_gai: float, layer_ratios: list, layer_ids: list = None) -> dict:
