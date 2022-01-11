@@ -4,7 +4,7 @@ from crop_energy_balance.solver import Solver
 from matplotlib import pyplot, ticker
 
 from sim_vs_obs.grignon.base_functions import (get_gai_data, build_gai_profile, read_phylloclimate,
-                                               set_energy_balance_inputs)
+                                               set_energy_balance_inputs, get_gai_from_sq2)
 from sim_vs_obs.grignon.config import (PathInfos, WeatherInfo, CanopyInfo, UncertainData)
 from sources.demo import get_grignon_weather_data
 
@@ -21,10 +21,13 @@ if __name__ == '__main__':
 
     temp_obs_all = read_phylloclimate(path_obs=path_source / 'temperatures_phylloclimate.csv')
     temp_obs_all = temp_obs_all[temp_obs_all['leaf_level'] != UncertainData.leaf_level.value]
-    gai_df = get_gai_data(path_obs=path_source / 'gai_percentage.csv')
+
+    dates_obs = get_gai_data(path_obs=path_source / 'gai_percentage.csv')['date'].unique()
+
+    gai_df = get_gai_from_sq2(path_sim=PathInfos.sq2_output.value)
+    gai_df = gai_df[gai_df['date'].isin(dates_obs)]
 
     sim_obs_dict = {}
-    dates_obs = gai_df['date'].unique()
     for date_obs in dates_obs:
         weather_meso = weather_meso_all.loc[str(date_obs)]
         sim_obs_dict.update({k: {} for k in weather_meso.index})
@@ -87,11 +90,13 @@ if __name__ == '__main__':
 
             y_obs = []
             x_obs = []
+            x_obs_avg = []
             x_sim = []
             for layer in canopy_layers:
                 ax_h.set_title(f'{treatment} (GAI={sum(solver.crop.inputs.leaf_layers.values()):.2f})')
-                obs_temperature = obs[obs['leaf_level'] == layer]['temperature'].to_list()
-                x_obs += obs_temperature
+                obs_temperature = obs[obs['leaf_level'] == layer]['temperature']
+                x_obs_avg.append(obs_temperature.mean())
+                x_obs += obs_temperature.to_list()
                 y_obs += [layer] * len(obs_temperature)
                 x_sim.append(solver.crop[layer].temperature - 273.15)
 
@@ -99,6 +104,7 @@ if __name__ == '__main__':
             ax_h.scatter(x_sim, canopy_layers, marker='o', c='blue')
             ax_d.scatter([datetime_obs.hour] * len(x_obs), x_obs, marker='s', c='red', alpha=0.3)
             ax_d.scatter([datetime_obs.hour] * len(x_sim), x_sim, marker='o', c='blue')
+            ax_h.scatter(x_obs_avg, canopy_layers, marker='o', edgecolor='black', c='red')
 
         axs_h[0].set(ylim=(0, 13), xlim=(-5, 30))
         [ax.set_ylabel('layer index') for ax in axs_h]

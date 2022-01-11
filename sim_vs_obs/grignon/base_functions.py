@@ -4,7 +4,8 @@ from pathlib import Path
 
 from crop_irradiance.uniform_crops import inputs as irradiance_inputs, params as irradiance_params, \
     shoot as irradiance_canopy
-from pandas import DataFrame, read_csv, Series
+from matplotlib import pyplot
+from pandas import DataFrame, read_csv, Series, concat
 
 from sim_vs_obs.grignon.config import ParamsGapFract2Gai, ParamsIrradiance, WeatherInfo, ParamsEnergyBalance
 
@@ -129,3 +130,39 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
         "leaf_scattering_coefficient": irradiance_obj.params.leaf_scattering_coefficient})
 
     return eb_inputs, eb_params
+
+
+def get_gai_from_sq2(path_sim: Path) -> DataFrame:
+    sim = []
+    for treatment in ('intensive', 'extensive'):
+        path_sim_trt = path_sim / f"{treatment.replace('ve', 'f').capitalize()}.sqsro"
+        start_line, end_line = None, None
+        with open(path_sim_trt) as f:
+            for i, line in enumerate(f.readlines()):
+                if line.startswith('DATE') and start_line is None:
+                    start_line = i
+                elif len(line.replace('\n', '')) == 0 and start_line is not None:
+                    end_line = i
+                    break
+        sim_df_trt = read_csv(path_sim_trt, sep='\t', decimal='.', skiprows=start_line, nrows=end_line - start_line - 1)
+        sim_df_trt.loc[:, 'treatment'] = treatment
+        sim_df_trt.loc[:, 'DATE'] = sim_df_trt.apply(lambda x: datetime.strptime(x['DATE'], '%Y-%m-%d').date(), axis=1)
+        sim_df_trt.rename(columns={'DATE': 'date', 'GAID': 'gai'}, inplace=True)
+        sim.append(sim_df_trt)
+
+    return concat(sim, ignore_index=True)
+
+
+def compare_sim_obs_gai(path_obs: Path, path_sim: Path):
+    fig, ax = pyplot.subplots()
+    obs_df = get_gai_data(path_obs=path_obs)
+    sim_df = get_gai_from_sq2(path_sim=path_sim)
+
+    for treatment in obs_df['treatment'].unique():
+        obs_trt = obs_df[obs_df['treatment'] == treatment]
+        sim_trt = sim_df[sim_df['treatment'] == treatment]
+        ax.scatter(obs_trt['date'], obs_trt['gai'], label=f'obs {treatment}')
+        ax.scatter(sim_trt['DATE'], sim_trt['GAID'], label=f'sim {treatment}')
+    ax.set(ylabel='GAI [-]')
+    ax.legend()
+    pass

@@ -8,6 +8,7 @@ from utils.van_genuchten_params import VanGenuchtenParams
 
 class PathInfos(Enum):
     source_fmt = Path(__file__).parents[2] / 'sources/grignon/data_fmt'
+    sq2_output = source_fmt / 'sim_sq2/3-Output'
 
 
 class ParamsGapFract2Gai(Enum):
