@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from math import pi
 from pathlib import Path
 
@@ -94,6 +94,7 @@ def get_grignon_weather_data(filename: str = None, file_path: Path = None, latit
         raw_data.dropna(inplace=True)
         raw_data.loc[:, 'date'] = raw_data.apply(
             lambda x: datetime(int(x['AN']), int(x['MOIS']), int(x['JOUR']), int(x['HEURE']) - 1), axis=1)
+        raw_data.loc[:, 'date'] = raw_data.loc[:, 'date'] + timedelta(hours=1)
     else:
         raw_data.loc[:, 'date'] = raw_data['date'].apply(lambda x: pd.to_datetime(x, format='%Y%m%d %H:%M:%S'))
 
