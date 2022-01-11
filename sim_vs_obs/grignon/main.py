@@ -100,7 +100,7 @@ if __name__ == '__main__':
             ax_d.scatter([datetime_obs.hour] * len(x_obs), x_obs, marker='s', c='red', alpha=0.3)
             ax_d.scatter([datetime_obs.hour] * len(x_sim), x_sim, marker='o', c='blue')
 
-        axs_h[0].set(ylim=(0, 13), xlim=(-5, 25))
+        axs_h[0].set(ylim=(0, 13), xlim=(-5, 30))
         [ax.set_ylabel('layer index') for ax in axs_h]
         axs_h[1].set_xlabel(r'$\mathregular{T_{leaf}\/[^\circ C]}$')
         axs_h[0].yaxis.set_major_locator(ticker.MultipleLocator(1))
