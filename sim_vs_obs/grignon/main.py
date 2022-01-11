@@ -69,7 +69,7 @@ if __name__ == '__main__':
         actual_date = datetime_obs.date()
         if actual_date != idate and idate is not None:
             for ax_d, treatment in zip(axs_d, treatments):
-                ax_d.set(ylim=(-15, 25), ylabel=r'$\mathregular{T_{leaf}\/[^\circ C]}$',
+                ax_d.set(ylim=(-15, 30), ylabel=r'$\mathregular{T_{leaf}\/[^\circ C]}$',
                          title=f"{treatment} (GAI={sum(sim_obs_dict[datetime_obs][treatment]['solver'].crop.inputs.leaf_layers.values()):.2f})")
 
             axs_d[-1].set(xlabel='hour')
