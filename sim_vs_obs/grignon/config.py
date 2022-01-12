@@ -1,3 +1,4 @@
+from datetime import date
 from enum import Enum
 from pathlib import Path
 
@@ -53,6 +54,7 @@ class CanopyInfo:
 
 class UncertainData(Enum):
     leaf_level = 5.5
+    temperature_date = date(2012, 5, 29)
 
 
 class ParamsIrradiance(Enum):

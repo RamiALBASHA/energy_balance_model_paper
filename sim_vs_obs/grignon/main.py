@@ -23,6 +23,7 @@ if __name__ == '__main__':
     temp_obs_all = temp_obs_all[temp_obs_all['leaf_level'] != UncertainData.leaf_level.value]
 
     dates_obs = get_gai_data(path_obs=path_source / 'gai_percentage.csv')['date'].unique()
+    dates_obs = [d for d in dates_obs if d != UncertainData.temperature_date.value]
 
     gai_df = get_gai_from_sq2(path_sim=PathInfos.sq2_output.value)
     gai_df = gai_df[gai_df['date'].isin(dates_obs)]
