@@ -1,11 +1,11 @@
 from pathlib import Path
 
 from crop_energy_balance.solver import Solver
-from matplotlib import pyplot, ticker
 
 from sim_vs_obs.grignon.base_functions import (get_gai_data, build_gai_profile, read_phylloclimate,
                                                set_energy_balance_inputs, get_gai_from_sq2, get_canopy_profile_from_sq2)
 from sim_vs_obs.grignon.config import (PathInfos, WeatherInfo, CanopyInfo, UncertainData)
+from sim_vs_obs.grignon.plots import plot_dynamic
 from sources.demo import get_grignon_weather_data
 
 if __name__ == '__main__':
@@ -81,53 +81,4 @@ if __name__ == '__main__':
     fig_path = Path(__file__).parent / 'figs'
     fig_path.mkdir(parents=True, exist_ok=True)
 
-    idate = None
-    fig_d, axs_d = pyplot.subplots(nrows=2, sharex='all', sharey='all')
-    for counter, datetime_obs in enumerate(sim_obs_dict.keys()):
-        treatments = list(sim_obs_dict[datetime_obs].keys())
-
-        actual_date = datetime_obs.date()
-        if actual_date != idate and idate is not None:
-            for ax_d, treatment in zip(axs_d, treatments):
-                ax_d.set(ylim=(-15, 30), ylabel=r'$\mathregular{T_{leaf}\/[^\circ C]}$',
-                         title=f"{treatment} (GAI={sum(sim_obs_dict[datetime_obs][treatment]['solver'].crop.inputs.leaf_layers.values()):.2f})")
-
-            axs_d[-1].set(xlabel='hour')
-            axs_d[-1].xaxis.set_major_locator(ticker.MultipleLocator(4))
-            fig_d.savefig(fig_path / f'{idate}.png')
-            pyplot.close(fig_d)
-            fig_d, axs_d = pyplot.subplots(nrows=len(treatments), sharex='all', sharey='all')
-        idate = actual_date
-
-        fig_h, axs_h = pyplot.subplots(nrows=len(treatments), sharex='all', sharey='all')
-        for ax_h, ax_d, treatment in zip(axs_h, axs_d, treatments):
-            solver = sim_obs_dict[datetime_obs][treatment]['solver']
-            obs = sim_obs_dict[datetime_obs][treatment]['obs']
-            canopy_layers = [k for k in solver.crop.components_keys if k != -1]
-
-            y_obs = []
-            x_obs = []
-            x_obs_avg = []
-            x_sim = []
-            for layer in canopy_layers:
-                ax_h.set_title(f'{treatment} (GAI={sum(solver.crop.inputs.leaf_layers.values()):.2f})')
-                obs_temperature = obs[obs['leaf_level'] == layer]['temperature']
-                x_obs_avg.append(obs_temperature.mean())
-                x_obs += obs_temperature.to_list()
-                y_obs += [layer] * len(obs_temperature)
-                x_sim.append(solver.crop[layer].temperature - 273.15)
-
-            ax_h.scatter(x_obs, y_obs, marker='s', c='red', alpha=0.3)
-            ax_h.scatter(x_sim, canopy_layers, marker='o', c='blue')
-            ax_d.scatter([datetime_obs.hour] * len(x_obs), x_obs, marker='s', c='red', alpha=0.3)
-            ax_d.scatter([datetime_obs.hour] * len(x_sim), x_sim, marker='o', c='blue')
-            ax_h.scatter(x_obs_avg, canopy_layers, marker='o', edgecolor='black', c='red')
-
-        axs_h[0].set(ylim=(0, 13), xlim=(-5, 30))
-        [ax.set_ylabel('layer index') for ax in axs_h]
-        axs_h[1].set_xlabel(r'$\mathregular{T_{leaf}\/[^\circ C]}$')
-        axs_h[0].yaxis.set_major_locator(ticker.MultipleLocator(1))
-
-        fig_h.suptitle(f"{datetime_obs.strftime('%Y-%m-%d %H:%M')}")
-        fig_h.savefig(fig_path / f'{counter}.png')
-        pyplot.close(fig_h)
+    plot_dynamic(data=sim_obs_dict, path_figs_dir=fig_path)
