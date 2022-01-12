@@ -99,7 +99,7 @@ class ParamsEnergyBalance(Enum):
 
 
 class SoilInfo:
-    def __init__(self, soil_class: str = 'Silty_Loam'):
+    def __init__(self, soil_class: str = 'Silty_Loam', is_from_sq2: bool = True):
         """Note: Soil class has been defined by F. Bernard thesis as deep silt loam
         Reference:
             Bernard F., 2012.
@@ -108,3 +108,9 @@ class SoilInfo:
         """
         self.soil_class = soil_class
         self.hydraulic_props = getattr(VanGenuchtenParams, self.soil_class).value
+        self.theta_sat_from_sq2 = 33.1
+        self.theta_fc_from_sq2 = 32.8
+        self.theta_pwp_from_sq2 = 14.6
+
+        if is_from_sq2:
+            self.hydraulic_props[1] = self.theta_sat_from_sq2

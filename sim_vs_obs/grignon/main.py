@@ -51,13 +51,14 @@ if __name__ == '__main__':
                 is_obs=not use_sq2_outputs)
 
             if use_sq2_outputs:
-                canopy_height = max(
-                    0.1, gai_df[(gai_df['date'] == date_obs) & (gai_df['treatment'] == treatment)]['height'].values[0])
-                soil_saturation_ratio = (
+                last_node_height = gai_df[(gai_df['date'] == date_obs) &
+                                          (gai_df['treatment'] == treatment)]['height'].values[0]
+                canopy_height = last_node_height + 0.30
+                plant_available_water_fraction = (
                     water_df[(water_df['date'] == date_obs) & (water_df['treatment'] == treatment)]['FPAWD'].values[0])
             else:
                 canopy_height = 0.7
-                soil_saturation_ratio = 0.9
+                plant_available_water_fraction = 0.9
 
             for datetime_obs, hourly_weather in weather_meso.iterrows():
                 eb_inputs, eb_params = set_energy_balance_inputs(
@@ -65,7 +66,7 @@ if __name__ == '__main__':
                     is_lumped=canopy_info.is_lumped,
                     weather_data=hourly_weather,
                     canopy_height=canopy_height,
-                    soil_saturation_ratio=soil_saturation_ratio)
+                    plant_available_water_fraction=plant_available_water_fraction)
 
                 solver = Solver(leaves_category=canopy_info.leaves_category,
                                 inputs_dict=eb_inputs,

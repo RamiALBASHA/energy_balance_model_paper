@@ -126,7 +126,7 @@ def calc_absorbed_irradiance(
 
 
 def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: Series, canopy_height: float,
-                              soil_saturation_ratio: float) -> (
+                              plant_available_water_fraction: float) -> (
         dict, dict):
     absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
         leaf_layers=leaf_layers,
@@ -135,11 +135,13 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
         incident_diffuse_par_irradiance=weather_data['incident_diffuse_irradiance'],
         solar_inclination_angle=weather_data['solar_declination'])
 
+    saturation_ratio, water_potential = calc_grignon_soil_water_status(
+            plant_available_water_fraction=plant_available_water_fraction)
     eb_inputs = {
         "measurement_height": WeatherInfo.reference_height.value,
         "canopy_height": canopy_height,
-        "soil_saturation_ratio": soil_saturation_ratio,
-        "soil_water_potential": calc_grignon_soil_water_potential(saturation_ratio=soil_saturation_ratio),
+        "soil_saturation_ratio": saturation_ratio,
+        "soil_water_potential": water_potential,
         "atmospheric_pressure": WeatherInfo.atmospheric_pressure.value,
         "leaf_layers": leaf_layers,
         "solar_inclination": weather_data['solar_declination'],
@@ -227,6 +229,13 @@ def get_canopy_profile_from_sq2(path_sim: Path) -> DataFrame:
     return concat(sim, ignore_index=True)
 
 
-def calc_grignon_soil_water_potential(saturation_ratio: float) -> float:
-    _, theta_sat, *_ = SoilInfo().hydraulic_props
-    return calc_soil_water_potential(theta=saturation_ratio * theta_sat, soil_class=SoilInfo().soil_class)
+def calc_grignon_soil_water_status(plant_available_water_fraction: float) -> tuple[float, float]:
+    soil_infos = SoilInfo()
+
+    soil_props = soil_infos.hydraulic_props
+    theta_fc = soil_infos.theta_fc_from_sq2
+    theta_pwp = soil_infos.theta_pwp_from_sq2
+    theta = plant_available_water_fraction * (theta_fc - theta_pwp) + theta_pwp
+    saturation_ratio = theta / soil_props[1]
+
+    return saturation_ratio, calc_soil_water_potential(theta=theta, soil_properties=soil_props) * 1.e-4
