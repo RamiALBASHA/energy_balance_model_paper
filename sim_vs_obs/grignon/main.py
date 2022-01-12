@@ -4,7 +4,7 @@ from crop_energy_balance.solver import Solver
 from matplotlib import pyplot, ticker
 
 from sim_vs_obs.grignon.base_functions import (get_gai_data, build_gai_profile, read_phylloclimate,
-                                               set_energy_balance_inputs, get_gai_from_sq2)
+                                               set_energy_balance_inputs, get_gai_from_sq2, get_canopy_profile_from_sq2)
 from sim_vs_obs.grignon.config import (PathInfos, WeatherInfo, CanopyInfo, UncertainData)
 from sources.demo import get_grignon_weather_data
 
@@ -22,11 +22,15 @@ if __name__ == '__main__':
     temp_obs_all = read_phylloclimate(path_obs=path_source / 'temperatures_phylloclimate.csv')
     temp_obs_all = temp_obs_all[temp_obs_all['leaf_level'] != UncertainData.leaf_level.value]
 
-    dates_obs = get_gai_data(path_obs=path_source / 'gai_percentage.csv')['date'].unique()
-    dates_obs = [d for d in dates_obs if d != UncertainData.temperature_date.value]
+    gai_obs_df = get_gai_data(path_obs=path_source / 'gai_percentage.csv')
+    use_sq2_outputs = True
+    if use_sq2_outputs:
+        gai_df = get_canopy_profile_from_sq2(path_sim=PathInfos.sq2_output.value)
+        water_df = get_gai_from_sq2(path_sim=PathInfos.sq2_output.value)
+    else:
+        gai_df = gai_obs_df.copy()
 
-    gai_df = get_gai_from_sq2(path_sim=PathInfos.sq2_output.value)
-    gai_df = gai_df[gai_df['date'].isin(dates_obs)]
+    dates_obs = [d for d in gai_obs_df['date'].unique() if d != UncertainData.temperature_date.value]
 
     sim_obs_dict = {}
     for date_obs in dates_obs:
@@ -34,23 +38,34 @@ if __name__ == '__main__':
         sim_obs_dict.update({k: {} for k in weather_meso.index})
 
         for treatment in ('extensive', 'intensive'):
-            gai_tot = gai_df[(gai_df['date'] == date_obs) & (gai_df['treatment'] == treatment)]['gai'].values[0]
             temp_obs = temp_obs_all[
                 (temp_obs_all['time'].dt.date == date_obs) &
                 (temp_obs_all['treatment'] == treatment)]
-
             leaves_measured = sorted(temp_obs['leaf_level'].unique())[-4:]
 
             gai_profile = build_gai_profile(
-                total_gai=gai_tot,
-                layer_ratios=getattr(canopy_info, treatment),
-                layer_ids=list(reversed(leaves_measured)))
+                gai_df=gai_df,
+                treatment=treatment,
+                date_obs=date_obs,
+                leaves_measured=leaves_measured,
+                is_obs=not use_sq2_outputs)
+
+            if use_sq2_outputs:
+                canopy_height = max(
+                    0.1, gai_df[(gai_df['date'] == date_obs) & (gai_df['treatment'] == treatment)]['height'].values[0])
+                soil_saturation_ratio = (
+                    water_df[(water_df['date'] == date_obs) & (water_df['treatment'] == treatment)]['FPAWD'].values[0])
+            else:
+                canopy_height = 0.7
+                soil_saturation_ratio = 0.9
 
             for datetime_obs, hourly_weather in weather_meso.iterrows():
                 eb_inputs, eb_params = set_energy_balance_inputs(
                     leaf_layers=gai_profile,
                     is_lumped=canopy_info.is_lumped,
-                    weather_data=hourly_weather)
+                    weather_data=hourly_weather,
+                    canopy_height=canopy_height,
+                    soil_saturation_ratio=soil_saturation_ratio)
 
                 solver = Solver(leaves_category=canopy_info.leaves_category,
                                 inputs_dict=eb_inputs,

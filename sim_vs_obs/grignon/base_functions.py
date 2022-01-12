@@ -7,7 +7,9 @@ from crop_irradiance.uniform_crops import inputs as irradiance_inputs, params as
 from matplotlib import pyplot
 from pandas import DataFrame, read_csv, Series, concat
 
-from sim_vs_obs.grignon.config import ParamsGapFract2Gai, ParamsIrradiance, WeatherInfo, ParamsEnergyBalance
+from sim_vs_obs.grignon.config import (ParamsGapFract2Gai, ParamsIrradiance, WeatherInfo, ParamsEnergyBalance, SoilInfo,
+                                       CanopyInfo)
+from utils.water_retention import calc_soil_water_potential
 
 
 def convert_gai_percentage_to_gai(gai_percentage: float, shape_param: float) -> float:
@@ -34,7 +36,7 @@ def get_gai_data(path_obs: Path) -> DataFrame:
     return df
 
 
-def build_gai_profile(total_gai: float, layer_ratios: list, layer_ids: list = None) -> dict:
+def build_gai_profile_from_obs(total_gai: float, layer_ratios: list, layer_ids: list = None) -> dict:
     number_layers = len(layer_ratios)
     number_ratios = len(layer_ids)
 
@@ -48,6 +50,31 @@ def build_gai_profile(total_gai: float, layer_ratios: list, layer_ids: list = No
         layer_ids = list(range(len(layer_ratios)))
 
     return {layer_id: total_gai * gai_ratio for layer_id, gai_ratio in zip(layer_ids, layer_ratios)}
+
+
+def build_gai_profile_from_sq2(gai_df: DataFrame, leaves_measured: list):
+    max_index_leaves_measured = int(leaves_measured[-1])
+    gai_profile = {s.replace('layer ', ''): gai_df[s].values[0] for s in gai_df.columns if
+                   s.startswith('layer')}
+    gai_profile = {k: v for k, v in gai_profile.items() if v != 0}
+    forced_layer_indices = range(max_index_leaves_measured - len(gai_profile) + 1,
+                                 max_index_leaves_measured + 1)
+    return {k: v for k, (_, v) in zip(forced_layer_indices, gai_profile.items())}
+
+
+def build_gai_profile(gai_df: DataFrame, treatment: str, date_obs: datetime, leaves_measured: list,
+                      is_obs: bool) -> dict:
+    gai_trt = gai_df[(gai_df['date'] == date_obs) & (gai_df['treatment'] == treatment)]
+    if is_obs:
+        gai_profile = build_gai_profile_from_obs(
+            total_gai=gai_trt['gai'].values[0],
+            layer_ratios=getattr(CanopyInfo(), treatment),
+            layer_ids=list(reversed(leaves_measured)))
+    else:
+        gai_profile = build_gai_profile_from_sq2(
+            gai_df=gai_trt,
+            leaves_measured=leaves_measured)
+    return gai_profile
 
 
 def read_phylloclimate(path_obs: Path, uncertain_data: dict = None) -> DataFrame:
@@ -98,7 +125,9 @@ def calc_absorbed_irradiance(
     return absorbed_par_irradiance, canopy
 
 
-def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: Series) -> (dict, dict):
+def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: Series, canopy_height: float,
+                              soil_saturation_ratio: float) -> (
+        dict, dict):
     absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
         leaf_layers=leaf_layers,
         is_lumped=is_lumped,
@@ -108,9 +137,9 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
 
     eb_inputs = {
         "measurement_height": WeatherInfo.reference_height.value,
-        "canopy_height": 0.7,
-        "soil_saturation_ratio": 0.9,
-        "soil_water_potential": -0.1,
+        "canopy_height": canopy_height,
+        "soil_saturation_ratio": soil_saturation_ratio,
+        "soil_water_potential": calc_grignon_soil_water_potential(saturation_ratio=soil_saturation_ratio),
         "atmospheric_pressure": WeatherInfo.atmospheric_pressure.value,
         "leaf_layers": leaf_layers,
         "solar_inclination": weather_data['solar_declination'],
@@ -166,3 +195,38 @@ def compare_sim_obs_gai(path_obs: Path, path_sim: Path):
     ax.set(ylabel='GAI [-]')
     ax.legend()
     pass
+
+
+def get_canopy_profile_from_sq2(path_sim: Path) -> DataFrame:
+    sim = []
+    for treatment in ('intensive', 'extensive'):
+        path_sim_trt = path_sim / f"{treatment.replace('ve', 'f').capitalize()}.sqsro"
+        start_line, end_line = None, None
+        with open(path_sim_trt) as f:
+            for i, line in enumerate(f.readlines()):
+                if 'Total leaf (lamina + sheath) surface area' in line and start_line is None:
+                    start_line = i + 1
+                elif len(line.replace('\n', '')) == 0 and start_line is not None:
+                    end_line = i
+                    break
+
+        tempo = read_csv(path_sim_trt, sep='\t', decimal='.', skiprows=start_line, nrows=end_line - start_line - 1)
+        tempo.drop([col for col in tempo.columns if 'Unnamed' in col], axis=1, inplace=True)
+        tempo.loc[:, 'treatment'] = treatment
+        tempo.loc[:, 'date'] = tempo.apply(lambda x: datetime.strptime(x['yyyy-mm-dd'], '%Y-%m-%d %H:%M:%S').date(),
+                                           axis=1)
+        tempo.pop('yyyy-mm-dd')
+        tempo.pop('yyyy-mm-dd.1')
+
+        sim_df = tempo.loc[:,
+                 ['date', 'treatment'] + [col for col in tempo.columns if '.1' not in col and col.startswith('layer')]]
+        sim_df.loc[:, 'height'] = tempo.loc[:, [col for col in tempo.columns if '.1' in col]].sum(axis=1)
+
+        sim.append(sim_df)
+
+    return concat(sim, ignore_index=True)
+
+
+def calc_grignon_soil_water_potential(saturation_ratio: float) -> float:
+    _, theta_sat, *_ = SoilInfo().hydraulic_props
+    return calc_soil_water_potential(theta=saturation_ratio * theta_sat, soil_class=SoilInfo().soil_class)
