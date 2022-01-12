@@ -5,7 +5,7 @@ from crop_energy_balance.solver import Solver
 from sim_vs_obs.grignon.base_functions import (get_gai_data, build_gai_profile, read_phylloclimate,
                                                set_energy_balance_inputs, get_gai_from_sq2, get_canopy_profile_from_sq2)
 from sim_vs_obs.grignon.config import (PathInfos, WeatherInfo, CanopyInfo, UncertainData)
-from sim_vs_obs.grignon.plots import plot_dynamic
+from sim_vs_obs.grignon import plots
 from sources.demo import get_grignon_weather_data
 
 if __name__ == '__main__':
@@ -81,4 +81,7 @@ if __name__ == '__main__':
     fig_path = Path(__file__).parent / 'figs'
     fig_path.mkdir(parents=True, exist_ok=True)
 
-    plot_dynamic(data=sim_obs_dict, path_figs_dir=fig_path)
+    plots.plot_dynamic(data=sim_obs_dict, path_figs_dir=fig_path)
+    plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path)
+    plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path, relative_layer_index=-1)
+    plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path, relative_layer_index=0)
