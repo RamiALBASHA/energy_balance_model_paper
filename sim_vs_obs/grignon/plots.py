@@ -115,5 +115,5 @@ def plot_sim_vs_obs(data: dict, path_figs_dir: Path, relative_layer_index: int =
 
     fig.tight_layout()
     fig.subplots_adjust(wspace=0)
-    fig.savefig(path_figs_dir / f'sim_vs_obs{relative_layer_index}.png')
+    fig.savefig(path_figs_dir / f"sim_vs_obs_{'all' if relative_layer_index is None else relative_layer_index}.png")
     pass

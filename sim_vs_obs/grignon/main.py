@@ -78,7 +78,7 @@ if __name__ == '__main__':
                         'obs': temp_obs[temp_obs['time'] == datetime_obs].drop(['time', 'treatment'], axis=1)}})
                 print(f'{datetime_obs}\t{treatment}')
 
-    fig_path = Path(__file__).parent / 'figs'
+    fig_path = PathInfos.source_fmt.value.parent / 'figs'
     fig_path.mkdir(parents=True, exist_ok=True)
 
     plots.plot_dynamic(data=sim_obs_dict, path_figs_dir=fig_path)
