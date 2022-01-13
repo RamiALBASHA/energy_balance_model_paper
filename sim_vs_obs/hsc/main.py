@@ -3,16 +3,21 @@ from datetime import timedelta
 
 from crop_energy_balance.solver import Solver
 from matplotlib import pyplot
-from pandas import read_excel
+from pandas import read_excel, DataFrame
 
 from sim_vs_obs.hsc import plots
 from sim_vs_obs.hsc.base_functions import get_weather_data, set_energy_balance_inputs, calc_apparent_temperature
 from sim_vs_obs.hsc.config import PathInfos, WeatherInfo
 from utils import stats
 
+MAP_UNITS = {
+    't': [r'$\mathregular{T_{canopy}}$', r'$\mathregular{[^\circ C]}$'],
+    'delta_t': [r'$\mathregular{T_{canopy}-T_{air}}$', r'$\mathregular{[^\circ C]}$'],
+}
+
 if __name__ == '__main__':
 
-    fig, ax = pyplot.subplots()
+    fig, axs = pyplot.subplots(ncols=2)
 
     path_source_raw = PathInfos.source_raw.value
     path_source_fmt = PathInfos.source_fmt.value
@@ -53,8 +58,10 @@ if __name__ == '__main__':
     soil_df = read_excel(path_source_fmt / 'soil_data.xlsx', sheet_name='data')
     soil_df.loc[:, 'datetime'] = soil_df.apply(lambda x: x['DATE'] + timedelta(hours=x['Time']), axis=1)
 
-    all_sim = []
-    all_obs = []
+    all_sim_t = []
+    all_obs_t = []
+
+    temperature_air = []
     for row_index, row in crop_df.iterrows():
         print(row_index)
         fig2, ax2 = pyplot.subplots(3, 3, sharex='col', figsize=(8, 8))
@@ -84,6 +91,8 @@ if __name__ == '__main__':
                 soil_data=soil_df,
                 weather_data=w_data)
 
+            temperature_air.append(eb_inputs['air_temperature'])
+
             solver = Solver(leaves_category='lumped' if is_lumped else 'sunlit_shaded',
                             inputs_dict=eb_inputs,
                             params_dict=eb_params)
@@ -94,11 +103,9 @@ if __name__ == '__main__':
         temp_sim_source = [eb_solver.crop.state_variables.source_temperature - 273.15 for eb_solver in solvers]
         temp_sim = [calc_apparent_temperature(eb_solver=eb_solver, date_obs=date_obs) for eb_solver in solvers]
 
-        all_sim.append(temp_sim)
-        all_obs.append(temp_obs)
+        all_sim_t += temp_sim
+        all_obs_t += temp_obs.tolist()
 
-        ax = plots.compare_temperature(obs=temp_obs, sim=temp_sim, ax=ax, return_ax=True,
-                                       plot_colorbar=row_index == crop_df.index[-1])
         x_ls = range(24)
         ax2[0, 0].plot(x_ls, crop_weather['incident_diffuse_par_irradiance'], label=r'$\mathregular{{PAR}_{diff}}$')
         ax2[0, 0].plot(x_ls, crop_weather['incident_direct_par_irradiance'], label=r'$\mathregular{{PAR}_{dir}}$')
@@ -109,7 +116,8 @@ if __name__ == '__main__':
         ax2[1, 0].set_ylim(0, 6)
         ax2[1, 0].legend()
 
-        ax2[2, 0].plot(x_ls, crop_weather['air_temperature'], label=r'$\mathregular{T_{air}}$', color='black', linestyle='--')
+        ax2[2, 0].plot(x_ls, crop_weather['air_temperature'], label=r'$\mathregular{T_{air}}$', color='black',
+                       linestyle='--')
         ax2[2, 0].plot(x_ls, temp_obs, label=r'$\mathregular{T_{can,\/obs}}$', color='orange')
         ax2[2, 0].plot(x_ls, temp_sim, label=r'$\mathregular{T_{can,\/sim}}$', color='blue')
         ax2[2, 0].set_ylim(-5, 60)
@@ -122,7 +130,8 @@ if __name__ == '__main__':
         ax2[1, 1].set_ylim(0, 6)
         ax2[1, 1].legend()
 
-        ax2[2, 1].plot(x_ls, [eb_solver.crop.inputs.soil_water_potential for eb_solver in solvers], label=r'$\mathregular{\Psi_{soil}}$')
+        ax2[2, 1].plot(x_ls, [eb_solver.crop.inputs.soil_water_potential for eb_solver in solvers],
+                       label=r'$\mathregular{\Psi_{soil}}$')
         ax2[2, 1].legend()
 
         ax2[0, 2] = plots.compare_temperature(obs=temp_obs, sim=temp_sim, ax=ax2[0, 2], return_ax=True)
@@ -131,9 +140,19 @@ if __name__ == '__main__':
         fig2.savefig(path_figs / f'{row["Trt"]}{row["Plot"]}{date_obs.date()}.png')
         pyplot.close(fig2)
 
-    all_sim = [x for sublist in all_sim for x in sublist]
-    all_obs = [x for sublist in all_obs for x in sublist]
-    ax.text(0.1, 0.9, f"R2 = {stats.calc_r2(all_sim, all_obs):.3f}", transform=ax.transAxes)
-    ax.text(0.1, 0.8, f"RMSE = {stats.calc_rmse(all_sim, all_obs):.3f}", transform=ax.transAxes)
+    df = DataFrame(data={'sim_t': all_sim_t, 'obs_t': all_obs_t, 'air_t': temperature_air})
+    df.loc[:, 'sim_delta_t'] = df['sim_t'] - df['air_t']
+    df.loc[:, 'obs_delta_t'] = df['obs_t'] - df['air_t']
 
+    for ax, var_to_plot in zip(axs, ('t', 'delta_t')):
+        x = df[f'obs_{var_to_plot}'].tolist()
+        y = df[f'sim_{var_to_plot}'].tolist()
+        lims = [sorted(x + y)[i] for i in [0, -1]]
+        ax.scatter(x, y, marker='o', alpha=0.1)
+        ax.plot(lims, lims, 'k--')
+        ax.text(0.1, 0.9, f"R2 = {stats.calc_r2(x, y):.3f}", transform=ax.transAxes)
+        ax.text(0.1, 0.8, f"RMSE = {stats.calc_rmse(x, y):.3f}", transform=ax.transAxes)
+        ax.set(xlabel=' '.join(['obs'] + MAP_UNITS[var_to_plot]), ylabel=' '.join(['sim'] + MAP_UNITS[var_to_plot]))
+
+    fig.tight_layout()
     fig.savefig(path_figs / 'sim_vs_obs.png')
