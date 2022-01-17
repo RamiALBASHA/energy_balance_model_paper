@@ -221,10 +221,10 @@ def calc_absorbed_irradiance(
     canopy.calc_absorbed_irradiance()
 
     absorbed_par_irradiance = {index: layer.absorbed_irradiance for index, layer in canopy.items()}
-
+    non_absorbed_par_by_vegetation = sum([incident_direct_par_irradiance, incident_diffuse_par_irradiance]) - (
+        sum([sum(v.absorbed_irradiance.values()) for v in canopy.values()]))
     absorbed_par_irradiance.update(
-        {-1: {'lumped': sum([incident_direct_par_irradiance, incident_diffuse_par_irradiance]) - (
-            sum([sum(v.absorbed_irradiance.values()) for v in canopy.values()]))}})
+        {-1: {'lumped': (1. - SoilInfo.albedo.value) * non_absorbed_par_by_vegetation}})
 
     return absorbed_par_irradiance, canopy
 
