@@ -5,6 +5,7 @@ from alinea.caribu.sky_tools import Gensun
 from alinea.caribu.sky_tools.spitters_horaire import RdRsH
 from convert_units.converter import convert_unit
 from crop_energy_balance.solver import Solver
+from crop_energy_balance.params import Constants
 from crop_irradiance.uniform_crops import (
     inputs as irradiance_inputs, params as irradiance_params, shoot as irradiance_canopy)
 from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import (
@@ -270,3 +271,17 @@ def calc_apparent_temperature(eb_solver: Solver, date_obs: datetime) -> float:
     weighted_temperature.append(soil_visible_fraction * eb_solver.crop[-1].temperature)
     apparent_temperature = sum(weighted_temperature) / total_weight
     return apparent_temperature - 273.15
+
+
+def calc_neutral_aerodynamic_resistance(solver: Solver):
+    k = Constants().von_karman
+    u = solver.inputs.wind_speed
+    zr = solver.inputs.measurement_height
+    d = solver.crop.state_variables.zero_displacement_height
+    z0u = solver.crop.state_variables.roughness_length_for_momentum
+    z0v = solver.crop.state_variables.roughness_length_for_heat_transfer
+    phi_u = solver.crop.state_variables.stability_correction_for_momentum
+    phi_v = solver.crop.state_variables.stability_correction_for_heat
+    phi_u = 0
+    phi_v = 0
+    return 1. / (k ** 2 * u) * (log((zr - d) / z0u) - phi_u) * (log((zr - d) / z0v) - phi_v) * 3600.
