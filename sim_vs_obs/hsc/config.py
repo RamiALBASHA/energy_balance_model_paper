@@ -35,6 +35,8 @@ class SoilInfo(Enum):
 class ParamsInfo:
     def __init__(self):
         self.psi_half_aperture = -0.9703454766964716
+        self.lai_distribution_ratios = [0.28, 0.32, 0.24, 0.16]  # ratios are taken from Grignon Intensive Experiment.
+        self.number_leaf_layers = len(self.lai_distribution_ratios)
 
     def fit_psi_half_aperture(self, plot_result: bool = False):
         """Calculates a rough estimation of Misson's 'half_stomatal_aperture' parameters
