@@ -6,7 +6,7 @@ from pandas import read_excel
 
 from sim_vs_obs.hsc import plots
 from sim_vs_obs.hsc.base_functions import get_weather_data, set_energy_balance_inputs
-from sim_vs_obs.hsc.config import PathInfos, WeatherInfo
+from sim_vs_obs.hsc.config import PathInfos, WeatherInfo, ParamsInfo
 
 if __name__ == '__main__':
     path_source_raw = PathInfos.source_raw.value
@@ -15,12 +15,13 @@ if __name__ == '__main__':
     path_figs.mkdir(parents=True, exist_ok=True)
 
     crop_representation = 'layered_sunlit-shaded'
-    number_leaf_layers = 5
 
     is_bigleaf = 'bigleaf' in crop_representation
     is_lumped = 'lumped' in crop_representation
     if is_bigleaf:
-        number_leaf_layers = 1
+        lai_distribution_ratios = [1]
+    else:
+        lai_distribution_ratios = ParamsInfo().lai_distribution_ratios
 
     crop_df = read_excel(path_source_raw / '3. Crop response data/Biomass_Yield_Area_Phenology.ods',
                          engine='odf', sheet_name='Time_Series_Biom_Yield_Area_N', skiprows=4)
@@ -51,8 +52,8 @@ if __name__ == '__main__':
     all_solvers = {d: {} for d in set(list(crop_df['date']))}
     for row_index, row in crop_df.iterrows():
         print(row_index)
-        leaf_layers = {0: row['GAI']} if is_bigleaf else {i: row['GAI'] / number_leaf_layers for i in
-                                                          range(1, number_leaf_layers + 1)}
+        leaf_layers = {0: row['GAI']} if is_bigleaf else {i: row['GAI'] * r
+                                                          for i, r in enumerate(lai_distribution_ratios)}
         date_obs = row['date']
 
         crop_weather = get_weather_data(
