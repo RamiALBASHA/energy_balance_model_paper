@@ -58,6 +58,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
             soil_water_potential = []
             richardson = []
             aerodynamic_resistance = []
+            soil_abs_par = []
             temp_sim = []
             for solver in plot_res['solvers']:
                 incident_diffuse_par_irradiance.append(solver.crop.inputs.incident_irradiance['diffuse'])
@@ -68,6 +69,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
                 soil_water_potential.append(solver.crop.inputs.soil_water_potential)
                 richardson.append(solver.crop.state_variables.richardson_number)
                 aerodynamic_resistance.append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
+                soil_abs_par.append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
                 temp_sim.append(calc_apparent_temperature(eb_solver=solver, date_obs=d1))
 
             all_sim_t += temp_sim
@@ -76,6 +78,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
 
             axs[0, 0].plot(x_ls, incident_diffuse_par_irradiance, label=r'$\mathregular{{PAR}_{diff}}$')
             axs[0, 0].plot(x_ls, incident_direct_par_irradiance, label=r'$\mathregular{{PAR}_{dir}}$')
+            axs[0, 0].plot(x_ls, soil_abs_par, label=r'$\mathregular{{PAR}_{abs,\/soil}}$', linewidth=2)
             axs[0, 0].set_ylim((0, 500))
             axs[0, 0].legend()
 
