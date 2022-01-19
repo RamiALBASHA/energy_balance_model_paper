@@ -5,7 +5,7 @@ from matplotlib import cm, colors
 from matplotlib.ticker import MultipleLocator
 from pandas import DataFrame
 
-from sim_vs_obs.hsc.base_functions import calc_apparent_temperature
+from sim_vs_obs.hsc.base_functions import calc_apparent_temperature, calc_neutral_aerodynamic_resistance
 from utils import stats
 
 MAP_UNITS = {
@@ -58,6 +58,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
             soil_water_potential = []
             richardson = []
             aerodynamic_resistance = []
+            neutral_aerodynamic_resistance = []
             soil_abs_par = []
             temp_sim = []
             for solver in plot_res['solvers']:
@@ -69,6 +70,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
                 soil_water_potential.append(solver.crop.inputs.soil_water_potential)
                 richardson.append(solver.crop.state_variables.richardson_number)
                 aerodynamic_resistance.append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
+                neutral_aerodynamic_resistance.append(calc_neutral_aerodynamic_resistance(solver=solver))
                 soil_abs_par.append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
                 temp_sim.append(calc_apparent_temperature(eb_solver=solver, date_obs=d1))
 
@@ -128,6 +130,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
                            transform=axs[1, 2].transAxes)
 
             axs[2, 2].plot(x_ls, aerodynamic_resistance, label=r'$\mathregular{r_{a,\/0}}$')
+            axs[2, 2].plot(x_ls, neutral_aerodynamic_resistance, label=r'$\mathregular{r_{a,\/0,\/neutral}}$')
             axs[2, 2].set(ylim=(0, 360), ylabel="s m-1")
             axs[2, 2].legend()
 
