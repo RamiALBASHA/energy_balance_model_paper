@@ -52,7 +52,7 @@ if __name__ == '__main__':
     all_solvers = {d: {} for d in set(list(crop_df['date']))}
     for row_index, row in crop_df.iterrows():
         print(row_index)
-        leaf_layers = {0: row['GAI']} if is_bigleaf else {i: row['GAI'] * r
+        leaf_layers = {0: row['LAI']} if is_bigleaf else {i: row['LAI'] * r
                                                           for i, r in enumerate(lai_distribution_ratios)}
         date_obs = row['date']
 
