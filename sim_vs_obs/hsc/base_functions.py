@@ -280,8 +280,6 @@ def calc_neutral_aerodynamic_resistance(solver: Solver):
     d = solver.crop.state_variables.zero_displacement_height
     z0u = solver.crop.state_variables.roughness_length_for_momentum
     z0v = solver.crop.state_variables.roughness_length_for_heat_transfer
-    phi_u = solver.crop.state_variables.stability_correction_for_momentum
-    phi_v = solver.crop.state_variables.stability_correction_for_heat
     phi_u = 0
     phi_v = 0
     return 1. / (k ** 2 * u) * (log((zr - d) / z0u) - phi_u) * (log((zr - d) / z0v) - phi_v) * 3600.
