@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from crop_energy_balance.solver import Solver
 from matplotlib import cm, colors
 from matplotlib.ticker import MultipleLocator
 from pandas import DataFrame
@@ -12,6 +13,10 @@ MAP_UNITS = {
     't': [r'$\mathregular{T_{canopy}}$', r'$\mathregular{[^\circ C]}$'],
     'delta_t': [r'$\mathregular{T_{canopy}-T_{air}}$', r'$\mathregular{[^\circ C]}$'],
 }
+
+
+def calc_abs_irradiance(solver: Solver):
+    return sum([sum(v.values()) for k, v in solver.inputs.absorbed_irradiance.items() if k != -1])
 
 
 def compare_temperature(obs: list, sim: list, ax: plt.Subplot = None, return_ax: bool = False,
@@ -47,7 +52,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
     x_ls = range(24)
     for d1, v1 in all_solvers.items():
         for plot_id, plot_res in v1.items():
-            fig, axs = plt.subplots(3, 3, figsize=(8, 8))
+            fig, axs = plt.subplots(3, 4, figsize=(12, 8))
 
             temp_obs = plot_res['temp_obs']
             incident_diffuse_par_irradiance = []
@@ -57,9 +62,13 @@ def plot_results(all_solvers: dict, path_figs: Path):
             air_temperature = []
             soil_water_potential = []
             richardson = []
+            monin_obukhov = []
             aerodynamic_resistance = []
             neutral_aerodynamic_resistance = []
             soil_abs_par = []
+            veg_abs_par = []
+            psi_u = []
+            psi_h = []
             temp_sim = []
             for solver in plot_res['solvers']:
                 incident_diffuse_par_irradiance.append(solver.crop.inputs.incident_irradiance['diffuse'])
@@ -69,9 +78,13 @@ def plot_results(all_solvers: dict, path_figs: Path):
                 air_temperature.append(solver.crop.inputs.air_temperature - 273.15)
                 soil_water_potential.append(solver.crop.inputs.soil_water_potential)
                 richardson.append(solver.crop.state_variables.richardson_number)
+                monin_obukhov.append(solver.crop.state_variables.monin_obukhov_length)
                 aerodynamic_resistance.append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
                 neutral_aerodynamic_resistance.append(calc_neutral_aerodynamic_resistance(solver=solver))
                 soil_abs_par.append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
+                veg_abs_par.append(calc_abs_irradiance(solver=solver))
+                psi_u.append(solver.crop.state_variables.stability_correction_for_momentum)
+                psi_h.append(solver.crop.state_variables.stability_correction_for_heat)
                 temp_sim.append(calc_apparent_temperature(eb_solver=solver, date_obs=d1))
 
             all_sim_t += temp_sim
@@ -81,6 +94,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
             axs[0, 0].plot(x_ls, incident_diffuse_par_irradiance, label=r'$\mathregular{{PAR}_{diff}}$')
             axs[0, 0].plot(x_ls, incident_direct_par_irradiance, label=r'$\mathregular{{PAR}_{dir}}$')
             axs[0, 0].plot(x_ls, soil_abs_par, label=r'$\mathregular{{PAR}_{abs,\/soil}}$', linewidth=2)
+            axs[0, 0].plot(x_ls, veg_abs_par, label=r'$\mathregular{{PAR}_{abs,\/veg}}$', c='k', linewidth=3)
             axs[0, 0].set_ylim((0, 500))
             axs[0, 0].legend()
 
@@ -106,37 +120,49 @@ def plot_results(all_solvers: dict, path_figs: Path):
             axs[2, 0].plot(x_ls, soil_water_potential, label=r'$\mathregular{\Psi_{soil}}$')
             axs[2, 0].legend()
 
-            axs[0, 2].scatter(temp_obs, temp_sim, alpha=0.5)
-            axs[0, 2].plot((-5, 40), (-5, 40), 'k--')
-            axs[0, 2].set(xlim=(-5, 40), ylim=(-5, 40), xlabel='obs T', ylabel='sim T')
+            axs[0, 3].scatter(temp_obs, temp_sim, alpha=0.5)
+            axs[0, 3].plot((-5, 40), (-5, 40), 'k--')
+            axs[0, 3].set(xlim=(-5, 40), ylim=(-5, 40), xlabel='obs T', ylabel='sim T')
             roughness_length_for_momentum = plot_res["solvers"][0].crop.state_variables.roughness_length_for_momentum
             canopy_height = plot_res["solvers"][0].crop.inputs.canopy_height
             zero_displacement_height = plot_res["solvers"][0].crop.state_variables.zero_displacement_height
-            axs[0, 2].text(0.1, 0.8, f'z0u/h ={roughness_length_for_momentum / canopy_height:.3f}',
-                           transform=axs[0, 2].transAxes)
-            axs[0, 2].text(0.1, 0.6, f'd/h ={zero_displacement_height / canopy_height:.3f}',
-                           transform=axs[0, 2].transAxes)
+            axs[0, 3].text(0.1, 0.8, f'z0u/h ={roughness_length_for_momentum / canopy_height:.3f}',
+                           transform=axs[0, 3].transAxes)
+            axs[0, 3].text(0.1, 0.6, f'd/h ={zero_displacement_height / canopy_height:.3f}',
+                           transform=axs[0, 3].transAxes)
+            axs[0, 3].yaxis.set_label_position("right")
+            axs[0, 3].yaxis.tick_right()
 
-            axs[1, 2].scatter(
+            axs[1, 3].scatter(
                 [t_obs - t_air for t_obs, t_air in zip(temp_obs, air_temperature)],
                 [t_sim - t_air for t_sim, t_air in zip(temp_sim, air_temperature)],
                 alpha=0.5)
-            axs[1, 2].plot((-15, 21), (-15, 21), 'k--')
-            axs[1, 2].set(xlim=(-15, 21), ylim=(-15, 21), xlabel='obs Tcan-Tair', ylabel='sim Tcan-Tair')
+            axs[1, 3].plot((-15, 21), (-15, 21), 'k--')
+            axs[1, 3].set(xlim=(-15, 21), ylim=(-15, 21), xlabel='obs Tcan-Tair', ylabel='sim Tcan-Tair')
 
-            axs[1, 2].text(0.1, 0.8, f'h={plot_res["solvers"][0].crop.inputs.canopy_height}',
-                           transform=axs[1, 2].transAxes)
-            axs[1, 2].text(0.1, 0.6, f'LAI={sum(plot_res["solvers"][0].crop.inputs.leaf_layers.values()):.3f}',
-                           transform=axs[1, 2].transAxes)
+            axs[1, 3].text(0.1, 0.8, f'h={plot_res["solvers"][0].crop.inputs.canopy_height}',
+                           transform=axs[1, 3].transAxes)
+            axs[1, 3].text(0.1, 0.6, f'LAI={sum(plot_res["solvers"][0].crop.inputs.leaf_layers.values()):.3f}',
+                           transform=axs[1, 3].transAxes)
 
             axs[2, 2].plot(x_ls, aerodynamic_resistance, label=r'$\mathregular{r_{a,\/0}}$')
             axs[2, 2].plot(x_ls, neutral_aerodynamic_resistance, label=r'$\mathregular{r_{a,\/0,\/neutral}}$')
             axs[2, 2].set(ylim=(0, 360), ylabel="s m-1")
             axs[2, 2].legend()
 
-            for ax in axs[:, :2].flatten().tolist() + [axs[2, 2]]:
+            axs[1, 2].plot(x_ls, psi_u, label=r'$\mathregular{\Psi_u}$')
+            axs[1, 2].plot(x_ls, psi_h, label=r'$\mathregular{\Psi_v}$')
+            axs[1, 2].legend()
+
+            axs[2, 3].scatter(richardson, monin_obukhov, marker='.', color='k')
+
+            for ax in axs[:, :3].flatten():
                 ax.xaxis.set_major_locator(MultipleLocator(3))
                 ax.grid()
+
+            for ax in axs[:, 3]:
+                ax.yaxis.set_label_position("right")
+                ax.yaxis.tick_right()
 
             fig.savefig(path_figs / f"{plot_id}_{d1.date().strftime('%Y%m%d')}.png")
             plt.close(fig)
