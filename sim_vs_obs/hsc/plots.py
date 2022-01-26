@@ -223,7 +223,7 @@ def plot_errors(all_solvers: dict, path_figs: Path):
         hours=[],
         net_longwave_radiation=[],
         height=[],
-        gai=[]
+        gai=[],
     )
 
     for d1, v1 in all_solvers.items():
