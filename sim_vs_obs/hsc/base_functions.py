@@ -183,7 +183,8 @@ def set_energy_balance_inputs(leaf_layers: dict, is_bigleaf: bool, is_lumped: bo
         "step_fraction": 0.5,
         "acceptable_temperature_error": 0.02,
         "maximum_iteration_number": 50,
-        "stomatal_density_factor": 1
+        "stomatal_density_factor": 1,
+        "atmospheric_emissivity_model": 'brutsaert_1975'
     }
 
     return eb_inputs, eb_params
