@@ -112,6 +112,7 @@ class SoilInfo:
         self.theta_sat_from_sq2 = 33.1
         self.theta_fc_from_sq2 = 32.8
         self.theta_pwp_from_sq2 = 14.6
+        self.albedo = 0.2
 
         if is_from_sq2:
             self.hydraulic_props[1] = self.theta_sat_from_sq2
