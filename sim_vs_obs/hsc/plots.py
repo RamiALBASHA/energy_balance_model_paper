@@ -69,6 +69,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
             veg_abs_par = []
             psi_u = []
             psi_h = []
+            emissivity_sky = []
             temp_sim = []
             for solver in plot_res['solvers']:
                 incident_diffuse_par_irradiance.append(solver.crop.inputs.incident_irradiance['diffuse'])
@@ -85,6 +86,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
                 veg_abs_par.append(calc_abs_irradiance(solver=solver))
                 psi_u.append(solver.crop.state_variables.stability_correction_for_momentum)
                 psi_h.append(solver.crop.state_variables.stability_correction_for_heat)
+                emissivity_sky.append(solver.crop.params.simulation.atmospheric_emissivity)
                 temp_sim.append(calc_apparent_temperature(eb_solver=solver, date_obs=d1))
 
             all_sim_t += temp_sim
@@ -155,6 +157,9 @@ def plot_results(all_solvers: dict, path_figs: Path):
             axs[1, 2].legend()
 
             axs[2, 3].scatter(richardson, monin_obukhov, marker='.', color='k')
+
+            axs[0, 2].plot(x_ls, emissivity_sky, label=r'$\mathregular{\epsilon_{sky}}$')
+            axs[0, 2].set_ylim(0, 1)
 
             for ax in axs[:, :3].flatten():
                 ax.xaxis.set_major_locator(MultipleLocator(3))
