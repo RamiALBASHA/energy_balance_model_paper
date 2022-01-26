@@ -92,6 +92,7 @@ class ParamsEnergyBalance(Enum):
     acceptable_temperature_error = 0.02
     maximum_iteration_number = 50
     stomatal_density_factor = 1
+    atmospheric_emissivity_model = 'monteith_2013'
 
     @classmethod
     def to_dict(cls):
