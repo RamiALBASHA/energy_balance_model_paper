@@ -89,3 +89,4 @@ if __name__ == '__main__':
                 'temp_obs': crop_weather['canopy_temperature'].tolist()}})
 
     plots.plot_results(all_solvers=all_solvers, path_figs=path_figs)
+    plots.plot_errors(all_solvers=all_solvers, path_figs=path_figs)
