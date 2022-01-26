@@ -70,6 +70,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
             psi_u = []
             psi_h = []
             emissivity_sky = []
+            is_forced_aerodynamic_resistance = []
             temp_sim = []
             for solver in plot_res['solvers']:
                 incident_diffuse_par_irradiance.append(solver.crop.inputs.incident_irradiance['diffuse'])
@@ -87,6 +88,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
                 psi_u.append(solver.crop.state_variables.stability_correction_for_momentum)
                 psi_h.append(solver.crop.state_variables.stability_correction_for_heat)
                 emissivity_sky.append(solver.crop.params.simulation.atmospheric_emissivity)
+                is_forced_aerodynamic_resistance.append(solver.is_forced_aerodynamic_resistance)
                 temp_sim.append(calc_apparent_temperature(eb_solver=solver, date_obs=d1))
 
             all_sim_t += temp_sim
@@ -112,6 +114,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
             axs[2, 1].plot(x_ls, air_temperature, label=r'$\mathregular{T_{air}}$', color='black', linestyle='--')
             axs[2, 1].plot(x_ls, temp_obs, label=r'$\mathregular{T_{can,\/obs}}$', color='orange')
             axs[2, 1].plot(x_ls, temp_sim, label=r'$\mathregular{T_{can,\/sim}}$', color='blue')
+            axs[2, 1].scatter(x_ls, [v if v else None for v in is_forced_aerodynamic_resistance], label='forced')
             axs[2, 1].set_ylim(-5, 60)
             axs[2, 1].legend(fontsize='x-small')
 
@@ -149,6 +152,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
 
             axs[2, 2].plot(x_ls, aerodynamic_resistance, label=r'$\mathregular{r_{a,\/0}}$')
             axs[2, 2].plot(x_ls, neutral_aerodynamic_resistance, label=r'$\mathregular{r_{a,\/0,\/neutral}}$')
+            axs[2, 2].scatter(x_ls, [v if v else None for v in is_forced_aerodynamic_resistance], label='forced')
             axs[2, 2].set(ylim=(0, 360), ylabel="s m-1")
             axs[2, 2].legend()
 
@@ -156,10 +160,14 @@ def plot_results(all_solvers: dict, path_figs: Path):
             axs[1, 2].plot(x_ls, psi_h, label=r'$\mathregular{\Psi_v}$')
             axs[1, 2].legend()
 
-            axs[2, 3].scatter(richardson, monin_obukhov, marker='.', color='k')
+            # axs[2, 3].scatter(richardson, monin_obukhov, marker='.', color='k')
+            axs[2, 3].scatter(richardson, psi_u, label=r'$\mathregular{\Psi_u}$')
+            axs[2, 3].scatter(richardson, psi_h, label=r'$\mathregular{\Psi_v}$')
+            axs[2, 3].legend()
 
             axs[0, 2].plot(x_ls, emissivity_sky, label=r'$\mathregular{\epsilon_{sky}}$')
             axs[0, 2].set_ylim(0, 1)
+            axs[0, 2].legend()
 
             for ax in axs[:, :3].flatten():
                 ax.xaxis.set_major_locator(MultipleLocator(3))
