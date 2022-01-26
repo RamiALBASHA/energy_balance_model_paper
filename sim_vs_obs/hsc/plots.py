@@ -191,3 +191,74 @@ def plot_results(all_solvers: dict, path_figs: Path):
     fig_summary.savefig(path_figs / 'sim_vs_obs.png')
     plt.close()
     pass
+
+
+def plot_errors(all_solvers: dict, path_figs: Path):
+    summary = dict(
+        temperature_air=[],
+        temperature_obs=[],
+        temperature_sim=[],
+
+        incident_diffuse_par_irradiance=[],
+        incident_direct_par_irradiance=[],
+        wind_speed=[],
+        vapor_pressure_deficit=[],
+        soil_water_potential=[],
+        richardson=[],
+        monin_obukhov=[],
+        aerodynamic_resistance=[],
+        neutral_aerodynamic_resistance=[],
+        soil_abs_par=[],
+        veg_abs_par=[],
+        psi_u=[],
+        psi_h=[],
+        hours=[],
+        net_longwave_radiation=[],
+        height=[],
+        gai=[]
+    )
+
+    for d1, v1 in all_solvers.items():
+        for plot_id, plot_res in v1.items():
+            summary['temperature_obs'] += plot_res['temp_obs']
+
+            for hour, solver in enumerate(plot_res['solvers']):
+                summary['incident_diffuse_par_irradiance'].append(solver.crop.inputs.incident_irradiance['diffuse'])
+                summary['incident_direct_par_irradiance'].append(solver.crop.inputs.incident_irradiance['direct'])
+                summary['wind_speed'].append(solver.crop.inputs.wind_speed / 3600.)
+                summary['vapor_pressure_deficit'].append(solver.crop.inputs.vapor_pressure_deficit)
+                summary['temperature_air'].append(solver.crop.inputs.air_temperature - 273.15)
+                summary['soil_water_potential'].append(solver.crop.inputs.soil_water_potential)
+                summary['richardson'].append(solver.crop.state_variables.richardson_number)
+                summary['monin_obukhov'].append(solver.crop.state_variables.monin_obukhov_length)
+                summary['aerodynamic_resistance'].append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
+                summary['neutral_aerodynamic_resistance'].append(calc_neutral_aerodynamic_resistance(solver=solver))
+                summary['soil_abs_par'].append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
+                summary['veg_abs_par'].append(calc_abs_irradiance(solver=solver))
+                summary['psi_u'].append(solver.crop.state_variables.stability_correction_for_momentum)
+                summary['psi_h'].append(solver.crop.state_variables.stability_correction_for_heat)
+                summary['temperature_sim'].append(calc_apparent_temperature(eb_solver=solver, date_obs=d1))
+                summary['hours'].append(hour)
+                summary['net_longwave_radiation'].append(solver.crop.state_variables.net_longwave_radiation)
+                summary['height'].append(solver.crop.inputs.canopy_height)
+                summary['gai'].append(sum(solver.crop.inputs.leaf_layers.values()))
+
+    summary.update({'temperature_error': [t_sim - t_obs for t_sim, t_obs in zip(summary['temperature_sim'],
+                                                                                summary['temperature_obs'])]})
+
+    n_rows = 3
+    n_cols = 4
+    fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharex='all')
+    for i, explanatory in enumerate(('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
+                                     'aerodynamic_resistance', 'soil_abs_par', 'veg_abs_par', 'hours',
+                                     'net_longwave_radiation', 'height', 'gai')):
+        ax = axs[i % n_rows, i // n_rows]
+        ax.scatter(summary['temperature_error'], summary[explanatory], marker='.', alpha=0.2)
+        ax.set(ylabel=explanatory)
+    for ax in axs[-1, :]:
+        ax.set_xlabel(r'$\mathregular{T_{sim}-T_{obs}\/[^\circ C]}$')
+    fig.savefig(path_figs / 'errors.png')
+    plt.close()
+
+
+
