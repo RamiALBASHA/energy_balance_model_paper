@@ -132,6 +132,8 @@ dmypy.json
 utils/*.png
 /sources/maricopa_hsc/data_raw/
 /sources/maricopa_hsc/figs/
+/sources/maricopa_face/data_raw/
+/sources/maricopa_face/figs/
 /sources/grignon/data_fmt/figs/
 /sources/grignon/data_raw/
 /sources/grignon/figs/
