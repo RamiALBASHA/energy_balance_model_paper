@@ -12,6 +12,10 @@ MAP_UNITS = {
 }
 
 
+def calc_abs_irradiance(solver):
+    return sum([sum(v.values()) for k, v in solver.inputs.absorbed_irradiance.items() if k != -1])
+
+
 def plot_dynamic(data: dict, path_figs_dir: Path):
     idate = None
     fig_d, axs_d = pyplot.subplots(nrows=2, sharex='all', sharey='all')
@@ -116,4 +120,83 @@ def plot_sim_vs_obs(data: dict, path_figs_dir: Path, relative_layer_index: int =
     fig.tight_layout()
     fig.subplots_adjust(wspace=0)
     fig.savefig(path_figs_dir / f"sim_vs_obs_{'all' if relative_layer_index is None else relative_layer_index}.png")
+    pass
+
+
+def plot_errors(data: dict, path_figs_dir: Path):
+    common = dict(
+        temperature_air=[],
+        temperature_obs=[],
+        temperature_sim=[],
+
+        incident_diffuse_par_irradiance=[],
+        incident_direct_par_irradiance=[],
+        wind_speed=[],
+        vapor_pressure_deficit=[],
+        soil_water_potential=[],
+        richardson=[],
+        monin_obukhov=[],
+        aerodynamic_resistance=[],
+        neutral_aerodynamic_resistance=[],
+        soil_abs_par=[],
+        veg_abs_par=[],
+        psi_u=[],
+        psi_h=[],
+        hours=[],
+        net_longwave_radiation=[],
+        height=[],
+        gai=[],
+    )
+
+    treatments = ('extensive', 'intensive')
+
+    res = {k: deepcopy(common) for k in treatments}
+
+    for datetime_obs in data.keys():
+        for trt in treatments:
+            solver = data[datetime_obs][trt]['solver']
+            obs = data[datetime_obs][trt]['obs']
+            canopy_layers = [k for k in solver.crop.components_keys if k != -1]
+
+            for hour, layer in enumerate(canopy_layers):
+                res[trt]['temperature_obs'].append(obs[obs['leaf_level'] == layer]['temperature'].mean())
+                res[trt]['temperature_air'].append(solver.crop.inputs.air_temperature - 273.15)
+                res[trt]['temperature_sim'].append(solver.crop[layer].temperature - 273.15)
+                res[trt]['incident_diffuse_par_irradiance'].append(solver.crop.inputs.incident_irradiance['diffuse'])
+                res[trt]['incident_direct_par_irradiance'].append(solver.crop.inputs.incident_irradiance['direct'])
+                res[trt]['wind_speed'].append(solver.crop.inputs.wind_speed / 3600.)
+                res[trt]['vapor_pressure_deficit'].append(solver.crop.inputs.vapor_pressure_deficit)
+                res[trt]['soil_water_potential'].append(solver.crop.inputs.soil_water_potential)
+                res[trt]['richardson'].append(solver.crop.state_variables.richardson_number)
+                res[trt]['monin_obukhov'].append(solver.crop.state_variables.monin_obukhov_length)
+                res[trt]['aerodynamic_resistance'].append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
+                res[trt]['soil_abs_par'].append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
+                res[trt]['veg_abs_par'].append(calc_abs_irradiance(solver=solver))
+                res[trt]['psi_u'].append(solver.crop.state_variables.stability_correction_for_momentum)
+                res[trt]['psi_h'].append(solver.crop.state_variables.stability_correction_for_heat)
+                res[trt]['hours'].append(hour)
+                res[trt]['net_longwave_radiation'].append(solver.crop.state_variables.net_longwave_radiation)
+                res[trt]['height'].append(solver.crop.inputs.canopy_height)
+                res[trt]['gai'].append(sum(solver.crop.inputs.leaf_layers.values()))
+
+            res[trt].update({'temperature_error': [t_sim - t_obs for t_sim, t_obs in zip(res[trt]['temperature_sim'],
+                                                                                         res[trt]['temperature_obs'])]})
+
+    n_rows = 3
+    n_cols = 4
+
+    for trt in treatments:
+        fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharex='all')
+        for i, explanatory in enumerate(
+                ('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
+                 'aerodynamic_resistance', 'soil_abs_par', 'veg_abs_par', 'hours',
+                 'net_longwave_radiation', 'height', 'gai')):
+            ax = axs[i % n_rows, i // n_rows]
+            ax.scatter(res[trt]['temperature_error'], res[trt][explanatory], marker='.', alpha=0.2)
+            ax.set(ylabel=explanatory)
+        for ax in axs[-1, :]:
+            ax.set_xlabel(r'$\mathregular{T_{sim}-T_{obs}\/[^\circ C]}$')
+        fig.savefig(path_figs_dir / f'errors_{trt}.png')
+        pyplot.close()
+
     pass
