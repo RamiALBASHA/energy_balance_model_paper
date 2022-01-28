@@ -6,7 +6,7 @@ from matplotlib import cm, colors
 from matplotlib.ticker import MultipleLocator
 from pandas import DataFrame
 
-from sim_vs_obs.hsc.base_functions import calc_apparent_temperature, calc_neutral_aerodynamic_resistance
+from sim_vs_obs.maricopa_hsc.base_functions import calc_apparent_temperature, calc_neutral_aerodynamic_resistance
 from utils import stats
 
 MAP_UNITS = {

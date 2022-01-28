@@ -4,9 +4,9 @@ from datetime import timedelta
 from crop_energy_balance.solver import Solver
 from pandas import read_excel
 
-from sim_vs_obs.hsc import plots
-from sim_vs_obs.hsc.base_functions import get_weather_data, set_energy_balance_inputs
-from sim_vs_obs.hsc.config import PathInfos, WeatherInfo, ParamsInfo
+from sim_vs_obs.maricopa_hsc import plots
+from sim_vs_obs.maricopa_hsc.base_functions import get_weather_data, set_energy_balance_inputs
+from sim_vs_obs.maricopa_hsc.config import PathInfos, WeatherInfo, ParamsInfo
 
 if __name__ == '__main__':
     path_source_raw = PathInfos.source_raw.value

@@ -1,2 +1,0 @@
-The folder "HSC-AgMIP_data" was provided by P. Martre (originally named "Final data from Bruce").
-This folder should have been downloaded from ODJAR (https://dataverse.harvard.edu/file.xhtml?persistentId=doi:10.7910/DVN/AEFLHB/WAHWZ6&version=1.0) but the link is incorrect.

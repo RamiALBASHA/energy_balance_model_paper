@@ -12,7 +12,7 @@ from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import (
     calc_direct_black_extinction_coefficient, calc_sunlit_fraction_per_leaf_layer, calc_sunlit_fraction)
 from pandas import DataFrame, Series
 
-from sim_vs_obs.hsc.config import WeatherInfo, SoilInfo, ParamsInfo, ParamsIrradiance
+from sim_vs_obs.maricopa_hsc.config import WeatherInfo, SoilInfo, ParamsInfo, ParamsIrradiance
 from utils.water_retention import calc_soil_water_potential
 
 

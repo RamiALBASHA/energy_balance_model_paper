@@ -8,8 +8,8 @@ from utils.van_genuchten_params import VanGenuchtenParams
 
 
 class PathInfos(Enum):
-    source_raw = Path(__file__).parents[2] / 'sources/hsc/data_raw'
-    source_fmt = Path(__file__).parents[2] / 'sources/hsc/data_fmt'
+    source_raw = Path(__file__).parents[2] / 'sources/maricopa_hsc/data_raw'
+    source_fmt = Path(__file__).parents[2] / 'sources/maricopa_hsc/data_fmt'
 
 
 class WeatherInfo(Enum):
