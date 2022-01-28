@@ -29,7 +29,7 @@ class SoilInfo(Enum):
     Vol_con_80cm = 0.35
     soil_class = 'Sandy_Clay_Loam'
     hydraulic_props = VanGenuchtenParams.Sandy_Clay_Loam.value
-    albedo = 0.2
+    albedo = 0.2  # 'Biomass Yield Area Phenology Management Weather Soil Moisture.ods' sheet 'Soils_meta' Maricopa FACE
 
 
 class ParamsInfo:
