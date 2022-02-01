@@ -26,7 +26,7 @@ def concat_weather():
         f.write(f"# This file was automatically generated using:\n"
                 f"# ~/{'/'.join([s for s in Path(__file__).parts[-4:]])}\n"
                 f"#\n")
-    df.to_csv(path_output, sep=';', decimal='.', mode='a')
+    df.to_csv(path_output, sep=';', decimal='.', mode='a', index=False)
     pass
 
 
