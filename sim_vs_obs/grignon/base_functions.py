@@ -2,12 +2,11 @@ from datetime import datetime
 from math import log
 from pathlib import Path
 
-from crop_irradiance.uniform_crops import inputs as irradiance_inputs, params as irradiance_params, \
-    shoot as irradiance_canopy
 from matplotlib import pyplot
 from pandas import DataFrame, read_csv, Series, concat
 
-from sim_vs_obs.grignon.config import (ParamsGapFract2Gai, ParamsIrradiance, WeatherInfo, ParamsEnergyBalance, SoilInfo,
+from sim_vs_obs.common import calc_absorbed_irradiance
+from sim_vs_obs.grignon.config import (ParamsGapFract2Gai, WeatherInfo, ParamsEnergyBalance, SoilInfo,
                                        CanopyInfo)
 from utils.water_retention import calc_soil_water_potential
 
@@ -86,46 +85,6 @@ def read_phylloclimate(path_obs: Path, uncertain_data: dict = None) -> DataFrame
     return df
 
 
-def calc_absorbed_irradiance(
-        leaf_layers: dict,
-        is_lumped: bool,
-        incident_direct_par_irradiance: float,
-        incident_diffuse_par_irradiance: float,
-        solar_inclination_angle: float) -> (
-        irradiance_inputs.LumpedInputs or irradiance_inputs.SunlitShadedInputs,
-        irradiance_params.LumpedParams or irradiance_params.SunlitShadedInputs):
-    leaves_category = 'lumped' if is_lumped else 'sunlit-shaded'
-
-    common_inputs = dict(
-        leaf_layers=leaf_layers,
-        incident_direct_irradiance=incident_direct_par_irradiance,
-        incident_diffuse_irradiance=incident_diffuse_par_irradiance,
-        solar_inclination=solar_inclination_angle)
-    common_params = ParamsIrradiance.to_dict()
-    if is_lumped:
-        sim_inputs = irradiance_inputs.LumpedInputs(model='de_pury', **common_inputs)
-        sim_params = irradiance_params.LumpedParams(model='de_pury', **common_params)
-    else:
-        sim_inputs = irradiance_inputs.SunlitShadedInputs(**common_inputs)
-        sim_params = irradiance_params.SunlitShadedParams(**common_params)
-    sim_params.update(sim_inputs)
-
-    canopy = irradiance_canopy.Shoot(
-        leaves_category=leaves_category,
-        inputs=sim_inputs,
-        params=sim_params)
-    canopy.calc_absorbed_irradiance()
-
-    absorbed_par_irradiance = {index: layer.absorbed_irradiance for index, layer in canopy.items()}
-    non_absorbed_par_by_vegetation = sum([incident_direct_par_irradiance, incident_diffuse_par_irradiance]) - (
-        sum([sum(v.absorbed_irradiance.values()) for v in canopy.values()]))
-
-    absorbed_par_irradiance.update(
-        {-1: {'lumped': (1. - SoilInfo().albedo) * non_absorbed_par_by_vegetation}})
-
-    return absorbed_par_irradiance, canopy
-
-
 def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: Series, canopy_height: float,
                               plant_available_water_fraction: float) -> (
         dict, dict):
@@ -134,10 +93,11 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
         is_lumped=is_lumped,
         incident_direct_par_irradiance=weather_data['incident_direct_irradiance'],
         incident_diffuse_par_irradiance=weather_data['incident_diffuse_irradiance'],
-        solar_inclination_angle=weather_data['solar_declination'])
+        solar_inclination_angle=weather_data['solar_declination'],
+        soil_albedo=SoilInfo().albedo)
 
     saturation_ratio, water_potential = calc_grignon_soil_water_status(
-            plant_available_water_fraction=plant_available_water_fraction)
+        plant_available_water_fraction=plant_available_water_fraction)
     eb_inputs = {
         "measurement_height": WeatherInfo.reference_height.value,
         "canopy_height": canopy_height,
