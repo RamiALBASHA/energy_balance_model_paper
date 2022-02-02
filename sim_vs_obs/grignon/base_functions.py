@@ -5,9 +5,8 @@ from pathlib import Path
 from matplotlib import pyplot
 from pandas import DataFrame, read_csv, Series, concat
 
-from sim_vs_obs.common import calc_absorbed_irradiance
-from sim_vs_obs.grignon.config import (ParamsGapFract2Gai, WeatherInfo, ParamsEnergyBalance, SoilInfo,
-                                       CanopyInfo)
+from sim_vs_obs.common import calc_absorbed_irradiance, ParamsEnergyBalanceBase
+from sim_vs_obs.grignon.config import (ParamsGapFract2Gai, WeatherInfo, SoilInfo, CanopyInfo)
 from utils.water_retention import calc_soil_water_potential
 
 
@@ -115,7 +114,7 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
         "absorbed_photosynthetically_active_radiation": absorbed_irradiance
     }
 
-    eb_params = ParamsEnergyBalance.to_dict()
+    eb_params = ParamsEnergyBalanceBase.to_dict()
     eb_params.update({
         "diffuse_extinction_coef": irradiance_obj.params.diffuse_extinction_coefficient,
         "leaf_scattering_coefficient": irradiance_obj.params.leaf_scattering_coefficient})

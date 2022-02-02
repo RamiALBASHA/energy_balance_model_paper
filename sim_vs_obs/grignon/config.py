@@ -70,35 +70,6 @@ class ParamsIrradiance(Enum):
         return {name: member.value for name, member in cls.__members__.items()}
 
 
-class ParamsEnergyBalance(Enum):
-    stomatal_sensibility = {
-        "leuning": {"d_0": 7},
-        "misson": {"psi_half_aperture": -1, "steepness": 2}}
-    soil_aerodynamic_resistance_shape_parameter = 2.5
-    soil_roughness_length_for_momentum = 0.0125
-    leaf_characteristic_length = 0.01
-    leaf_boundary_layer_shape_parameter = 0.01
-    wind_speed_extinction_coef = 0.5
-    maximum_stomatal_conductance = 80.0
-    residual_stomatal_conductance = 1.0
-    diffuse_extinction_coef = None
-    leaf_scattering_coefficient = None
-    leaf_emissivity = None
-    soil_emissivity = None
-    absorbed_par_50 = 43
-    soil_resistance_to_vapor_shape_parameter_1 = 8.206
-    soil_resistance_to_vapor_shape_parameter_2 = 4.255
-    step_fraction = 0.5
-    acceptable_temperature_error = 0.02
-    maximum_iteration_number = 50
-    stomatal_density_factor = 1
-    atmospheric_emissivity_model = 'monteith_2013'
-
-    @classmethod
-    def to_dict(cls):
-        return {name: member.value for name, member in cls.__members__.items()}
-
-
 class SoilInfo:
     def __init__(self, soil_class: str = 'Silty_Loam', is_from_sq2: bool = True):
         """Note: Soil class has been defined by F. Bernard thesis as deep silt loam
