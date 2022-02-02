@@ -1,4 +1,4 @@
-from pandas import DataFrame, read_excel, Series
+from pandas import DataFrame, read_excel, Series, read_csv
 
 from sim_vs_obs.maricopa_face.config import ExpIdInfos, PathInfos
 
@@ -15,3 +15,7 @@ def build_area_profile(treatment_data: Series) -> dict:
     total_leaf_area_index = treatment_data['LAID']
     total_stem_area_index = treatment_data['SAID']
     return {k + 1: (total_stem_area_index + total_leaf_area_index) / number_leaf for k in range(number_leaf)}
+
+
+def read_weather() -> DataFrame:
+    return read_csv(PathInfos.source_fmt.value / 'weather.csv', sep=';', decimal='.', comment='#', parse_dates=['DATE'])
