@@ -1,6 +1,8 @@
 from enum import Enum
 from pathlib import Path
 
+from sim_vs_obs.common import ParamsEnergyBalanceBase
+
 
 class PathInfos(Enum):
     source_dir = Path(__file__).parents[2] / 'sources/maricopa_face'
@@ -37,3 +39,7 @@ class WeatherStationInfos(Enum):
     longitude = -111.9826
     elevation = 361
     atmospheric_pressure = 101.3
+
+
+class ParamsEnergyBalance(ParamsEnergyBalanceBase):
+    atmospheric_emissivity_model = 'monteith_2013'
