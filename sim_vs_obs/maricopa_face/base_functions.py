@@ -6,8 +6,8 @@ from convert_units.converter import convert_unit
 from crop_energy_balance.formalisms.weather import calc_saturated_air_vapor_pressure
 from pandas import DataFrame, read_excel, Series, read_csv
 
-from sim_vs_obs.common import calc_absorbed_irradiance
-from sim_vs_obs.maricopa_face.config import ExpIdInfos, PathInfos, WeatherStationInfos, SoilInfos, ParamsEnergyBalance
+from sim_vs_obs.common import calc_absorbed_irradiance, ParamsEnergyBalanceBase
+from sim_vs_obs.maricopa_face.config import ExpIdInfos, PathInfos, WeatherStationInfos, SoilInfos
 
 
 def get_area_data() -> DataFrame:
@@ -101,7 +101,7 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
         "absorbed_photosynthetically_active_radiation": absorbed_irradiance
     }
 
-    eb_params = ParamsEnergyBalance.to_dict()
+    eb_params = ParamsEnergyBalanceBase.to_dict()
     eb_params.update({
         "diffuse_extinction_coef": irradiance_obj.params.diffuse_extinction_coefficient,
         "leaf_scattering_coefficient": irradiance_obj.params.leaf_scattering_coefficient})
