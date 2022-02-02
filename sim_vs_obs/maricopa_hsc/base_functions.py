@@ -4,15 +4,14 @@ from math import pi, log, radians
 from alinea.caribu.sky_tools import Gensun
 from alinea.caribu.sky_tools.spitters_horaire import RdRsH
 from convert_units.converter import convert_unit
-from crop_energy_balance.solver import Solver
 from crop_energy_balance.params import Constants
-from crop_irradiance.uniform_crops import (
-    inputs as irradiance_inputs, params as irradiance_params, shoot as irradiance_canopy)
+from crop_energy_balance.solver import Solver
 from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import (
     calc_direct_black_extinction_coefficient, calc_sunlit_fraction_per_leaf_layer, calc_sunlit_fraction)
 from pandas import DataFrame, Series
 
-from sim_vs_obs.maricopa_hsc.config import WeatherInfo, SoilInfo, ParamsInfo, ParamsIrradiance
+from sim_vs_obs.common import calc_absorbed_irradiance
+from sim_vs_obs.maricopa_hsc.config import WeatherInfo, SoilInfo, ParamsInfo
 from utils.water_retention import calc_soil_water_potential
 
 
@@ -189,48 +188,6 @@ def set_energy_balance_inputs(leaf_layers: dict, is_bigleaf: bool, is_lumped: bo
     }
 
     return eb_inputs, eb_params
-
-
-def calc_absorbed_irradiance(
-        leaf_layers: dict,
-        is_bigleaf: bool,
-        is_lumped: bool,
-        incident_direct_par_irradiance: float,
-        incident_diffuse_par_irradiance: float,
-        solar_inclination_angle: float,
-        soil_albedo: float) -> (
-        irradiance_inputs.LumpedInputs or irradiance_inputs.SunlitShadedInputs,
-        irradiance_params.LumpedParams or irradiance_params.SunlitShadedInputs):
-    vegetative_layers = {0: sum(leaf_layers.values())} if is_bigleaf else leaf_layers.copy()
-    leaves_category = 'lumped' if is_lumped else 'sunlit-shaded'
-
-    common_inputs = dict(
-        leaf_layers=vegetative_layers,
-        incident_direct_irradiance=incident_direct_par_irradiance,
-        incident_diffuse_irradiance=incident_diffuse_par_irradiance,
-        solar_inclination=solar_inclination_angle)
-    common_params = ParamsIrradiance.to_dict()
-    if is_lumped:
-        sim_inputs = irradiance_inputs.LumpedInputs(model='de_pury', **common_inputs)
-        sim_params = irradiance_params.LumpedParams(model='de_pury', **common_params)
-    else:
-        sim_inputs = irradiance_inputs.SunlitShadedInputs(**common_inputs)
-        sim_params = irradiance_params.SunlitShadedParams(**common_params)
-    sim_params.update(sim_inputs)
-
-    canopy = irradiance_canopy.Shoot(
-        leaves_category=leaves_category,
-        inputs=sim_inputs,
-        params=sim_params)
-    canopy.calc_absorbed_irradiance()
-
-    absorbed_par_irradiance = {index: layer.absorbed_irradiance for index, layer in canopy.items()}
-    non_absorbed_par_by_vegetation = sum([incident_direct_par_irradiance, incident_diffuse_par_irradiance]) - (
-        sum([sum(v.absorbed_irradiance.values()) for v in canopy.values()]))
-    absorbed_par_irradiance.update(
-        {-1: {'lumped': (1. - soil_albedo) * non_absorbed_par_by_vegetation}})
-
-    return absorbed_par_irradiance, canopy
 
 
 def calc_irt_sensor_visible_fractions(leaf_layers: dict, date_obs: datetime) -> dict:
