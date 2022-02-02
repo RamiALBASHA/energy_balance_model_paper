@@ -138,3 +138,4 @@ utils/*.png
 /sources/grignon/data_raw/
 /sources/grignon/figs/
 /sim_vs_obs/maricopa_hsc/debug_stuff/
+/sources/maricopa_face/data_fmt/weather.csv
