@@ -125,7 +125,6 @@ def set_energy_balance_inputs(leaf_layers: dict, is_bigleaf: bool, is_lumped: bo
                               crop_data: Series, soil_data: DataFrame, weather_data: Series) -> (dict, dict):
     absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
         leaf_layers=leaf_layers,
-        is_bigleaf=is_bigleaf,
         is_lumped=is_lumped,
         incident_direct_par_irradiance=weather_data['incident_direct_par_irradiance'],
         incident_diffuse_par_irradiance=weather_data['incident_diffuse_par_irradiance'],

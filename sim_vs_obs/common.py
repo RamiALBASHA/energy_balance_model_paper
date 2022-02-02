@@ -5,7 +5,6 @@ from sim_vs_obs.maricopa_hsc.config import ParamsIrradiance
 
 def calc_absorbed_irradiance(
         leaf_layers: dict,
-        is_bigleaf: bool,
         is_lumped: bool,
         incident_direct_par_irradiance: float,
         incident_diffuse_par_irradiance: float,
@@ -13,11 +12,10 @@ def calc_absorbed_irradiance(
         soil_albedo: float) -> (
         inputs.LumpedInputs or inputs.SunlitShadedInputs,
         params.LumpedParams or params.SunlitShadedInputs):
-    vegetative_layers = {0: sum(leaf_layers.values())} if is_bigleaf else leaf_layers.copy()
     leaves_category = 'lumped' if is_lumped else 'sunlit-shaded'
 
     common_inputs = dict(
-        leaf_layers=vegetative_layers,
+        leaf_layers=leaf_layers,
         incident_direct_irradiance=incident_direct_par_irradiance,
         incident_diffuse_irradiance=incident_diffuse_par_irradiance,
         solar_inclination=solar_inclination_angle)
