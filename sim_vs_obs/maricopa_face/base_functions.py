@@ -6,7 +6,8 @@ from convert_units.converter import convert_unit
 from crop_energy_balance.formalisms.weather import calc_saturated_air_vapor_pressure
 from pandas import DataFrame, read_excel, Series, read_csv
 
-from sim_vs_obs.maricopa_face.config import ExpIdInfos, PathInfos, WeatherStationInfos
+from sim_vs_obs.common import calc_absorbed_irradiance
+from sim_vs_obs.maricopa_face.config import ExpIdInfos, PathInfos, WeatherStationInfos, SoilInfos, ParamsEnergyBalance
 
 
 def get_area_data() -> DataFrame:
@@ -68,3 +69,41 @@ def get_weather(raw_data: DataFrame) -> DataFrame:
         'vapor_pressure',
         'solar_declination')], axis=1, inplace=True)
     return raw_df
+
+
+def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: Series, canopy_height: float) -> (
+        dict, dict):
+    absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
+        leaf_layers=leaf_layers,
+        is_lumped=is_lumped,
+        incident_direct_par_irradiance=weather_data['incident_direct_irradiance'],
+        incident_diffuse_par_irradiance=weather_data['incident_diffuse_irradiance'],
+        solar_inclination_angle=weather_data['solar_declination'],
+        soil_albedo=SoilInfos.albedo.value)
+
+    saturation_ratio, water_potential = 1, -0.01
+
+    eb_inputs = {
+        "measurement_height": 2,
+        "canopy_height": canopy_height,
+        "soil_saturation_ratio": saturation_ratio,
+        "soil_water_potential": water_potential,
+        "atmospheric_pressure": WeatherStationInfos.atmospheric_pressure.value,
+        "leaf_layers": leaf_layers,
+        "solar_inclination": weather_data['solar_declination'],
+        "wind_speed": weather_data['wind_speed'],
+        "vapor_pressure": weather_data['vapor_pressure'],
+        "vapor_pressure_deficit": weather_data['vapor_pressure_deficit'],
+        "air_temperature": weather_data['air_temperature'],
+        "incident_photosynthetically_active_radiation": {
+            'direct': weather_data['incident_direct_irradiance'],
+            'diffuse': weather_data['incident_diffuse_irradiance']},
+        "absorbed_photosynthetically_active_radiation": absorbed_irradiance
+    }
+
+    eb_params = ParamsEnergyBalance.to_dict()
+    eb_params.update({
+        "diffuse_extinction_coef": irradiance_obj.params.diffuse_extinction_coefficient,
+        "leaf_scattering_coefficient": irradiance_obj.params.leaf_scattering_coefficient})
+
+    return eb_inputs, eb_params
