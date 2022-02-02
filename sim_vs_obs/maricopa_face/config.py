@@ -32,7 +32,7 @@ class ExpIdInfos(Enum):
                 all([s in member.value for s in ('High N', 'Ambient CO2')])]
 
 
-class FieldInfos(Enum):
+class WeatherStationInfos(Enum):
     latitude = 33.0628
     longitude = -111.9826
     elevation = 361

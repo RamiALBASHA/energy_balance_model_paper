@@ -6,7 +6,7 @@ from convert_units.converter import convert_unit
 from crop_energy_balance.formalisms.weather import calc_saturated_air_vapor_pressure
 from pandas import DataFrame, read_excel, Series, read_csv
 
-from sim_vs_obs.maricopa_face.config import ExpIdInfos, PathInfos, FieldInfos
+from sim_vs_obs.maricopa_face.config import ExpIdInfos, PathInfos, WeatherStationInfos
 
 
 def get_area_data() -> DataFrame:
@@ -32,8 +32,8 @@ def get_weather(raw_data: DataFrame) -> DataFrame:
     convert_par = 1.e6 / 3600. / 4.6
 
     convert_wind = 1000  # km to m
-    latitude = FieldInfos.latitude.value
-    atmospheric_pressure = FieldInfos.atmospheric_pressure.value
+    latitude = WeatherStationInfos.latitude.value
+    atmospheric_pressure = WeatherStationInfos.atmospheric_pressure.value
 
     raw_df = raw_data.copy()
     raw_df.loc[:, 'RG'] = raw_df['SRAD'] * convert_rg
