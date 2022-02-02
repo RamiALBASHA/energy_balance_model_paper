@@ -86,8 +86,7 @@ def read_phylloclimate(path_obs: Path, uncertain_data: dict = None) -> DataFrame
 
 
 def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: Series, canopy_height: float,
-                              plant_available_water_fraction: float) -> (
-        dict, dict):
+                              plant_available_water_fraction: float) -> (dict, dict):
     absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
         leaf_layers=leaf_layers,
         is_lumped=is_lumped,
