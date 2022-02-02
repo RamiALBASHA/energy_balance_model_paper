@@ -130,7 +130,8 @@ def set_energy_balance_inputs(leaf_layers: dict, is_bigleaf: bool, is_lumped: bo
         is_lumped=is_lumped,
         incident_direct_par_irradiance=weather_data['incident_direct_par_irradiance'],
         incident_diffuse_par_irradiance=weather_data['incident_diffuse_par_irradiance'],
-        solar_inclination_angle=weather_data['solar_declination'])
+        solar_inclination_angle=weather_data['solar_declination'],
+        soil_albedo=SoilInfo.albedo.value)
 
     saturation_ratio, water_potential = estimate_water_status(
         soil_df=soil_data,
@@ -196,7 +197,8 @@ def calc_absorbed_irradiance(
         is_lumped: bool,
         incident_direct_par_irradiance: float,
         incident_diffuse_par_irradiance: float,
-        solar_inclination_angle: float) -> (
+        solar_inclination_angle: float,
+        soil_albedo: float) -> (
         irradiance_inputs.LumpedInputs or irradiance_inputs.SunlitShadedInputs,
         irradiance_params.LumpedParams or irradiance_params.SunlitShadedInputs):
     vegetative_layers = {0: sum(leaf_layers.values())} if is_bigleaf else leaf_layers.copy()
@@ -226,7 +228,7 @@ def calc_absorbed_irradiance(
     non_absorbed_par_by_vegetation = sum([incident_direct_par_irradiance, incident_diffuse_par_irradiance]) - (
         sum([sum(v.absorbed_irradiance.values()) for v in canopy.values()]))
     absorbed_par_irradiance.update(
-        {-1: {'lumped': (1. - SoilInfo.albedo.value) * non_absorbed_par_by_vegetation}})
+        {-1: {'lumped': (1. - soil_albedo) * non_absorbed_par_by_vegetation}})
 
     return absorbed_par_irradiance, canopy
 
