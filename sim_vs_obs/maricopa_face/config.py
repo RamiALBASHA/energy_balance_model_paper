@@ -41,5 +41,9 @@ class WeatherStationInfos(Enum):
     atmospheric_pressure = 101.3
 
 
+class SoilInfos(Enum):
+    albedo = 0.2
+
+
 class ParamsEnergyBalance(ParamsEnergyBalanceBase):
     atmospheric_emissivity_model = 'monteith_2013'
