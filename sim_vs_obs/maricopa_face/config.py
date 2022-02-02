@@ -1,6 +1,8 @@
 from enum import Enum
 from pathlib import Path
 
+from utils.van_genuchten_params import VanGenuchtenParams
+
 
 class PathInfos(Enum):
     source_dir = Path(__file__).parents[2] / 'sources/maricopa_face'
@@ -41,3 +43,15 @@ class WeatherStationInfos(Enum):
 
 class SoilInfos(Enum):
     albedo = 0.2
+    weights = {'D30': 0.4,
+               'D50': 0.2,
+               'D70': 0.2,
+               'D90': 0.2}
+    saturated_humidity = {'D30': (0.417 * 10 + 0.424 * 12.5 + 0.424 * 17.5) / 40,
+                          'D50': (0.419 * 15 + 0.387 * 10) / 25,
+                          'D70': 0.387,
+                          'D90': 0.359}
+    # saturated_humidity values are taken from 'Soil_layers' sheet.
+    soil_class = 'Sandy_Clay_Loam'
+    hydraulic_props = VanGenuchtenParams.Sandy_Clay_Loam.value
+    # hydraulic_props[2] = sum(saturated_humidity.values()) / len(saturated_humidity.values())

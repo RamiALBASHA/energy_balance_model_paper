@@ -4,17 +4,21 @@ from alinea.caribu.sky_tools import Gensun
 from alinea.caribu.sky_tools.spitters_horaire import RdRsH
 from convert_units.converter import convert_unit
 from crop_energy_balance.formalisms.weather import calc_saturated_air_vapor_pressure
-from pandas import DataFrame, read_excel, Series, read_csv
+from pandas import DataFrame, read_excel, Series, read_csv, DatetimeIndex
 
 from sim_vs_obs.common import calc_absorbed_irradiance, ParamsEnergyBalanceBase
 from sim_vs_obs.maricopa_face.config import ExpIdInfos, PathInfos, WeatherStationInfos, SoilInfos
+from utils.water_retention import calc_soil_water_potential
 
 
 def get_area_data() -> DataFrame:
     path_obs = PathInfos.source_raw.value / 'Biomass Yield Area Phenology Management Weather Soil Moisture.ods'
     df = read_excel(path_obs, engine='odf', sheet_name='Obs_daily_Avg_over_Reps')
     plot_ids = ExpIdInfos.get_studied_plot_ids()
-    return df[df['TRNO'].isin(plot_ids) & ~df['LNUM'].isna()]
+    df = df[df['TRNO'].isin(plot_ids) & ~df['LNUM'].isna()]
+    df.loc[:, 'DATE'] = df['DATE'].dt.date
+    df.set_index('DATE', inplace=True)
+    return df
 
 
 def build_area_profile(treatment_data: Series) -> dict:
@@ -71,8 +75,8 @@ def get_weather(raw_data: DataFrame) -> DataFrame:
     return raw_df
 
 
-def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: Series, canopy_height: float) -> (
-        dict, dict):
+def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: Series, canopy_height: float,
+                              soil_data: Series) -> (dict, dict):
     absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
         leaf_layers=leaf_layers,
         is_lumped=is_lumped,
@@ -81,7 +85,7 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
         solar_inclination_angle=weather_data['solar_declination'],
         soil_albedo=SoilInfos.albedo.value)
 
-    saturation_ratio, water_potential = 1, -0.01
+    saturation_ratio, water_potential = estimate_water_status(soil_data=soil_data)
 
     eb_inputs = {
         "measurement_height": 2,
@@ -107,3 +111,25 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
         "leaf_scattering_coefficient": irradiance_obj.params.leaf_scattering_coefficient})
 
     return eb_inputs, eb_params
+
+
+def read_soil_moisture():
+    path_obs = PathInfos.source_raw.value / 'Biomass Yield Area Phenology Management Weather Soil Moisture.ods'
+    df = read_excel(path_obs, engine='odf', sheet_name='Soil_moisture_Avg_over_Reps', parse_dates=['Date'])
+    df.loc[:, 'Date'] = df['Date'].dt.date
+    df.set_index('Date', inplace=True)
+    df.index = DatetimeIndex(df.index)
+    return df
+
+
+def estimate_water_status(soil_data: Series) -> tuple[float, float]:
+    theta_sat = SoilInfos.saturated_humidity.value
+    weights = SoilInfos.weights.value
+    weight_sum = sum(weights.values())
+    depth_ids = theta_sat.keys()
+    soil_saturation_ratio = sum([soil_data[s] / theta_sat[s] * weights[s] for s in depth_ids]) / weight_sum
+    weighted_soil_water_content = sum([soil_data[s] * weights[s] for s in depth_ids]) / weight_sum
+    soil_water_potential = 1.e-4 * calc_soil_water_potential(
+        theta=weighted_soil_water_content,
+        soil_class=SoilInfos.soil_class.value)
+    return soil_saturation_ratio, soil_water_potential
