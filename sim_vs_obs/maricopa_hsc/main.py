@@ -70,7 +70,6 @@ if __name__ == '__main__':
         for datetime_obs, w_data in crop_weather.iterrows():
             eb_inputs, eb_params = set_energy_balance_inputs(
                 leaf_layers=leaf_layers,
-                is_bigleaf=is_bigleaf,
                 is_lumped=is_lumped,
                 datetime_obs=datetime_obs,
                 crop_data=row,
