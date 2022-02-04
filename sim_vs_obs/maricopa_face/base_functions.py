@@ -133,3 +133,22 @@ def estimate_water_status(soil_data: Series) -> tuple[float, float]:
         theta=weighted_soil_water_content,
         soil_class=SoilInfos.soil_class.value)
     return soil_saturation_ratio, soil_water_potential
+
+
+def read_canopy_height_for_wet_ambient_co2_plots():
+    path_root = PathInfos.source_raw.value
+    use_cols = ['Doy', 'CW1', 'CW2', 'CW3', 'CW4']
+    res = {}
+    for year, sheet_name, file_name in ((1993, 'PN-SMRY', 'Height of canopy 1993.ods'),
+                                        (1994, 'SN-SMRY', 'Height of canopy 1994.ods')):
+        df = read_excel(path_root / file_name, engine='odf', sheet_name=sheet_name, skiprows=8, usecols=use_cols)
+        df = df.loc[df[df['Doy'].isna()].index.max() + 1:, :]
+        df.set_index('Doy', inplace=True)
+        df = df.reindex(range(int(df.index.min()), int(df.index.max() + 1)))
+        df.interpolate(method='linear', inplace=True)
+        df = df / 100.
+        res.update({year: df})
+
+    return res
+
+
