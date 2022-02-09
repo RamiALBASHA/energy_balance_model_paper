@@ -8,9 +8,12 @@ if __name__ == '__main__':
     soil_df = base_functions.read_soil_moisture()
     area_df = base_functions.get_area_data()
     heights = base_functions.calc_canopy_height(pheno=area_df, weather=weather_df)
+    obs_wet = base_functions.read_obs_wet()
+    obs_dry = base_functions.read_obs_dry()
 
     area_df = area_df[~area_df['LNUM'].isna()]
 
+    sim_obs_dict = {k: {} for k in area_df['TRNO'].unique()}
     for date_obs, row in area_df.iterrows():
         treatment = int(row['TRNO'])
         print(date_obs, treatment)
@@ -40,3 +43,7 @@ if __name__ == '__main__':
                                 inputs_dict=eb_inputs,
                                 params_dict=eb_params)
                 solver.run(is_stability_considered=True)
+
+                sim_obs_dict[treatment].update({
+                    'solver': solver,
+                    'obs': base_functions.get_obs(all_obs=obs_wet, treatment_id=treatment, datetime_obs=datetime_obs)})
