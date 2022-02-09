@@ -90,8 +90,8 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
     absorbed_irradiance, irradiance_obj = calc_absorbed_irradiance(
         leaf_layers=leaf_layers,
         is_lumped=is_lumped,
-        incident_direct_par_irradiance=weather_data['incident_direct_irradiance'],
-        incident_diffuse_par_irradiance=weather_data['incident_diffuse_irradiance'],
+        incident_direct_par_irradiance=weather_data['incident_direct_par_irradiance'],
+        incident_diffuse_par_irradiance=weather_data['incident_diffuse_par_irradiance'],
         solar_inclination_angle=weather_data['solar_declination'],
         soil_albedo=SoilInfos.albedo.value)
 
@@ -110,8 +110,8 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
         "vapor_pressure_deficit": weather_data['vapor_pressure_deficit'],
         "air_temperature": weather_data['air_temperature'],
         "incident_photosynthetically_active_radiation": {
-            'direct': weather_data['incident_direct_irradiance'],
-            'diffuse': weather_data['incident_diffuse_irradiance']},
+            'direct': weather_data['incident_direct_par_irradiance'],
+            'diffuse': weather_data['incident_diffuse_par_irradiance']},
         "absorbed_photosynthetically_active_radiation": absorbed_irradiance
     }
 
