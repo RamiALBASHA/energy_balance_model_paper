@@ -257,3 +257,25 @@ def identify_date_zadok(zadok_obs: Series, zadok_stage: int) -> datetime:
 def get_date_bounds(dates_obs: list[Union[DatetimeIndex, Series]]) -> tuple[datetime, datetime]:
     dates_min, dates_max = zip(*[(d.min(), d.max()) for d in dates_obs])
     return max(dates_min), min(dates_max)
+
+
+def read_obs_wet() -> DataFrame:
+    df = read_csv(PathInfos.source_fmt.value / 'obs_hourly.csv',
+                  sep=';', decimal='.', parse_dates=['date'], dayfirst=True)
+    df.loc[:, 'date'] = df.apply(lambda x: x['date'] + timedelta(hours=x['HR']), axis=1)
+    return df
+
+
+def read_obs_dry() -> DataFrame:
+    pass
+
+
+def get_obs(all_obs: DataFrame, treatment_id: int, datetime_obs: datetime) -> dict:
+    cols = ['CT', 'Rn', 'H', 'G', 'L', 'ET', 'ST.1', 'ST.2', 'ST.5', 'ST.10', 'ST.20', 'ST.40']
+    obs_s = all_obs[(all_obs['TRNO'] == treatment_id) & (all_obs['date'] == datetime_obs)][cols]
+    if all(obs_s.isna()):
+        res = None
+    else:
+        res = obs_s.to_dict(orient='records')
+
+    return res
