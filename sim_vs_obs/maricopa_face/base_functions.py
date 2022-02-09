@@ -134,6 +134,7 @@ def read_soil_moisture():
 
 def calc_soil_moisture(raw_data: DataFrame, treatment_id: int, date_obs: datetime) -> Series:
     soil_trt = raw_data[raw_data['TRNO'] == treatment_id]
+    soil_trt = soil_trt.groupby('Date').mean()
     idx = date_range(min(soil_trt.index), max(soil_trt.index))
     soil_trt = soil_trt.reindex(idx)
     soil_trt.interpolate('linear', inplace=True)
