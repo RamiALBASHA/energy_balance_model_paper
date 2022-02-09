@@ -45,5 +45,7 @@ if __name__ == '__main__':
                 solver.run(is_stability_considered=True)
 
                 sim_obs_dict[treatment].update({
-                    'solver': solver,
-                    'obs': base_functions.get_obs(all_obs=obs_wet, treatment_id=treatment, datetime_obs=datetime_obs)})
+                    datetime_obs: {
+                        'solver': solver,
+                        'obs': base_functions.get_obs(all_obs=obs_wet, treatment_id=treatment, datetime_obs=datetime_obs)
+                    }})
