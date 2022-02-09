@@ -71,7 +71,7 @@ def get_weather(raw_data: DataFrame) -> DataFrame:
     raw_df.loc[:, 'solar_declination'] = raw_df.apply(
         lambda x: pi / 2. - (Gensun.Gensun()(Rsun=x['RG'], DOY=x['DOY'], heureTU=x['DATE'].hour, lat=latitude)).elev,
         axis=1)
-    raw_df.rename({'TDRY': 'air_temperature'}, inplace=True)
+    raw_df.rename(columns={'TDRY': 'air_temperature'}, inplace=True)
     raw_df.set_index('DATE', inplace=True)
     raw_df.drop(labels=[col for col in raw_df.columns if col not in (
         'incident_diffuse_par_irradiance',
