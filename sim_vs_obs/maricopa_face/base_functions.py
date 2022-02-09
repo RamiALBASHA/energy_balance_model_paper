@@ -1,13 +1,14 @@
+from datetime import datetime, timedelta
 from math import pi
 
 from alinea.caribu.sky_tools import Gensun
 from alinea.caribu.sky_tools.spitters_horaire import RdRsH
 from convert_units.converter import convert_unit
 from crop_energy_balance.formalisms.weather import calc_saturated_air_vapor_pressure
-from pandas import DataFrame, read_excel, Series, read_csv, DatetimeIndex, isna
+from pandas import DataFrame, read_excel, Series, read_csv, DatetimeIndex, date_range, isna
 
 from sim_vs_obs.common import calc_absorbed_irradiance, ParamsEnergyBalanceBase
-from sim_vs_obs.maricopa_face.config import ExpIdInfos, PathInfos, WeatherStationInfos, SoilInfos
+from sim_vs_obs.maricopa_face.config import ExpIdInfos, PathInfos, WeatherStationInfos, SoilInfos, CropInfos
 from utils.water_retention import calc_soil_water_potential
 
 
@@ -144,20 +145,102 @@ def estimate_water_status(soil_data: Series) -> tuple[float, float]:
     return soil_saturation_ratio, soil_water_potential
 
 
-def read_canopy_height_for_wet_ambient_co2_plots():
+def _read_canopy_height() -> dict:
     path_root = PathInfos.source_raw.value
-    use_cols = ['Doy', 'CW1', 'CW2', 'CW3', 'CW4']
     res = {}
     for year, sheet_name, file_name in ((1993, 'PN-SMRY', 'Height of canopy 1993.ods'),
                                         (1994, 'SN-SMRY', 'Height of canopy 1994.ods')):
-        df = read_excel(path_root / file_name, engine='odf', sheet_name=sheet_name, skiprows=8, usecols=use_cols)
-        df = df.loc[df[df['Doy'].isna()].index.max() + 1:, :]
-        df.set_index('Doy', inplace=True)
-        df = df.reindex(range(int(df.index.min()), int(df.index.max() + 1)))
-        df.interpolate(method='linear', inplace=True)
-        df = df / 100.
-        res.update({year: df})
+        res.update({year: {}})
+        for treatment, cols in (('Dry', ['CD1', 'CD2', 'CD3', 'CD4']),
+                                ('Wet', ['CW1', 'CW2', 'CW3', 'CW4'])):
+            df = read_excel(
+                path_root / file_name, engine='odf', sheet_name=sheet_name, skiprows=8, usecols=['Doy'] + cols)
+            df = df.loc[df[df['Doy'].isna()].index.max() + 1:, :]
+            df.loc[:, 'date'] = df.apply(lambda x: datetime(year - 1, 12, 31) + timedelta(days=x['Doy']), axis=1)
+            df.loc[:, 'avg'] = df[cols].mean(axis=1)
+            df.set_index('date', inplace=True)
+            df.drop(['Doy'], inplace=True, axis=1)
+
+            res[year].update({treatment: df})
 
     return res
 
 
+def calc_canopy_height(pheno: DataFrame, weather: DataFrame) -> dict:
+    heights = _read_canopy_height()
+    zadok_at_stem_elongation = CropInfos.zadok_at_stem_elongation.value
+    zadok_at_anthesis_end = CropInfos.zadok_at_anthesis_end.value
+    height_at_emergence = CropInfos.height_at_emergence.value
+    height_at_stem_elongation = CropInfos.height_at_stem_elongation.value
+    doy_emergence = CropInfos.doy_emergence.value
+
+    phyllochron_wet_ls = []
+
+    res = {}
+    for year, year_data in heights.items():
+        res.update({year: {}})
+
+        date_emergence = datetime(year - 1, 12, 31) + timedelta(days=doy_emergence)
+
+        for treatment, df in year_data.items():
+            df = df.reindex(date_range(df.index[0], df.index[-1]))
+            df.interpolate(method='linear', inplace=True)
+
+            treatment_id = ExpIdInfos.identify_ids(values=[treatment, 'High N', 'Ambient CO2', str(year)])[0]
+            zadok_s = extract_zadok_obs(pheno, treatment_id, year)
+
+            date_stem_elongation = identify_date_zadok(zadok_obs=zadok_s, zadok_stage=zadok_at_stem_elongation)
+            date_end_antehsis = identify_date_zadok(zadok_obs=zadok_s, zadok_stage=zadok_at_anthesis_end)
+
+            w = weather[(weather['DATE'] >= date_stem_elongation) & (weather['DATE'] <= date_end_antehsis)][
+                ['DATE', 'TDRY']]
+            w.set_index('DATE', inplace=True)
+            w = w.resample('D').mean()
+            w['gdd'] = w['TDRY'].cumsum()
+
+            phyllochron = ((df.loc[date_end_antehsis, 'avg'] - height_at_stem_elongation) / w['gdd'].max())
+            w['height'] = w['gdd'] * phyllochron + height_at_stem_elongation
+
+            df = df.reindex(date_range(date_emergence, df.index[-1]))
+            df.loc[date_emergence, 'avg'] = height_at_emergence
+            df.loc[date_stem_elongation:date_end_antehsis, 'avg'] = w['height']
+            df.interpolate(method='linear', inplace=True)
+
+            if treatment == 'Wet':
+                phyllochron_wet_ls.append(phyllochron)
+            res[year].update({treatment_id: df})
+
+    phyllochron_wet = sum(phyllochron_wet_ls) / len(phyllochron_wet_ls)
+    for year in (1996, 1997):
+        date_emergence = datetime(year - 1, 12, 31) + timedelta(days=doy_emergence)
+        treatment_id = ExpIdInfos.identify_ids(values=['Wet', 'High N', 'Ambient CO2', str(year)])[0]
+        zadok_s = extract_zadok_obs(pheno, treatment_id, year)
+        date_stem_elongation = identify_date_zadok(zadok_obs=zadok_s, zadok_stage=zadok_at_stem_elongation)
+        date_end_antehsis = identify_date_zadok(zadok_obs=zadok_s, zadok_stage=zadok_at_anthesis_end)
+
+        w = weather[(weather['DATE'] >= date_stem_elongation) & (weather['DATE'] <= date_end_antehsis)][
+            ['DATE', 'TDRY']]
+        w.set_index('DATE', inplace=True)
+        w = w.resample('D').mean()
+        w['gdd'] = w['TDRY'].cumsum()
+
+        w['height'] = w['gdd'] * phyllochron_wet + height_at_stem_elongation
+
+        df = DataFrame(data={'avg': [height_at_emergence, height_at_stem_elongation, None]},
+                       index=[date_emergence, date_stem_elongation, datetime(year, 5, 1)])
+        df = df.reindex(date_range(date_emergence, df.index[-1]))
+        df.loc[date_stem_elongation:date_end_antehsis, 'avg'] = w['height']
+        df.interpolate(method='linear', inplace=True)
+        res.update({year: {treatment_id: df}})
+
+    return res
+
+
+def extract_zadok_obs(pheno, treatment_id, year):
+    df = pheno[(pheno['TRNO'] == treatment_id)].apply(lambda x: int(x['GSTZD']), axis=1)
+    df = df.reindex(date_range(df.index.min(), df.index.max()))
+    return df.interpolate(method='linear')
+
+
+def identify_date_zadok(zadok_obs: Series, zadok_stage: int) -> datetime:
+    return zadok_obs.index[abs(zadok_obs - zadok_stage) == abs(zadok_obs - zadok_stage).min()][-1]
