@@ -59,3 +59,11 @@ class SoilInfos(Enum):
     soil_class = 'Sandy_Clay_Loam'
     hydraulic_props = VanGenuchtenParams.Sandy_Clay_Loam.value
     # hydraulic_props[2] = sum(saturated_humidity.values()) / len(saturated_humidity.values())
+
+
+class CropInfos(Enum):
+    doy_emergence = 1  # same for both seasons as indicated in Kimball et al. (2017)
+    zadok_at_stem_elongation = 30
+    zadok_at_anthesis_end = 70
+    height_at_emergence = 1.
+    height_at_stem_elongation = 10.
