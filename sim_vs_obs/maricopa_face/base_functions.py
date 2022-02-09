@@ -208,7 +208,7 @@ def calc_canopy_height(pheno: DataFrame, weather: DataFrame) -> dict:
             phyllochron = ((df.loc[date_end_antehsis, 'avg'] - height_at_stem_elongation) / w['gdd'].max())
             w['height'] = w['gdd'] * phyllochron + height_at_stem_elongation
 
-            df = df.reindex(date_range(date_emergence, df.index[-1]))
+            df = df.reindex(date_range(date_emergence, datetime(year, 5, 15)))
             df.loc[date_emergence, 'avg'] = height_at_emergence
             df.loc[date_stem_elongation:date_end_antehsis, 'avg'] = w['height']
             df.interpolate(method='linear', inplace=True)
@@ -234,7 +234,7 @@ def calc_canopy_height(pheno: DataFrame, weather: DataFrame) -> dict:
         w['height'] = w['gdd'] * phyllochron_wet + height_at_stem_elongation
 
         df = DataFrame(data={'avg': [height_at_emergence, height_at_stem_elongation, None]},
-                       index=[date_emergence, date_stem_elongation, datetime(year, 5, 1)])
+                       index=[date_emergence, date_stem_elongation, datetime(year, 5, 15)])
         df = df.reindex(date_range(date_emergence, df.index[-1]))
         df.loc[date_stem_elongation:date_end_antehsis, 'avg'] = w['height']
         df.interpolate(method='linear', inplace=True)
