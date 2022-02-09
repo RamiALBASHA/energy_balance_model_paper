@@ -273,7 +273,7 @@ def read_obs_dry() -> DataFrame:
 def get_obs(all_obs: DataFrame, treatment_id: int, datetime_obs: datetime) -> dict:
     cols = ['CT', 'Rn', 'H', 'G', 'L', 'ET', 'ST.1', 'ST.2', 'ST.5', 'ST.10', 'ST.20', 'ST.40']
     obs_s = all_obs[(all_obs['TRNO'] == treatment_id) & (all_obs['date'] == datetime_obs)][cols]
-    if all(obs_s.isna()):
+    if obs_s.shape[0] <= 1 or all(obs_s.isna().values[0]):
         res = None
     else:
         res = obs_s.to_dict(orient='records')
