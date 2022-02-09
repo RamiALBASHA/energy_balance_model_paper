@@ -66,7 +66,7 @@ class SoilInfos(Enum):
 
 
 class CropInfos(Enum):
-    doy_emergence = 1  # same for both seasons as indicated in Kimball et al. (2017)
+    doy_emergence = 1  # same for all seasons as indicated in Kimball et al. (2017)
     zadok_at_stem_elongation = 30
     zadok_at_anthesis_end = 70
     height_at_emergence = 1.
