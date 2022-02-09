@@ -29,9 +29,13 @@ class ExpIdInfos(Enum):
     exp_916 = ('Wet', 'High N', 'Elevated CO2', '1997')
 
     @classmethod
-    def get_studied_plot_ids(cls):
+    def identify_ids(cls, values: list[str]) -> list[int]:
         return [int(name.split('_')[-1]) for name, member in cls.__members__.items() if
-                all([s in member.value for s in ('High N', 'Ambient CO2')])]
+                all([s in member.value for s in values])]
+
+    @classmethod
+    def get_studied_plot_ids(cls) -> list[int]:
+        return cls.identify_ids(values=['High N', 'Ambient CO2'])
 
 
 class WeatherStationInfos(Enum):
