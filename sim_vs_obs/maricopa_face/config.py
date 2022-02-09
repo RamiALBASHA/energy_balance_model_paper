@@ -10,6 +10,10 @@ class PathInfos(Enum):
     source_fmt = source_dir / 'data_fmt'
 
 
+class SimInfos(Enum):
+    leaf_category = 'sunlit-shaded'
+
+
 class ExpIdInfos(Enum):
     exp_901 = ('Dry', 'High N', 'Ambient CO2', '1993')
     exp_902 = ('Wet', 'High N', 'Ambient CO2', '1993')
