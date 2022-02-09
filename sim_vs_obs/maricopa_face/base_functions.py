@@ -187,8 +187,6 @@ def calc_canopy_height(pheno: DataFrame, weather: DataFrame) -> dict:
 
     res = {}
     for year, year_data in heights.items():
-        res.update({year: {}})
-
         date_emergence = datetime(year - 1, 12, 31) + timedelta(days=doy_emergence)
 
         for treatment, df in year_data.items():
@@ -217,7 +215,7 @@ def calc_canopy_height(pheno: DataFrame, weather: DataFrame) -> dict:
 
             if treatment == 'Wet':
                 phyllochron_wet_ls.append(phyllochron)
-            res[year].update({treatment_id: df})
+            res.update({treatment_id: df})
 
     phyllochron_wet = sum(phyllochron_wet_ls) / len(phyllochron_wet_ls)
     for year in (1996, 1997):
@@ -240,7 +238,7 @@ def calc_canopy_height(pheno: DataFrame, weather: DataFrame) -> dict:
         df = df.reindex(date_range(date_emergence, df.index[-1]))
         df.loc[date_stem_elongation:date_end_antehsis, 'avg'] = w['height']
         df.interpolate(method='linear', inplace=True)
-        res.update({year: {treatment_id: df}})
+        res.update({treatment_id: df})
 
     return res
 
