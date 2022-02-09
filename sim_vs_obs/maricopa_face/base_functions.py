@@ -132,6 +132,14 @@ def read_soil_moisture():
     return df
 
 
+def calc_soil_moisture(raw_data: DataFrame, treatment_id: int, date_obs: datetime) -> Series:
+    soil_trt = raw_data[raw_data['TRNO'] == treatment_id]
+    idx = date_range(min(soil_trt.index), max(soil_trt.index))
+    soil_trt = soil_trt.reindex(idx)
+    soil_trt.interpolate('linear', inplace=True)
+    return soil_trt.loc[date_obs]
+
+
 def estimate_water_status(soil_data: Series) -> tuple[float, float]:
     theta_sat = SoilInfos.saturated_humidity.value
     weights = SoilInfos.weights.value
