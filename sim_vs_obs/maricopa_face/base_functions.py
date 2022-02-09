@@ -49,8 +49,8 @@ def calc_diffuse_ratio(hourly_weather: Series, latitude: float) -> float:
 def get_weather(raw_data: DataFrame) -> DataFrame:
     convert_rg = convert_unit(1, 'MJ/h/m2', 'W/m2')
     convert_par = 1.e6 / 3600. / 4.6
-
     convert_wind = 1000  # km to m
+
     latitude = WeatherStationInfos.latitude.value
     atmospheric_pressure = WeatherStationInfos.atmospheric_pressure.value
 
