@@ -18,6 +18,7 @@ def get_area_data() -> DataFrame:
     df = df[df['TRNO'].isin(plot_ids)]
     df.loc[:, 'DATE'] = df['DATE'].dt.date
     df.set_index('DATE', inplace=True)
+    df.index = DatetimeIndex(df.index)
     return df
 
 
