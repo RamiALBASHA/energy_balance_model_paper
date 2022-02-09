@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from math import pi
+from typing import Union
 
 from alinea.caribu.sky_tools import Gensun
 from alinea.caribu.sky_tools.spitters_horaire import RdRsH
@@ -251,3 +252,8 @@ def extract_zadok_obs(pheno, treatment_id, year):
 
 def identify_date_zadok(zadok_obs: Series, zadok_stage: int) -> datetime:
     return zadok_obs.index[abs(zadok_obs - zadok_stage) == abs(zadok_obs - zadok_stage).min()][-1]
+
+
+def get_date_bounds(dates_obs: list[Union[DatetimeIndex, Series]]) -> tuple[datetime, datetime]:
+    dates_min, dates_max = zip(*[(d.min(), d.max()) for d in dates_obs])
+    return max(dates_min), min(dates_max)
