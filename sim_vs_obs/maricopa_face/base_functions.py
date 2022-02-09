@@ -4,7 +4,7 @@ from alinea.caribu.sky_tools import Gensun
 from alinea.caribu.sky_tools.spitters_horaire import RdRsH
 from convert_units.converter import convert_unit
 from crop_energy_balance.formalisms.weather import calc_saturated_air_vapor_pressure
-from pandas import DataFrame, read_excel, Series, read_csv, DatetimeIndex
+from pandas import DataFrame, read_excel, Series, read_csv, DatetimeIndex, isna
 
 from sim_vs_obs.common import calc_absorbed_irradiance, ParamsEnergyBalanceBase
 from sim_vs_obs.maricopa_face.config import ExpIdInfos, PathInfos, WeatherStationInfos, SoilInfos
@@ -33,6 +33,18 @@ def read_weather() -> DataFrame:
     return read_csv(PathInfos.source_fmt.value / 'weather.csv', sep=';', decimal='.', comment='#', parse_dates=['DATE'])
 
 
+def calc_diffuse_ratio(hourly_weather: Series, latitude: float) -> float:
+    if isna(hourly_weather['SHADO']):
+        res = RdRsH(
+            Rg=hourly_weather['RG'], DOY=hourly_weather['DOY'], heureTU=hourly_weather['HOUR'], latitude=latitude)
+    elif hourly_weather['SRAD']:
+        res = 1.
+    else:
+        res = hourly_weather['SHADO'] / hourly_weather['SRAD']
+
+    return res
+
+
 def get_weather(raw_data: DataFrame) -> DataFrame:
     convert_rg = convert_unit(1, 'MJ/h/m2', 'W/m2')
     convert_par = 1.e6 / 3600. / 4.6
@@ -44,12 +56,8 @@ def get_weather(raw_data: DataFrame) -> DataFrame:
     raw_df = raw_data.copy()
     raw_df.loc[:, 'RG'] = raw_df['SRAD'] * convert_rg
     raw_df.loc[:, 'PAR'] = raw_df['PARD'] * convert_par
-    if 'SHADO' in raw_df.columns:
-        raw_df.loc[:, 'diffuse_ratio'] = raw_df['SHADO'] / raw_df['SRAD']
-    else:
-        raw_df.loc[:, 'diffuse_ratio'] = raw_df.apply(
-            lambda x: RdRsH(Rg=x['RG'], DOY=x['DOY'], heureTU=x['HOUR'], latitude=latitude), axis=1)
-
+    raw_df.loc[:, 'diffuse_ratio'] = raw_df.apply(lambda x: calc_diffuse_ratio(hourly_weather=x, latitude=latitude),
+                                                  axis=1)
     raw_df.loc[:, 'vapor_pressure'] = raw_df.apply(lambda x: calc_saturated_air_vapor_pressure(x['TDEW']), axis=1)
     raw_df.loc[:, 'vapor_pressure_deficit'] = raw_df.apply(
         lambda x: max(0., calc_saturated_air_vapor_pressure(x['TDRY']) - x['vapor_pressure']), axis=1)
