@@ -195,7 +195,7 @@ def calc_canopy_height(pheno: DataFrame, weather: DataFrame) -> dict:
             df.interpolate(method='linear', inplace=True)
 
             treatment_id = ExpIdInfos.identify_ids(values=[treatment, 'High N', 'Ambient CO2', str(year)])[0]
-            zadok_s = extract_zadok_obs(pheno, treatment_id, year)
+            zadok_s = extract_zadok_obs(pheno, treatment_id)
 
             date_stem_elongation = identify_date_zadok(zadok_obs=zadok_s, zadok_stage=zadok_at_stem_elongation)
             date_end_antehsis = identify_date_zadok(zadok_obs=zadok_s, zadok_stage=zadok_at_anthesis_end)
@@ -222,7 +222,7 @@ def calc_canopy_height(pheno: DataFrame, weather: DataFrame) -> dict:
     for year in (1996, 1997):
         date_emergence = datetime(year - 1, 12, 31) + timedelta(days=doy_emergence)
         treatment_id = ExpIdInfos.identify_ids(values=['Wet', 'High N', 'Ambient CO2', str(year)])[0]
-        zadok_s = extract_zadok_obs(pheno, treatment_id, year)
+        zadok_s = extract_zadok_obs(pheno, treatment_id)
         date_stem_elongation = identify_date_zadok(zadok_obs=zadok_s, zadok_stage=zadok_at_stem_elongation)
         date_end_antehsis = identify_date_zadok(zadok_obs=zadok_s, zadok_stage=zadok_at_anthesis_end)
 
@@ -244,7 +244,7 @@ def calc_canopy_height(pheno: DataFrame, weather: DataFrame) -> dict:
     return res
 
 
-def extract_zadok_obs(pheno, treatment_id, year):
+def extract_zadok_obs(pheno, treatment_id):
     df = pheno[(pheno['TRNO'] == treatment_id)].apply(lambda x: int(x['GSTZD']), axis=1)
     df = df.reindex(date_range(df.index.min(), df.index.max()))
     return df.interpolate(method='linear')
