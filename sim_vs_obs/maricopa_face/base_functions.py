@@ -6,6 +6,7 @@ from alinea.caribu.sky_tools import Gensun
 from alinea.caribu.sky_tools.spitters_horaire import RdRsH
 from convert_units.converter import convert_unit
 from crop_energy_balance.formalisms.weather import calc_saturated_air_vapor_pressure
+from crop_irradiance.uniform_crops.shoot import Shoot
 from pandas import DataFrame, read_excel, Series, read_csv, DatetimeIndex, date_range, isna
 
 from sim_vs_obs.common import calc_absorbed_irradiance, ParamsEnergyBalanceBase
@@ -300,3 +301,9 @@ def get_irradiance_obs() -> DataFrame:
         axis=1)
 
     return df
+
+
+def calc_sim_fapar(shoot: Shoot) -> float:
+    absorbed_irradiance = sum([v for layer in shoot.values() for v in layer.absorbed_irradiance.values()])
+    incident_irradiance = shoot.inputs.incident_direct_irradiance + shoot.inputs.incident_diffuse_irradiance
+    return absorbed_irradiance / incident_irradiance
