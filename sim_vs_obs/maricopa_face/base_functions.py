@@ -289,7 +289,7 @@ def get_irradiance_obs() -> DataFrame:
     df.loc[:, 'date'] = df.apply(
         lambda x: datetime(x['YEAR'] - 1, 12, 31) + timedelta(days=x['DOY'], hours=int(x['HR.f']),
                                                               minutes=x['HR.f'] % 1 * 60), axis=1)
-    df = df[~df['R'].isin(['m', 'se'])]
+    df = df[~df['R'].isin(['m', 'se']) & (df['DQF']).isin([1, 2])]
     df.loc[:, 'gai'] = df['GLAI'] + df['GSAI']
     df.loc[:, 'RG'] = df['IPAR'] / 0.48
     df.rename(columns={'HR.f': 'HOUR'}, inplace=True)
