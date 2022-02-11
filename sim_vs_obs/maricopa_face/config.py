@@ -9,6 +9,7 @@ class PathInfos(Enum):
     source_dir = Path(__file__).parents[2] / 'sources/maricopa_face'
     source_raw = source_dir / 'data_raw'
     source_fmt = source_dir / 'data_fmt'
+    source_figs = source_dir / 'figs'
 
 
 class SimInfos(Enum):
