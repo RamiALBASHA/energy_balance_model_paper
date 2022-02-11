@@ -279,3 +279,24 @@ def get_obs(all_obs: DataFrame, treatment_id: int, datetime_obs: datetime) -> di
         res = obs_s.to_dict(orient='list')
 
     return res
+
+
+def get_irradiance_obs() -> DataFrame:
+    latitude = WeatherStationInfos.latitude.value
+    df = read_excel(PathInfos.source_raw.value / 'fAPAR fraction Absorbed Photosynthetically Active Radiation.ods',
+                    sheet_name='1994_&_1996_Data', engine='odf', skiprows=35)
+    df.loc[:, 'date'] = df.apply(
+        lambda x: datetime(x['YEAR'] - 1, 12, 31) + timedelta(days=x['DOY'], hours=int(x['HR.f']),
+                                                              minutes=x['HR.f'] % 1 * 60), axis=1)
+    df = df[~df['R'].isin(['m', 'se'])]
+    df.loc[:, 'gai'] = df['GLAI'] + df['GSAI']
+    df.loc[:, 'RG'] = df['IPAR'] / 0.48
+    df.rename(columns={'HR.f': 'HOUR'}, inplace=True)
+    df.loc[:, 'diffuse_ratio'] = df.apply(lambda x: calc_diffuse_ratio(x, latitude), axis=1)
+    df.loc[:, 'incident_diffuse_par_irradiance'] = df.apply(lambda x: x['IPAR'] * x['diffuse_ratio'], axis=1)
+    df.loc[:, 'incident_direct_par_irradiance'] = df.apply(lambda x: x['IPAR'] * (1 - x['diffuse_ratio']), axis=1)
+    df.loc[:, 'solar_declination'] = df.apply(
+        lambda x: pi / 2. - (Gensun.Gensun()(Rsun=x['RG'], DOY=x['DOY'], heureTU=x['HOUR'], lat=latitude)).elev,
+        axis=1)
+
+    return df
