@@ -52,7 +52,9 @@ class WeatherStationInfos(Enum):
 
 
 class SoilInfos(Enum):
-    albedo = 0.2
+    # albedo taken from 'fAPAR fraction Absorbed Photosynthetically Active Radiation.ods', sheet = '1994_&_1996_Data'
+    # with PLOT = 'SOIL'
+    albedo = 0.13
     weights = {'D30': 0.4,
                'D50': 0.2,
                'D70': 0.2,
