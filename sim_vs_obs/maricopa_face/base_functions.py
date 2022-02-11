@@ -36,7 +36,7 @@ def read_weather() -> DataFrame:
 
 
 def calc_diffuse_ratio(hourly_weather: Series, latitude: float) -> float:
-    if isna(hourly_weather['SHADO']):
+    if 'SHADO' not in hourly_weather.keys() or isna(hourly_weather['SHADO']):
         res = RdRsH(
             Rg=hourly_weather['RG'], DOY=hourly_weather['DOY'], heureTU=hourly_weather['HOUR'], latitude=latitude)
     elif hourly_weather['SRAD'] == 0:
