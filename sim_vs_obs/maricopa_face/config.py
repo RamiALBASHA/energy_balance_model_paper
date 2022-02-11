@@ -1,4 +1,5 @@
 from enum import Enum
+from math import radians
 from pathlib import Path
 
 from utils.van_genuchten_params import VanGenuchtenParams
@@ -71,3 +72,10 @@ class CropInfos(Enum):
     zadok_at_anthesis_end = 70
     height_at_emergence = 1.
     height_at_stem_elongation = 10.
+
+
+class SensorInfos(Enum):
+    irt_angle_below_horizon = radians(20)
+    """Infrared Thermometer angle below horizon.
+    cf. detail in 'Canopy Leaf Soil Temperatures from Hand-held Infrared Thermometers 1993.ods', sheet 1, first line.
+    """
