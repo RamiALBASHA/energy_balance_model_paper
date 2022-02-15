@@ -1,12 +1,12 @@
 from copy import deepcopy
 
-from crop_energy_balance.params import Constants
 from matplotlib import pyplot
-from pandas import DataFrame
+from pandas import DataFrame, isna
 
 from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, calc_apparent_temperature
 from sim_vs_obs.maricopa_face import base_functions
 from sim_vs_obs.maricopa_face.config import SensorInfos, PathInfos
+from utils import stats
 
 
 def add_1_1_line(ax):
@@ -25,15 +25,13 @@ def calc_diff(sim_obs: dict, idx: int) -> float:
     return sim_obs['sim'][idx] - obs if obs is not None else None
 
 
-def plot_dynamic(sim_obs: dict):
-    props = {'marker': 'o', 'color': 'b', 'alpha': 0.1}
-
-    all_t_can = []
-    all_t_soil = []
-    all_net_radiation = []
-    all_sensible_heat = []
-    all_latent_heat = []
-    all_soil_heat = []
+def plot_comparison(sim_obs: dict):
+    all_t_can = {'sim': [], 'obs': []}
+    all_t_soil = {'sim': [], 'obs': []}
+    all_net_radiation = {'sim': [], 'obs': []}
+    all_sensible_heat = {'sim': [], 'obs': []}
+    all_latent_heat = {'sim': [], 'obs': []}
+    all_soil_heat = {'sim': [], 'obs': []}
 
     counter = 0
     for trt_id, trt_obs in sim_obs.items():
@@ -67,7 +65,6 @@ def plot_dynamic(sim_obs: dict):
             delta_sensible_heat = pattern_list.copy()
             delta_latent_heat = pattern_list.copy()
             delta_soil_heat = pattern_list.copy()
-            delta_et = pattern_list.copy()
 
             gai = sum(trt_obs[datetime_obs_ls[0]]['solver'].crop.inputs.leaf_layers.values())
 
@@ -105,16 +102,32 @@ def plot_dynamic(sim_obs: dict):
                 delta_latent_heat[i] = calc_diff(sim_obs=latent_heat, idx=i)
                 delta_soil_heat[i] = calc_diff(sim_obs=soil_heat, idx=i)
 
-                all_t_can.append(t_can)
-                all_t_soil.append(t_soil)
-                all_net_radiation.append(net_radiation)
-                all_sensible_heat.append(sensible_heat)
-                all_latent_heat.append(latent_heat)
-                all_soil_heat.append(soil_heat)
+            all_t_can['sim'] += t_can['sim']
+            all_t_soil['sim'] += t_soil['sim']
+            all_net_radiation['sim'] += net_radiation['sim']
+            all_sensible_heat['sim'] += sensible_heat['sim']
+            all_latent_heat['sim'] += latent_heat['sim']
+            all_soil_heat['sim'] += soil_heat['sim']
+
+            all_t_can['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in t_can['obs']]
+            all_t_soil['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in t_soil['obs']]
+            all_net_radiation['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in net_radiation['obs']]
+            all_sensible_heat['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in sensible_heat['obs']]
+            all_latent_heat['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in latent_heat['obs']]
+            all_soil_heat['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in soil_heat['obs']]
 
             plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_veg, par_abs_sol, vpd, t_air,
                                psi_soil, wind, ra, t_can, t_soil, net_radiation, latent_heat, sensible_heat, soil_heat)
             counter += 1
+
+    plot_sim_vs_obs(
+        res={'t_can': all_t_can,
+             't_soil': all_t_soil,
+             'net_radiation': all_net_radiation,
+             'sensible_heat': all_sensible_heat,
+             'latent_heat': all_latent_heat,
+             'soil_heat': all_soil_heat})
+    pass
 
 
 def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_veg, par_abs_sol, vpd, t_air, psi_soil,
@@ -204,8 +217,34 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
     axs[0, 6].legend(*[v[:2] for v in axs[0, 6].get_legend_handles_labels()])
     axs[0, 7].legend(*[v[:2] for v in axs[0, 7].get_legend_handles_labels()])
 
+    for h in hours:
+        rnh, gh, hh, lh = [v[h] for v in (net_radiation['obs'], soil_heat['obs'], sensible_heat['obs'], latent_heat['obs'])]
+        if not None in (rnh, gh, hh, lh):
+            energy_balance_error = stats.calc_mean(rnh) - stats.calc_mean(gh) - stats.calc_mean(hh) - stats.calc_mean(lh)
+            axs[-1, -1].scatter(h, energy_balance_error, label='Rn-G-H-L', **props)
+    axs[-1, -1].legend(*[v[:1] for v in axs[-1, -1].get_legend_handles_labels()])
+
     fig.savefig(PathInfos.source_figs.value / f'{counter}.png')
     pyplot.close('all')
+    pass
+
+
+def plot_sim_vs_obs(res: dict):
+    fig, axs = pyplot.subplots(ncols=len(res.keys()), figsize=(16, 4))
+    for ax, (k, v) in zip(axs, res.items()):
+        obs_ls, sim_ls = v['obs'], v['sim']
+        obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
+        ax.scatter(obs_ls, sim_ls, alpha=0.1)
+        ax.text(0.1, 0.9, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.3f}', transform=ax.transAxes)
+        ax.text(0.1, 0.8, f'R2={stats.calc_r2(obs_ls, sim_ls):.3f}', transform=ax.transAxes)
+        ax.set_title(k)
+        ax = add_1_1_line(ax)
+
+    fig.tight_layout()
+    fig.savefig(PathInfos.source_figs.value / f'all_sim_vs_obs.png')
+    pyplot.close('all')
+
+
     pass
 
 
