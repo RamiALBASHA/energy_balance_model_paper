@@ -8,7 +8,7 @@ if __name__ == '__main__':
     soil_df = base_functions.read_soil_moisture()
     area_df = base_functions.get_area_data()
     heights = base_functions.calc_canopy_height(pheno=area_df, weather=weather_df)
-    obs_wet = base_functions.read_obs_energy_balance()
+    obs_energy_balance = base_functions.read_obs_energy_balance()
 
     area_df = area_df[~area_df['LNUM'].isna()]
 
@@ -46,8 +46,8 @@ if __name__ == '__main__':
                 sim_obs_dict[treatment].update({
                     datetime_obs: {
                         'solver': solver,
-                        'obs_energy_balance': base_functions.get_obs_energy_balance(all_obs=obs_wet, treatment_id=treatment,
-                                                                                    datetime_obs=datetime_obs)
+                        'obs_energy_balance': base_functions.get_obs_energy_balance(
+                            all_obs=obs_energy_balance, treatment_id=treatment, datetime_obs=datetime_obs)
                     }})
 
     plots.plot_comparison(sim_obs=sim_obs_dict)
