@@ -23,7 +23,6 @@ if __name__ == '__main__':
         if date_min <= date_obs <= date_max:
             weather_at_date = base_functions.get_weather(raw_data=weather_df[weather_df['DATE'].dt.date == date_obs])
 
-            # gai_tot = sum(row[['LAID', 'SAID']])
             gai_profile = base_functions.build_area_profile(treatment_data=row)
 
             soil_data = base_functions.calc_soil_moisture(raw_data=soil_df, treatment_id=treatment, date_obs=date_obs)
@@ -50,4 +49,4 @@ if __name__ == '__main__':
                             all_obs=obs_energy_balance, treatment_id=treatment, datetime_obs=datetime_obs)
                     }})
 
-    plots.plot_comparison(sim_obs=sim_obs_dict)
+    plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict)

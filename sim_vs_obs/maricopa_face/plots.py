@@ -25,7 +25,7 @@ def calc_diff(sim_obs: dict, idx: int) -> float:
     return sim_obs['sim'][idx] - obs if obs is not None else None
 
 
-def plot_comparison(sim_obs: dict):
+def plot_comparison_energy_balance(sim_obs: dict):
     all_t_can = {'sim': [], 'obs': []}
     all_t_soil = {'sim': [], 'obs': []}
     all_net_radiation = {'sim': [], 'obs': []}
