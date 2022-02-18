@@ -8,8 +8,7 @@ if __name__ == '__main__':
     soil_df = base_functions.read_soil_moisture()
     area_df = base_functions.get_area_data()
     heights = base_functions.calc_canopy_height(pheno=area_df, weather=weather_df)
-    obs_wet = base_functions.read_obs_wet()
-    obs_dry = base_functions.read_obs_dry()
+    obs_wet = base_functions.read_obs_energy_balance()
 
     area_df = area_df[~area_df['LNUM'].isna()]
 

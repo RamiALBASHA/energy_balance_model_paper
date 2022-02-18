@@ -260,15 +260,11 @@ def get_date_bounds(dates_obs: list[Union[DatetimeIndex, Series]]) -> tuple[date
     return max(dates_min), min(dates_max)
 
 
-def read_obs_wet() -> DataFrame:
+def read_obs_energy_balance() -> DataFrame:
     df = read_csv(PathInfos.source_fmt.value / 'obs_hourly.csv',
                   sep=';', decimal='.', parse_dates=['date'], dayfirst=True)
     df.loc[:, 'date'] = df.apply(lambda x: x['date'] + timedelta(hours=x['HR']), axis=1)
     return df
-
-
-def read_obs_dry() -> DataFrame:
-    pass
 
 
 def get_obs(all_obs: DataFrame, treatment_id: int, datetime_obs: datetime) -> dict:
