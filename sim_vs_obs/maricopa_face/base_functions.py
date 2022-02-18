@@ -307,3 +307,29 @@ def calc_sim_fapar(shoot: Shoot) -> float:
     absorbed_irradiance = sum([v for layer in shoot.values() for v in layer.absorbed_irradiance.values()])
     incident_irradiance = shoot.inputs.incident_direct_irradiance + shoot.inputs.incident_diffuse_irradiance
     return absorbed_irradiance / incident_irradiance
+
+
+def get_portable_infrared_obs_1993() -> DataFrame:
+    file_name = f'Canopy Leaf Soil Temperatures from Hand-held Infrared Thermometers 1993.ods'
+    df_raw = read_excel(PathInfos.source_raw.value / file_name, skiprows=29, engine='odf')
+    df = DataFrame(data={
+        '901_canopy_shaded': df_raw.iloc[:, 24].to_list(),
+        '901_canopy_sunlit': df_raw.iloc[:, 45].to_list(),
+        '901_soil_shaded': df_raw.iloc[:, 129].to_list(),
+        '901_soil_sunlit': df_raw.iloc[:, 150].to_list(),
+        '902_canopy_shaded': df_raw.iloc[:, 29].to_list(),
+        '902_canopy_sunlit': df_raw.iloc[:, 50].to_list(),
+        '902_soil_shaded': df_raw.iloc[:, 134].to_list(),
+        '902_soil_sunlit': df_raw.iloc[:, 155].to_list(),
+        'quality': df_raw.iloc[:, 172].to_list()},
+        index=df_raw.apply(lambda x: _calc_date(x), axis=1).to_list())
+    return df[(df['quality'] < 3) & ~isna(df.index)]
+
+
+def _calc_date(x: Series) -> datetime:
+    """Time observation differs within few minutes between observations. Observation time of control-dry shaded
+    leaves was thus considered"""
+    try:
+        return datetime(int(x.iloc[21]) - 1, 12, 31, int(x.iloc[23]), int(round(x.iloc[23], 0))) + timedelta(days=x[22])
+    except ValueError:
+        pass
