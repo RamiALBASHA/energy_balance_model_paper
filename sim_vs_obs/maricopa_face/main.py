@@ -46,8 +46,8 @@ if __name__ == '__main__':
                 sim_obs_dict[treatment].update({
                     datetime_obs: {
                         'solver': solver,
-                        'obs': base_functions.get_obs(all_obs=obs_wet, treatment_id=treatment,
-                                                      datetime_obs=datetime_obs)
+                        'obs_energy_balance': base_functions.get_obs(all_obs=obs_wet, treatment_id=treatment,
+                                                                     datetime_obs=datetime_obs)
                     }})
 
     plots.plot_comparison(sim_obs=sim_obs_dict)

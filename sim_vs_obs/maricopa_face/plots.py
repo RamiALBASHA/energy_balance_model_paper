@@ -69,7 +69,7 @@ def plot_comparison(sim_obs: dict):
             gai = sum(trt_obs[datetime_obs_ls[0]]['solver'].crop.inputs.leaf_layers.values())
 
             for i, dt_obs in enumerate(datetime_obs_ls):
-                solver, obs = [trt_obs[dt_obs][s] for s in ('solver', 'obs')]
+                solver, obs = [trt_obs[dt_obs][s] for s in ('solver', 'obs_energy_balance')]
 
                 par_inc[i] = sum(solver.crop.inputs.incident_irradiance.values())
                 par_abs_veg[i] = get_canopy_abs_irradiance_from_solver(solver)
