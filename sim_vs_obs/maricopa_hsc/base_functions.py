@@ -1,13 +1,11 @@
 from datetime import datetime, timedelta
-from math import pi, log, radians
+from math import pi, log
 
 from alinea.caribu.sky_tools import Gensun
 from alinea.caribu.sky_tools.spitters_horaire import RdRsH
 from convert_units.converter import convert_unit
 from crop_energy_balance.params import Constants
 from crop_energy_balance.solver import Solver
-from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import (
-    calc_direct_black_extinction_coefficient, calc_sunlit_fraction_per_leaf_layer, calc_sunlit_fraction)
 from pandas import DataFrame, Series
 
 from sim_vs_obs.common import calc_absorbed_irradiance
@@ -187,49 +185,6 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, datetime_obs: 
     }
 
     return eb_inputs, eb_params
-
-
-def calc_irt_sensor_visible_fractions(leaf_layers: dict, date_obs: datetime) -> dict:
-    sensor_angle = radians(45 if date_obs < datetime(2008, 1, 2) else 30)
-    direct_black_extinction_coefficient = calc_direct_black_extinction_coefficient(
-        solar_inclination=sensor_angle,
-        leaves_to_sun_average_projection=0.5)
-
-    visible_leaf_fraction_to_sensor = {}
-    layer_indices = reversed(sorted(list(leaf_layers.keys())))
-    upper_leaf_area_index = 0.0
-    for layer_index in layer_indices:
-        layer_thickness = leaf_layers[layer_index]
-        visible_leaf_fraction_to_sensor.update({
-            layer_index: calc_sunlit_fraction_per_leaf_layer(
-                upper_cumulative_leaf_area_index=upper_leaf_area_index,
-                leaf_layer_thickness=layer_thickness,
-                direct_black_extinction_coefficient=direct_black_extinction_coefficient)})
-        upper_leaf_area_index += layer_thickness
-
-    visible_leaf_fraction_to_sensor.update({
-        -1: calc_sunlit_fraction(
-            cumulative_leaf_area_index=upper_leaf_area_index,
-            direct_black_extinction_coefficient=direct_black_extinction_coefficient)})
-    return visible_leaf_fraction_to_sensor
-
-
-def calc_apparent_temperature(eb_solver: Solver, date_obs: datetime) -> float:
-    sensor_visible_fractions = calc_irt_sensor_visible_fractions(
-        leaf_layers=eb_solver.crop.inputs.leaf_layers,
-        date_obs=date_obs)
-
-    total_weight = sum(sensor_visible_fractions.values())
-    soil_visible_fraction = sensor_visible_fractions.pop(-1)
-
-    weighted_temperature = []
-    for layer_index, visible_fraction in sensor_visible_fractions.items():
-        weighted_temperature.append(
-            visible_fraction * sum([(component.temperature * component.surface_fraction)
-                                    for component in eb_solver.crop[layer_index].values()]))
-    weighted_temperature.append(soil_visible_fraction * eb_solver.crop[-1].temperature)
-    apparent_temperature = sum(weighted_temperature) / total_weight
-    return apparent_temperature - 273.15
 
 
 def calc_neutral_aerodynamic_resistance(solver: Solver):

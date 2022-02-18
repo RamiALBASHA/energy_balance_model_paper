@@ -4,16 +4,13 @@ from pathlib import Path
 from matplotlib import pyplot, ticker
 from pandas import isna
 
+from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver
 from utils import stats
 
 MAP_UNITS = {
     't': [r'$\mathregular{T_{leaf}}$', r'$\mathregular{[^\circ C]}$'],
     'delta_t': [r'$\mathregular{T_{leaf}-T_{air}}$', r'$\mathregular{[^\circ C]}$'],
 }
-
-
-def calc_abs_irradiance(solver):
-    return sum([sum(v.values()) for k, v in solver.inputs.absorbed_irradiance.items() if k != -1])
 
 
 def plot_dynamic(data: dict, path_figs_dir: Path):
@@ -171,7 +168,7 @@ def plot_errors(data: dict, path_figs_dir: Path):
                 res[trt]['monin_obukhov'].append(solver.crop.state_variables.monin_obukhov_length)
                 res[trt]['aerodynamic_resistance'].append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
                 res[trt]['soil_abs_par'].append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
-                res[trt]['veg_abs_par'].append(calc_abs_irradiance(solver=solver))
+                res[trt]['veg_abs_par'].append(get_canopy_abs_irradiance_from_solver(solver=solver))
                 res[trt]['psi_u'].append(solver.crop.state_variables.stability_correction_for_momentum)
                 res[trt]['psi_h'].append(solver.crop.state_variables.stability_correction_for_heat)
                 res[trt]['hours'].append(hour)

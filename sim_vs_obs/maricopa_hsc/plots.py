@@ -1,22 +1,20 @@
+from datetime import datetime
+from math import radians
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from crop_energy_balance.solver import Solver
 from matplotlib import cm, colors
 from matplotlib.ticker import MultipleLocator
 from pandas import DataFrame
 
-from sim_vs_obs.maricopa_hsc.base_functions import calc_apparent_temperature, calc_neutral_aerodynamic_resistance
+from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, calc_apparent_temperature
+from sim_vs_obs.maricopa_hsc.base_functions import calc_neutral_aerodynamic_resistance
 from utils import stats
 
 MAP_UNITS = {
     't': [r'$\mathregular{T_{canopy}}$', r'$\mathregular{[^\circ C]}$'],
     'delta_t': [r'$\mathregular{T_{canopy}-T_{air}}$', r'$\mathregular{[^\circ C]}$'],
 }
-
-
-def calc_abs_irradiance(solver: Solver):
-    return sum([sum(v.values()) for k, v in solver.inputs.absorbed_irradiance.items() if k != -1])
 
 
 def compare_temperature(obs: list, sim: list, ax: plt.Subplot = None, return_ax: bool = False,
@@ -72,6 +70,9 @@ def plot_results(all_solvers: dict, path_figs: Path):
             emissivity_sky = []
             is_forced_aerodynamic_resistance = []
             temp_sim = []
+
+            sensor_angle_below_horizon = radians(45 if d1 < datetime(2008, 1, 2) else 30)
+
             for solver in plot_res['solvers']:
                 incident_diffuse_par_irradiance.append(solver.crop.inputs.incident_irradiance['diffuse'])
                 incident_direct_par_irradiance.append(solver.crop.inputs.incident_irradiance['direct'])
@@ -84,12 +85,12 @@ def plot_results(all_solvers: dict, path_figs: Path):
                 aerodynamic_resistance.append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
                 neutral_aerodynamic_resistance.append(calc_neutral_aerodynamic_resistance(solver=solver))
                 soil_abs_par.append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
-                veg_abs_par.append(calc_abs_irradiance(solver=solver))
+                veg_abs_par.append(get_canopy_abs_irradiance_from_solver(solver=solver))
                 psi_u.append(solver.crop.state_variables.stability_correction_for_momentum)
                 psi_h.append(solver.crop.state_variables.stability_correction_for_heat)
                 emissivity_sky.append(solver.crop.params.simulation.atmospheric_emissivity)
                 is_forced_aerodynamic_resistance.append(solver.is_forced_aerodynamic_resistance)
-                temp_sim.append(calc_apparent_temperature(eb_solver=solver, date_obs=d1))
+                temp_sim.append(calc_apparent_temperature(eb_solver=solver, sensor_angle=sensor_angle_below_horizon))
 
             all_sim_t += temp_sim
             all_obs_t += temp_obs
@@ -242,7 +243,7 @@ def plot_errors(all_solvers: dict, path_figs: Path):
                 summary['aerodynamic_resistance'].append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
                 summary['neutral_aerodynamic_resistance'].append(calc_neutral_aerodynamic_resistance(solver=solver))
                 summary['soil_abs_par'].append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
-                summary['veg_abs_par'].append(calc_abs_irradiance(solver=solver))
+                summary['veg_abs_par'].append(get_canopy_abs_irradiance_from_solver(solver=solver))
                 summary['psi_u'].append(solver.crop.state_variables.stability_correction_for_momentum)
                 summary['psi_h'].append(solver.crop.state_variables.stability_correction_for_heat)
                 summary['temperature_sim'].append(calc_apparent_temperature(eb_solver=solver, date_obs=d1))
@@ -267,6 +268,3 @@ def plot_errors(all_solvers: dict, path_figs: Path):
         ax.set_xlabel(r'$\mathregular{T_{sim}-T_{obs}\/[^\circ C]}$')
     fig.savefig(path_figs / 'errors.png')
     plt.close()
-
-
-

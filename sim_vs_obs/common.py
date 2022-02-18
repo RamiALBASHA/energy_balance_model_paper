@@ -1,6 +1,9 @@
 from enum import Enum
 
+from crop_energy_balance.solver import Solver
 from crop_irradiance.uniform_crops import inputs, params, shoot
+from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import calc_direct_black_extinction_coefficient, \
+    calc_sunlit_fraction_per_leaf_layer, calc_sunlit_fraction
 
 from sim_vs_obs.maricopa_hsc.config import ParamsIrradiance
 
@@ -72,3 +75,49 @@ class ParamsEnergyBalanceBase(Enum):
     @classmethod
     def to_dict(cls):
         return {name: member.value for name, member in cls.__members__.items()}
+
+
+def get_canopy_abs_irradiance_from_solver(solver: Solver):
+    return sum([sum(v.values()) for k, v in solver.inputs.absorbed_irradiance.items() if k != -1])
+
+
+def calc_irt_sensor_visible_fractions(leaf_layers: dict, sensor_angle: float) -> dict:
+    direct_black_extinction_coefficient = calc_direct_black_extinction_coefficient(
+        solar_inclination=sensor_angle,
+        leaves_to_sun_average_projection=0.5)
+
+    visible_leaf_fraction_to_sensor = {}
+    layer_indices = reversed(sorted(list(leaf_layers.keys())))
+    upper_leaf_area_index = 0.0
+    for layer_index in layer_indices:
+        layer_thickness = leaf_layers[layer_index]
+        visible_leaf_fraction_to_sensor.update({
+            layer_index: calc_sunlit_fraction_per_leaf_layer(
+                upper_cumulative_leaf_area_index=upper_leaf_area_index,
+                leaf_layer_thickness=layer_thickness,
+                direct_black_extinction_coefficient=direct_black_extinction_coefficient)})
+        upper_leaf_area_index += layer_thickness
+
+    visible_leaf_fraction_to_sensor.update({
+        -1: calc_sunlit_fraction(
+            cumulative_leaf_area_index=upper_leaf_area_index,
+            direct_black_extinction_coefficient=direct_black_extinction_coefficient)})
+    return visible_leaf_fraction_to_sensor
+
+
+def calc_apparent_temperature(eb_solver: Solver, sensor_angle: float) -> float:
+    sensor_visible_fractions = calc_irt_sensor_visible_fractions(
+        leaf_layers=eb_solver.crop.inputs.leaf_layers,
+        sensor_angle=sensor_angle)
+
+    total_weight = sum(sensor_visible_fractions.values())
+    soil_visible_fraction = sensor_visible_fractions.pop(-1)
+
+    weighted_temperature = []
+    for layer_index, visible_fraction in sensor_visible_fractions.items():
+        weighted_temperature.append(
+            visible_fraction * sum([(component.temperature * component.surface_fraction)
+                                    for component in eb_solver.crop[layer_index].values()]))
+    weighted_temperature.append(soil_visible_fraction * eb_solver.crop[-1].temperature)
+    apparent_temperature = sum(weighted_temperature) / total_weight
+    return apparent_temperature - 273.15
