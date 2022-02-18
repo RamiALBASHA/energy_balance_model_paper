@@ -267,7 +267,7 @@ def read_obs_energy_balance() -> DataFrame:
     return df
 
 
-def get_obs(all_obs: DataFrame, treatment_id: int, datetime_obs: datetime) -> dict:
+def get_obs_energy_balance(all_obs: DataFrame, treatment_id: int, datetime_obs: datetime) -> dict:
     cols = ['CT', 'Rn', 'H', 'G', 'L', 'ET', 'ST.1', 'ST.2', 'ST.5', 'ST.10', 'ST.20', 'ST.40']
     obs_s = all_obs[(all_obs['TRNO'] == treatment_id) & (all_obs['date'] == datetime_obs)][cols]
     if obs_s.shape[0] < 1 or all(obs_s.isna().values.flatten()):
@@ -305,7 +305,7 @@ def calc_sim_fapar(shoot: Shoot) -> float:
     return absorbed_irradiance / incident_irradiance
 
 
-def get_portable_infrared_obs_1993() -> DataFrame:
+def read_portable_infrared_obs_1993() -> DataFrame:
     file_name = f'Canopy Leaf Soil Temperatures from Hand-held Infrared Thermometers 1993.ods'
     df_raw = read_excel(PathInfos.source_raw.value / file_name, skiprows=29, engine='odf')
     df = DataFrame(data={
