@@ -326,6 +326,19 @@ def _calc_date(x: Series) -> datetime:
     """Time observation differs within few minutes between observations. Observation time of control-dry shaded
     leaves was thus considered"""
     try:
-        return datetime(int(x.iloc[21]) - 1, 12, 31, int(x.iloc[23]), int(round(x.iloc[23], 0))) + timedelta(days=x[22])
+        return datetime(int(x.iloc[21]) - 1, 12, 31, int(round(x.iloc[23], 0))) + timedelta(days=x[22])
     except ValueError:
         pass
+
+
+def get_obs_sunlit_shaded_temperature(obs_df: DataFrame, treatment_id: Union[str, int], datetime_obs: datetime) -> dict:
+    if datetime_obs in obs_df.index:
+        row = obs_df.loc[datetime_obs]
+        res = {
+            'sunlit': row[f'{treatment_id}_canopy_sunlit'],
+            'shaded': row[f'{treatment_id}_canopy_shaded'],
+            'soil': row[['902_soil_sunlit', '902_soil_shaded']].mean()}
+    else:
+        res = None
+
+    return res

@@ -9,6 +9,7 @@ if __name__ == '__main__':
     area_df = base_functions.get_area_data()
     heights = base_functions.calc_canopy_height(pheno=area_df, weather=weather_df)
     obs_energy_balance = base_functions.read_obs_energy_balance()
+    obs_portable_infrared_obs_1993 = base_functions.read_portable_infrared_obs_1993()
 
     area_df = area_df[~area_df['LNUM'].isna()]
 
@@ -46,7 +47,9 @@ if __name__ == '__main__':
                     datetime_obs: {
                         'solver': solver,
                         'obs_energy_balance': base_functions.get_obs_energy_balance(
-                            all_obs=obs_energy_balance, treatment_id=treatment, datetime_obs=datetime_obs)
+                            all_obs=obs_energy_balance, treatment_id=treatment, datetime_obs=datetime_obs),
+                        'obs_sunlit_shaded': base_functions.get_obs_sunlit_shaded_temperature(
+                            obs_df=obs_portable_infrared_obs_1993, treatment_id=treatment, datetime_obs=datetime_obs)
                     }})
 
     plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict)
