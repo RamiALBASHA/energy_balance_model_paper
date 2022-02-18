@@ -1,6 +1,6 @@
 from crop_energy_balance.solver import Solver
 
-from sim_vs_obs.maricopa_face import base_functions
+from sim_vs_obs.maricopa_face import base_functions, plots
 from sim_vs_obs.maricopa_face.config import SimInfos
 
 if __name__ == '__main__':
