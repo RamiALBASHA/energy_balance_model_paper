@@ -246,7 +246,8 @@ def plot_errors(all_solvers: dict, path_figs: Path):
                 summary['veg_abs_par'].append(get_canopy_abs_irradiance_from_solver(solver=solver))
                 summary['psi_u'].append(solver.crop.state_variables.stability_correction_for_momentum)
                 summary['psi_h'].append(solver.crop.state_variables.stability_correction_for_heat)
-                summary['temperature_sim'].append(calc_apparent_temperature(eb_solver=solver, date_obs=d1))
+                summary['temperature_sim'].append(calc_apparent_temperature(
+                    eb_solver=solver, sensor_angle=radians(45 if d1 < datetime(2008, 1, 2) else 30)))
                 summary['hours'].append(hour)
                 summary['net_longwave_radiation'].append(solver.crop.state_variables.net_longwave_radiation)
                 summary['height'].append(solver.crop.inputs.canopy_height)
