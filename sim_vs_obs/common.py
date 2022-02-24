@@ -114,10 +114,11 @@ def calc_apparent_temperature(eb_solver: Solver, sensor_angle: float) -> float:
     soil_visible_fraction = sensor_visible_fractions.pop(-1)
 
     weighted_temperature = []
-    for layer_index, visible_fraction in sensor_visible_fractions.items():
+    for component in eb_solver.leaf_components:
+        visible_fraction = sensor_visible_fractions[component.index]
         weighted_temperature.append(
-            visible_fraction * sum([(component.temperature * component.surface_fraction)
-                                    for component in eb_solver.crop[layer_index].values()]))
+            visible_fraction * component.temperature * component.surface_fraction)
+
     weighted_temperature.append(soil_visible_fraction * eb_solver.crop[-1].temperature)
     apparent_temperature = sum(weighted_temperature) / total_weight
     return apparent_temperature - 273.15
