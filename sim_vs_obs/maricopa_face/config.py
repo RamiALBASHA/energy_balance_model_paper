@@ -13,6 +13,7 @@ class PathInfos(Enum):
 
 
 class SimInfos(Enum):
+    is_bigleaf = True
     leaf_category = 'sunlit-shaded'
 
 
