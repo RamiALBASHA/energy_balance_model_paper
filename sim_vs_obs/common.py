@@ -96,7 +96,8 @@ def get_canopy_abs_irradiance_from_solver(solver: Solver):
 def calc_irt_sensor_visible_fractions(leaf_layers: dict, sensor_angle: float) -> dict:
     direct_black_extinction_coefficient = calc_direct_black_extinction_coefficient(
         solar_inclination=sensor_angle,
-        leaves_to_sun_average_projection=0.5)
+        leaf_angle_distribution_factor=ParamsIrradiance.leaf_angle_distribution_factor.value,
+        clumping_factor=ParamsIrradiance.clumping_factor.value)
 
     visible_leaf_fraction_to_sensor = {}
     layer_indices = reversed(sorted(list(leaf_layers.keys())))
