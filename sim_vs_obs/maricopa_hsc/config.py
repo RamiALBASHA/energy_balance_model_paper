@@ -70,16 +70,3 @@ class ParamsInfo:
             fig.savefig('stomatal_sensitivity_fit.png')
 
         self.psi_half_aperture = popt[0]
-
-
-class ParamsIrradiance(Enum):
-    leaf_reflectance = 0.08
-    leaf_transmittance = 0.07
-    leaves_to_sun_average_projection = 0.5
-    sky_sectors_number = 3
-    sky_type = 'soc'
-    canopy_reflectance_to_diffuse_irradiance = 0.057
-
-    @classmethod
-    def to_dict(cls):
-        return {name: member.value for name, member in cls.__members__.items()}

@@ -5,7 +5,19 @@ from crop_irradiance.uniform_crops import inputs, params, shoot
 from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import calc_direct_black_extinction_coefficient, \
     calc_sunlit_fraction_per_leaf_layer, calc_sunlit_fraction
 
-from sim_vs_obs.maricopa_hsc.config import ParamsIrradiance
+
+class ParamsIrradiance(Enum):
+    leaf_reflectance = 0.08
+    leaf_transmittance = 0.07
+    leaf_angle_distribution_factor = 0.9773843811168246
+    sky_sectors_number = 3
+    sky_type = 'soc'
+    canopy_reflectance_to_diffuse_irradiance = 0.057
+    clumping_factor = 0.89
+
+    @classmethod
+    def to_dict(cls):
+        return {name: member.value for name, member in cls.__members__.items()}
 
 
 def calc_absorbed_irradiance(
