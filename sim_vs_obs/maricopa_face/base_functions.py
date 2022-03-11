@@ -25,11 +25,15 @@ def get_area_data() -> DataFrame:
     return df
 
 
-def build_area_profile(treatment_data: Series) -> dict:
-    number_leaf = int(treatment_data['LNUM'])
+def build_area_profile(treatment_data: Series, is_bigleaf: bool = True) -> dict:
     total_leaf_area_index = treatment_data['LAID']
     total_stem_area_index = treatment_data['SAID']
-    return {k + 1: (total_stem_area_index + total_leaf_area_index) / number_leaf for k in range(number_leaf)}
+    if is_bigleaf:
+        res = {1: (total_stem_area_index + total_leaf_area_index)}
+    else:
+        number_leaf = int(treatment_data['LNUM'])
+        res = {k + 1: (total_stem_area_index + total_leaf_area_index) / number_leaf for k in range(number_leaf)}
+    return res
 
 
 def read_weather() -> DataFrame:

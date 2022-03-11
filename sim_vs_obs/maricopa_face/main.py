@@ -24,7 +24,7 @@ if __name__ == '__main__':
         if date_min <= date_obs <= date_max:
             weather_at_date = base_functions.get_weather(raw_data=weather_df[weather_df['DATE'].dt.date == date_obs])
 
-            gai_profile = base_functions.build_area_profile(treatment_data=row)
+            gai_profile = base_functions.build_area_profile(treatment_data=row, is_bigleaf=SimInfos.is_bigleaf.value)
 
             soil_data = base_functions.calc_soil_moisture(raw_data=soil_df, treatment_id=treatment, date_obs=date_obs)
 
