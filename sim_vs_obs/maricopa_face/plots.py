@@ -16,7 +16,7 @@ def add_1_1_line(ax):
 
 
 def get_dates(t_ls: list) -> list:
-    return list(set(t.date() for t in t_ls))
+    return sorted(list(set(t.date() for t in t_ls)))
 
 
 def calc_diff(sim_obs: dict, idx: int) -> float:
