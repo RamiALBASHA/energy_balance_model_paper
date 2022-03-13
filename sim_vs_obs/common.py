@@ -1,3 +1,4 @@
+from math import radians
 from enum import Enum
 
 from crop_energy_balance.solver import Solver
@@ -9,7 +10,7 @@ from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import calc_d
 class ParamsIrradiance(Enum):
     leaf_reflectance = 0.08
     leaf_transmittance = 0.07
-    leaf_angle_distribution_factor = 0.9773843811168246
+    leaf_angle_distribution_factor = radians(56)
     sky_sectors_number = 3
     sky_type = 'soc'
     canopy_reflectance_to_diffuse_irradiance = 0.057
@@ -83,6 +84,8 @@ class ParamsEnergyBalanceBase(Enum):
     maximum_iteration_number = 50
     stomatal_density_factor = 1
     atmospheric_emissivity_model = 'monteith_2013'
+    leaf_angle_distribution_factor = ParamsIrradiance.leaf_angle_distribution_factor.value
+    clumping_factor = ParamsIrradiance.clumping_factor.value
 
     @classmethod
     def to_dict(cls):
