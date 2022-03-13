@@ -25,6 +25,12 @@ def get_area_data() -> DataFrame:
     return df
 
 
+def interpolate_area_df(df: DataFrame) -> DataFrame:
+    idx = date_range(min(df.index), max(df.index))
+    df = df.reindex(idx)
+    return df.interpolate('linear')
+
+
 def build_area_profile(treatment_data: Series, is_bigleaf: bool = True) -> dict:
     total_leaf_area_index = treatment_data['LAID']
     total_stem_area_index = treatment_data['SAID']
