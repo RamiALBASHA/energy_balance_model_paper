@@ -83,7 +83,7 @@ class ParamsEnergyBalanceBase(Enum):
     acceptable_temperature_error = 0.02
     maximum_iteration_number = 50
     stomatal_density_factor = 1
-    atmospheric_emissivity_model = 'monteith_2013'
+    atmospheric_emissivity_model = 'brutsaert_1975'
     leaf_angle_distribution_factor = ParamsIrradiance.leaf_angle_distribution_factor.value
     clumping_factor = ParamsIrradiance.clumping_factor.value
 
