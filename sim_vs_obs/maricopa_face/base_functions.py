@@ -53,7 +53,7 @@ def calc_diffuse_ratio(hourly_weather: Series, latitude: float) -> float:
     elif hourly_weather['SRAD'] == 0:
         res = 1.
     else:
-        res = hourly_weather['SHADO'] / hourly_weather['SRAD']
+        res = min(1., hourly_weather['SHADO'] / hourly_weather['SRAD'])
 
     return res
 
