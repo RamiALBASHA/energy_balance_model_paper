@@ -157,8 +157,7 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, datetime_obs: 
     eb_params['stomatal_sensibility']['misson']['psi_half_aperture'] = ParamsInfo().psi_half_aperture
     eb_params.update({
         "diffuse_extinction_coef": irradiance_obj.params.diffuse_extinction_coefficient,
-        "leaf_scattering_coefficient": irradiance_obj.params.leaf_scattering_coefficient,
-        "atmospheric_emissivity_model": 'brutsaert_1975'})
+        "leaf_scattering_coefficient": irradiance_obj.params.leaf_scattering_coefficient})
 
     return eb_inputs, eb_params
 
