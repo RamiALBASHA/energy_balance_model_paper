@@ -14,7 +14,7 @@ if __name__ == '__main__':
     path_figs = PathInfos.source_fmt.value.parent / 'figs'
     path_figs.mkdir(parents=True, exist_ok=True)
 
-    crop_representation = 'layered_sunlit-shaded'
+    crop_representation = 'bigleaf_sunlit-shaded'
 
     is_bigleaf = 'bigleaf' in crop_representation
     is_lumped = 'lumped' in crop_representation
