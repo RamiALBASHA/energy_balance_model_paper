@@ -130,6 +130,119 @@ def plot_comparison_energy_balance(sim_obs: dict):
     pass
 
 
+def extract_sim_obs_data(sim_obs: dict):
+    all_t_can = {'sim': [], 'obs': []}
+    all_t_soil = {'sim': [], 'obs': []}
+    all_net_radiation = {'sim': [], 'obs': []}
+    all_sensible_heat = {'sim': [], 'obs': []}
+    all_latent_heat = {'sim': [], 'obs': []}
+    all_soil_heat = {'sim': [], 'obs': []}
+
+    all_t_sunlit = {'sim': [], 'obs': []}
+    all_t_shaded = {'sim': [], 'obs': []}
+    # all_t_soil2 = {'sim': [], 'obs': []}
+
+    for trt_id, trt_obs in sim_obs.items():
+        for date_obs in get_dates(trt_obs.keys()):
+
+            datetime_obs_ls = sorted(v for v in trt_obs.keys() if v.date() == date_obs)
+            hours = [t.hour for t in datetime_obs_ls]
+            nb_hours = len(hours)
+
+            pattern_list = [None] * nb_hours
+            pattern_dict = {k: pattern_list.copy() for k in ('sim', 'obs')}
+
+            par_inc = pattern_list.copy()
+            par_abs_veg = pattern_list.copy()
+            par_abs_sol = pattern_list.copy()
+            vpd = pattern_list.copy()
+            wind = pattern_list.copy()
+            ra = pattern_list.copy()
+            psi_soil = pattern_list.copy()
+            t_air = pattern_list.copy()
+            t_can = deepcopy(pattern_dict)
+            t_soil = deepcopy(pattern_dict)
+            net_radiation = deepcopy(pattern_dict)
+            sensible_heat = deepcopy(pattern_dict)
+            latent_heat = deepcopy(pattern_dict)
+            soil_heat = deepcopy(pattern_dict)
+
+            t_sunlit = deepcopy(pattern_dict)
+            t_shaded = deepcopy(pattern_dict)
+            t_soil2 = deepcopy(pattern_dict)
+
+            for i, dt_obs in enumerate(datetime_obs_ls):
+                solver, obs, obs2 = [trt_obs[dt_obs][s] for s in ('solver', 'obs_energy_balance', 'obs_sunlit_shaded')]
+
+                par_inc[i] = sum(solver.crop.inputs.incident_irradiance.values())
+                par_abs_veg[i] = get_canopy_abs_irradiance_from_solver(solver)
+                par_abs_sol[i] = solver.crop.inputs.absorbed_irradiance[-1]['lumped']
+                vpd[i] = solver.crop.inputs.vapor_pressure_deficit
+                wind[i] = solver.crop.inputs.wind_speed / 3600.
+                ra[i] = solver.crop.state_variables.aerodynamic_resistance * 3600.
+                psi_soil[i] = solver.crop.inputs.soil_water_potential
+                t_air[i] = solver.crop.inputs.air_temperature - 273.15
+
+                t_can['sim'][i] = calc_apparent_temperature(solver, SensorInfos.irt_angle_below_horizon.value)
+                t_soil['sim'][i] = solver.crop[-1].temperature - 273.15
+                net_radiation['sim'][i] = solver.crop.state_variables.net_radiation
+                sensible_heat['sim'][i] = solver.crop.state_variables.sensible_heat_flux
+                latent_heat['sim'][i] = solver.crop.state_variables.total_penman_monteith_evaporative_energy
+                soil_heat['sim'][i] = solver.crop[-1].heat_flux
+
+                max_layer_index = max(solver.crop.keys())
+                if solver.crop.leaves_category == 'sunlit-shaded':
+                    t_sunlit['sim'][i] = solver.crop[max_layer_index]['sunlit'].temperature - 273.15
+                    t_shaded['sim'][i] = solver.crop[max_layer_index]['shaded'].temperature - 273.15
+                    t_soil2['sim'][i] = solver.crop[-1].temperature - 273.15
+
+                if obs is not None:
+                    i_latent_heat = [i_l for i_l in obs['L'] if i_l >= 0]
+                    if len(i_latent_heat) > 0:
+                        latent_heat['obs'][i] = i_latent_heat
+                        t_can['obs'][i] = obs['CT']
+                        t_soil['obs'][i] = obs['ST.1']
+                        net_radiation['obs'][i] = obs['Rn']
+                        sensible_heat['obs'][i] = obs['H']
+                        soil_heat['obs'][i] = obs['G']
+
+                if obs2 is not None:
+                    t_sunlit['obs'][i] = obs2['sunlit']
+                    t_shaded['obs'][i] = obs2['shaded']
+                    t_soil2['obs'][i] = obs2['soil']
+
+            all_t_can['sim'] += t_can['sim']
+            all_t_soil['sim'] += t_soil['sim']
+            all_net_radiation['sim'] += net_radiation['sim']
+            all_sensible_heat['sim'] += sensible_heat['sim']
+            all_latent_heat['sim'] += latent_heat['sim']
+            all_soil_heat['sim'] += soil_heat['sim']
+            all_t_sunlit['sim'] += t_sunlit['sim']
+            all_t_shaded['sim'] += t_shaded['sim']
+            # all_t_soil2['sim'] += t_shaded['sim']
+
+            all_t_can['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_can['obs']]
+            all_t_soil['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_soil['obs']]
+            all_net_radiation['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in net_radiation['obs']]
+            all_sensible_heat['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in sensible_heat['obs']]
+            all_latent_heat['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in latent_heat['obs']]
+            all_soil_heat['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in soil_heat['obs']]
+            all_t_sunlit['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_sunlit['obs']]
+            all_t_shaded['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_shaded['obs']]
+            # all_t_soil2['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_soil2['obs']]
+
+    return dict(
+        all_t_can=all_t_can,
+        all_t_soil=all_t_soil,
+        all_net_radiation=all_net_radiation,
+        all_sensible_heat=all_sensible_heat,
+        all_latent_heat=all_latent_heat,
+        all_soil_heat=all_soil_heat,
+        all_t_sunlit=all_t_sunlit,
+        all_t_shaded=all_t_shaded
+    )
+
+
 def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_veg, par_abs_sol, vpd, t_air, psi_soil,
                        wind, ra, t_can, t_soil, net_radiation, latent_heat, sensible_heat, soil_heat):
     props = {'marker': 'o', 'color': 'b', 'alpha': 0.1}
