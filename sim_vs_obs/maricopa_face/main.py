@@ -61,4 +61,21 @@ if __name__ == '__main__':
                                 datetime_obs=datetime_obs)
                         }})
 
+    results_all = plots.extract_sim_obs_data(sim_obs=sim_obs_dict)
+    results_dry = plots.extract_sim_obs_data(sim_obs={k: v for k, v in sim_obs_dict.items() if k in (901, 905)})
+    results_wet = plots.extract_sim_obs_data(sim_obs={k: v for k, v in sim_obs_dict.items() if k not in (901, 905)})
+
+    plots.plot_sim_vs_obs(
+        res_all={k: v for k, v in results_all.items() if k not in ('all_t_sunlit', 'all_t_shaded')},
+        res_wet={k: v for k, v in results_wet.items() if k not in ('all_t_sunlit', 'all_t_shaded')},
+        res_dry={k: v for k, v in results_dry.items() if k not in ('all_t_sunlit', 'all_t_shaded')},
+        fig_name_suffix='wet')
+
+    plots.plot_sim_vs_obs(
+        res_all={k: v for k, v in results_all.items() if k in ('all_t_sunlit', 'all_t_shaded')},
+        res_wet={k: v for k, v in results_wet.items() if k in ('all_t_sunlit', 'all_t_shaded')},
+        res_dry={k: v for k, v in results_dry.items() if k in ('all_t_sunlit', 'all_t_shaded')},
+        alpha=1,
+        fig_name_suffix='sunlit_shaded')
+
     plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict)
