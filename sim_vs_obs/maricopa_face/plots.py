@@ -152,6 +152,7 @@ def plot_comparison_energy_balance(sim_obs: dict):
 
 
 def extract_sim_obs_data(sim_obs: dict):
+    all_t_air = []
     all_t_can = {'sim': [], 'obs': []}
     all_t_soil = {'sim': [], 'obs': []}
     all_net_radiation = {'sim': [], 'obs': []}
@@ -252,7 +253,10 @@ def extract_sim_obs_data(sim_obs: dict):
             all_t_shaded['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_shaded['obs']]
             # all_t_soil2['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_soil2['obs']]
 
+            all_t_air += t_air
+
     return dict(
+        all_t_air=all_t_air,
         all_t_can=all_t_can,
         all_t_soil=all_t_soil,
         all_net_radiation=all_net_radiation,
@@ -404,12 +408,34 @@ def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, alpha: float = 
         obs_ls, sim_ls = v['obs'], v['sim']
         obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
         ax.text(0.1, 0.9, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.3f}', transform=ax.transAxes)
-        ax.text(0.1, 0.8, f'R2={stats.calc_r2(obs_ls, sim_ls):.3f}', transform=ax.transAxes)
+        ax.text(0.1, 0.8, f'R²={stats.calc_r2(obs_ls, sim_ls):.3f}', transform=ax.transAxes)
         ax.set_title(k)
         add_1_1_line(ax)
 
     fig.tight_layout()
     fig.savefig(PathInfos.source_figs.value / f'all_sim_vs_obs_{fig_name_suffix}.png')
+    pyplot.close('all')
+
+    pass
+
+
+def plot_delta_temperature(temperature_air: list, temperature_canopy_sim: list, temperature_canopy_obs: list):
+    fig, ax = pyplot.subplots()
+    t_air, t_sim, t_obs = zip(*[(it_air, it_sim, it_obs) for it_air, it_sim, it_obs in
+                                zip(temperature_air, temperature_canopy_sim, temperature_canopy_obs) if
+                                not any(isna([it_air, it_sim, it_obs]))])
+    delta_t_sim = [it_sim - it_air for it_sim, it_air in zip(t_sim, t_air)]
+    delta_t_obs = [it_obs - it_air for it_obs, it_air in zip(t_obs, t_air)]
+
+    ax.scatter(delta_t_obs, delta_t_sim, alpha=0.1)
+    ax.text(0.1, 0.9, f'RMSE={stats.calc_rmse(delta_t_obs, delta_t_sim):.3f}', transform=ax.transAxes)
+    ax.text(0.1, 0.8, f'R²={stats.calc_r2(delta_t_obs, delta_t_sim):.3f}', transform=ax.transAxes)
+    add_1_1_line(ax)
+    ax.set(xlabel=r'$\mathregular{T_{obs}-T_{air}\/[^\circ C]}$',
+           ylabel=r'$\mathregular{T_{sim}-T_{air}\/[^\circ C]}$')
+
+    fig.tight_layout()
+    fig.savefig(PathInfos.source_figs.value / f'all_sim_vs_obs_delta_temperature.png')
     pyplot.close('all')
 
     pass
