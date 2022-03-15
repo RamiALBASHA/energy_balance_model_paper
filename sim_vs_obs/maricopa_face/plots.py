@@ -33,6 +33,10 @@ def plot_comparison_energy_balance(sim_obs: dict):
     all_latent_heat = {'sim': [], 'obs': []}
     all_soil_heat = {'sim': [], 'obs': []}
 
+    all_t_sunlit = {'sim': [], 'obs': []}
+    all_t_shaded = {'sim': [], 'obs': []}
+    all_t_soil2 = {'sim': [], 'obs': []}
+
     counter = 0
     for trt_id, trt_obs in sim_obs.items():
         for date_obs in get_dates(trt_obs.keys()):
@@ -59,17 +63,21 @@ def plot_comparison_energy_balance(sim_obs: dict):
             latent_heat = deepcopy(pattern_dict)
             soil_heat = deepcopy(pattern_dict)
 
-            delta_t_can = pattern_list.copy()
-            delta_t_sol = pattern_list.copy()
-            delta_net_radiation = pattern_list.copy()
-            delta_sensible_heat = pattern_list.copy()
-            delta_latent_heat = pattern_list.copy()
-            delta_soil_heat = pattern_list.copy()
+            t_sunlit = deepcopy(pattern_dict)
+            t_shaded = deepcopy(pattern_dict)
+            t_soil2 = deepcopy(pattern_dict)
+
+            # delta_t_can = pattern_list.copy()
+            # delta_t_sol = pattern_list.copy()
+            # delta_net_radiation = pattern_list.copy()
+            # delta_sensible_heat = pattern_list.copy()
+            # delta_latent_heat = pattern_list.copy()
+            # delta_soil_heat = pattern_list.copy()
 
             gai = sum(trt_obs[datetime_obs_ls[0]]['solver'].crop.inputs.leaf_layers.values())
 
             for i, dt_obs in enumerate(datetime_obs_ls):
-                solver, obs = [trt_obs[dt_obs][s] for s in ('solver', 'obs_energy_balance')]
+                solver, obs, obs2 = [trt_obs[dt_obs][s] for s in ('solver', 'obs_energy_balance', 'obs_sunlit_shaded')]
 
                 par_inc[i] = sum(solver.crop.inputs.incident_irradiance.values())
                 par_abs_veg[i] = get_canopy_abs_irradiance_from_solver(solver)
@@ -87,20 +95,33 @@ def plot_comparison_energy_balance(sim_obs: dict):
                 latent_heat['sim'][i] = solver.crop.state_variables.total_penman_monteith_evaporative_energy
                 soil_heat['sim'][i] = solver.crop[-1].heat_flux
 
-                if obs is not None:
-                    t_can['obs'][i] = obs['CT']
-                    t_soil['obs'][i] = obs['ST.1']
-                    net_radiation['obs'][i] = obs['Rn']
-                    sensible_heat['obs'][i] = obs['H']
-                    latent_heat['obs'][i] = obs['L']
-                    soil_heat['obs'][i] = obs['G']
+                max_layer_index = max(solver.crop.keys())
+                if solver.crop.leaves_category == 'sunlit-shaded':
+                    t_sunlit['sim'][i] = solver.crop[max_layer_index]['sunlit'].temperature - 273.15
+                    t_shaded['sim'][i] = solver.crop[max_layer_index]['shaded'].temperature - 273.15
+                    t_soil2['sim'][i] = solver.crop[-1].temperature - 273.15
 
-                delta_t_can[i] = calc_diff(sim_obs=t_can, idx=i)
-                delta_t_sol[i] = calc_diff(sim_obs=t_can, idx=i)
-                delta_net_radiation[i] = calc_diff(sim_obs=net_radiation, idx=i)
-                delta_sensible_heat[i] = calc_diff(sim_obs=sensible_heat, idx=i)
-                delta_latent_heat[i] = calc_diff(sim_obs=latent_heat, idx=i)
-                delta_soil_heat[i] = calc_diff(sim_obs=soil_heat, idx=i)
+                if obs is not None:
+                    i_latent_heat = [i_l for i_l in obs['L'] if i_l >= 0]
+                    if len(i_latent_heat) > 0:
+                        latent_heat['obs'][i] = i_latent_heat
+                        t_can['obs'][i] = obs['CT']
+                        t_soil['obs'][i] = obs['ST.1']
+                        net_radiation['obs'][i] = obs['Rn']
+                        sensible_heat['obs'][i] = obs['H']
+                        soil_heat['obs'][i] = obs['G']
+
+                if obs2 is not None:
+                    t_sunlit['obs'][i] = obs2['sunlit']
+                    t_shaded['obs'][i] = obs2['shaded']
+                    t_soil2['obs'][i] = obs2['soil']
+
+                # delta_t_can[i] = calc_diff(sim_obs=t_can, idx=i)
+                # delta_t_sol[i] = calc_diff(sim_obs=t_can, idx=i)
+                # delta_net_radiation[i] = calc_diff(sim_obs=net_radiation, idx=i)
+                # delta_sensible_heat[i] = calc_diff(sim_obs=sensible_heat, idx=i)
+                # delta_latent_heat[i] = calc_diff(sim_obs=latent_heat, idx=i)
+                # delta_soil_heat[i] = calc_diff(sim_obs=soil_heat, idx=i)
 
             all_t_can['sim'] += t_can['sim']
             all_t_soil['sim'] += t_soil['sim']
@@ -108,25 +129,25 @@ def plot_comparison_energy_balance(sim_obs: dict):
             all_sensible_heat['sim'] += sensible_heat['sim']
             all_latent_heat['sim'] += latent_heat['sim']
             all_soil_heat['sim'] += soil_heat['sim']
+            all_t_sunlit['sim'] += t_sunlit['sim']
+            all_t_shaded['sim'] += t_shaded['sim']
+            all_t_soil2['sim'] += t_shaded['sim']
 
-            all_t_can['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in t_can['obs']]
-            all_t_soil['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in t_soil['obs']]
-            all_net_radiation['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in net_radiation['obs']]
-            all_sensible_heat['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in sensible_heat['obs']]
-            all_latent_heat['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in latent_heat['obs']]
-            all_soil_heat['obs'] += [sum(v)/len(v) if isinstance(v, list) else v for v in soil_heat['obs']]
+            all_t_can['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_can['obs']]
+            all_t_soil['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_soil['obs']]
+            all_net_radiation['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in net_radiation['obs']]
+            all_sensible_heat['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in sensible_heat['obs']]
+            all_latent_heat['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in latent_heat['obs']]
+            all_soil_heat['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in soil_heat['obs']]
+            all_t_sunlit['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_sunlit['obs']]
+            all_t_shaded['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_shaded['obs']]
+            all_t_soil2['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_soil2['obs']]
 
-            plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_veg, par_abs_sol, vpd, t_air,
-                               psi_soil, wind, ra, t_can, t_soil, net_radiation, latent_heat, sensible_heat, soil_heat)
+            plot_daily_dynamic(f'{trt_id}_{counter}', date_obs, trt_id, gai, hours, par_inc, par_abs_veg, par_abs_sol,
+                               vpd, t_air, psi_soil, wind, ra, t_can, t_soil, net_radiation, latent_heat, sensible_heat,
+                               soil_heat, t_sunlit, t_shaded, t_soil2)
             counter += 1
 
-    plot_sim_vs_obs(
-        res={'t_can': all_t_can,
-             't_soil': all_t_soil,
-             'net_radiation': all_net_radiation,
-             'sensible_heat': all_sensible_heat,
-             'latent_heat': all_latent_heat,
-             'soil_heat': all_soil_heat})
     pass
 
 
@@ -244,7 +265,8 @@ def extract_sim_obs_data(sim_obs: dict):
 
 
 def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_veg, par_abs_sol, vpd, t_air, psi_soil,
-                       wind, ra, t_can, t_soil, net_radiation, latent_heat, sensible_heat, soil_heat):
+                       wind, ra, t_can, t_soil, net_radiation, latent_heat, sensible_heat, soil_heat, t_sunlit,
+                       t_shaded, t_soil2):
     props = {'marker': 'o', 'color': 'b', 'alpha': 0.1}
     fig, axs = pyplot.subplots(nrows=3, ncols=8, figsize=(18, 8))
 
@@ -290,6 +312,15 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
     axs[1, 2].legend(*[v[:2] for v in axs[1, 2].get_legend_handles_labels()])
     axs[1, 3].legend(*[v[:2] for v in axs[1, 3].get_legend_handles_labels()])
 
+    axs[2, 2].plot(hours, t_soil2['sim'], label=r'$\mathregular{T_{soil,\/sim}}$')
+    for h in hours:
+        if t_soil2['obs'][h] is not None:
+            axs[2, 2].scatter(h, t_soil2['obs'][h], label=r'$\mathregular{T_{soil,\/obs}}$', **props)
+            axs[2, 3].scatter(t_soil2['obs'][h], t_soil2['sim'][h], label=r'$\mathregular{T_{soil}}$', **props)
+    axs[2, 3] = add_1_1_line(ax=axs[2, 3])
+    axs[2, 2].legend(*[v[:2] for v in axs[2, 2].get_legend_handles_labels()])
+    axs[2, 3].legend(*[v[:2] for v in axs[2, 3].get_legend_handles_labels()])
+
     axs[0, 4].plot(hours, net_radiation['sim'], label=r'$\mathregular{{Rn}_{sim}}$')
     for h in hours:
         if net_radiation['obs'][h] is not None:
@@ -330,12 +361,29 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
     axs[0, 6].legend(*[v[:2] for v in axs[0, 6].get_legend_handles_labels()])
     axs[0, 7].legend(*[v[:2] for v in axs[0, 7].get_legend_handles_labels()])
 
+    axs[1, 6].plot(hours, t_sunlit['sim'], label=r'$\mathregular{T_{sunlit\/sim}}$', color='orange')
+    axs[1, 6].plot(hours, t_shaded['sim'], label=r'$\mathregular{T_{shaded\/sim}}$', color='brown')
     for h in hours:
-        rnh, gh, hh, lh = [v[h] for v in (net_radiation['obs'], soil_heat['obs'], sensible_heat['obs'], latent_heat['obs'])]
-        if not None in (rnh, gh, hh, lh):
-            energy_balance_error = stats.calc_mean(rnh) - stats.calc_mean(gh) - stats.calc_mean(hh) - stats.calc_mean(lh)
-            axs[-1, -1].scatter(h, energy_balance_error, label='Rn-G-H-L', **props)
-    axs[-1, -1].legend(*[v[:1] for v in axs[-1, -1].get_legend_handles_labels()])
+        if t_sunlit['obs'][h] is not None:
+            axs[1, 6].scatter(h, t_sunlit['obs'][h], label=r'$\mathregular{T_{sunlit,\/obs}}$',
+                              color='orange', marker='o')
+            axs[1, 7].scatter(t_sunlit['obs'][h], t_sunlit['sim'][h], label=r'$\mathregular{T_{sunlit}}$',
+                              color='orange', marker='o')
+        if t_shaded['obs'][h] is not None:
+            axs[1, 6].scatter(h, t_shaded['obs'][h], label=r'$\mathregular{T_{shaded,\/obs}}$',
+                              color='brown', marker='o')
+            axs[1, 7].scatter(t_shaded['obs'][h], t_shaded['sim'][h], label=r'$\mathregular{T_{shaded}}$',
+                              color='brown', marker='o')
+    axs[1, 7] = add_1_1_line(ax=axs[1, 7])
+    axs[1, 6].legend(*[v[:2] for v in axs[1, 6].get_legend_handles_labels()])
+    axs[1, 7].legend(*[v[:2] for v in axs[1, 7].get_legend_handles_labels()])
+
+    # for h in hours:
+    #     rnh, gh, hh, lh = [v[h] for v in (net_radiation['obs'], soil_heat['obs'], sensible_heat['obs'], latent_heat['obs'])]
+    #     if not None in (rnh, gh, hh, lh):
+    #         energy_balance_error = stats.calc_mean(rnh) - stats.calc_mean(gh) - stats.calc_mean(hh) - stats.calc_mean(lh)
+    #         axs[-1, -1].scatter(h, energy_balance_error, label='Rn-G-H-L', **props)
+    # axs[-1, -1].legend(*[v[:1] for v in axs[-1, -1].get_legend_handles_labels()])
 
     fig.savefig(PathInfos.source_figs.value / f'{counter}.png')
     pyplot.close('all')
