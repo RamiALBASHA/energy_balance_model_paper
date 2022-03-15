@@ -390,21 +390,27 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
     pass
 
 
-def plot_sim_vs_obs(res: dict):
-    fig, axs = pyplot.subplots(ncols=len(res.keys()), figsize=(16, 4))
-    for ax, (k, v) in zip(axs, res.items()):
+def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, alpha: float = 0.1, fig_name_suffix: str = ''):
+    n_cols = len(res_all.keys())
+    fig_size = [6.4, 4.8] if n_cols < 4 else [16, 4]
+    fig, axs = pyplot.subplots(ncols=len(res_all.keys()), figsize=fig_size)
+    for res, c in (res_wet, 'blue'), (res_dry, 'red'):
+        for ax, (k, v) in zip(axs, res.items()):
+            obs_ls, sim_ls = v['obs'], v['sim']
+            # obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
+            ax.scatter(obs_ls, sim_ls, alpha=alpha)
+
+    for ax, (k, v) in zip(axs, res_all.items()):
         obs_ls, sim_ls = v['obs'], v['sim']
         obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
-        ax.scatter(obs_ls, sim_ls, alpha=0.1)
         ax.text(0.1, 0.9, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.3f}', transform=ax.transAxes)
         ax.text(0.1, 0.8, f'R2={stats.calc_r2(obs_ls, sim_ls):.3f}', transform=ax.transAxes)
         ax.set_title(k)
-        ax = add_1_1_line(ax)
+        add_1_1_line(ax)
 
     fig.tight_layout()
-    fig.savefig(PathInfos.source_figs.value / f'all_sim_vs_obs.png')
+    fig.savefig(PathInfos.source_figs.value / f'all_sim_vs_obs_{fig_name_suffix}.png')
     pyplot.close('all')
-
 
     pass
 
