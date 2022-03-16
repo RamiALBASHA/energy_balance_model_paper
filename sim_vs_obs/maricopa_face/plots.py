@@ -256,15 +256,15 @@ def extract_sim_obs_data(sim_obs: dict):
             all_t_air += t_air
 
     return dict(
-        all_t_air=all_t_air,
-        all_t_can=all_t_can,
-        all_t_soil=all_t_soil,
-        all_net_radiation=all_net_radiation,
-        all_sensible_heat=all_sensible_heat,
-        all_latent_heat=all_latent_heat,
-        all_soil_heat=all_soil_heat,
-        all_t_sunlit=all_t_sunlit,
-        all_t_shaded=all_t_shaded
+        t_air=all_t_air,
+        t_can=all_t_can,
+        t_soil=all_t_soil,
+        net_radiation=all_net_radiation,
+        sensible_heat=all_sensible_heat,
+        latent_heat=all_latent_heat,
+        soil_heat=all_soil_heat,
+        t_sunlit=all_t_sunlit,
+        t_shaded=all_t_shaded
     )
 
 
