@@ -1,0 +1,23 @@
+UNITS_MAP = {
+    'net_radiation': (r'$\mathregular{R_n}$', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
+    'sensible_heat_flux': ('H', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
+    'total_penman_monteith_evaporative_energy': (r'$\mathregular{\lambda E}$', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
+    'soil_heat_flux': ('G', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
+    'energy_balance': ('balance', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
+    'richardson_number': ('Ri', '[-]'),
+    'stability_correction_for_momentum': (r'$\mathregular{\Phi_m}$', '[m]'),
+    'stability_correction_for_heat': (r'$\mathregular{\Phi_h}$', '[m]'),
+    'monin_obukhov_length': ('L', '[m]'),
+    'available_energy': ('A', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
+    'penman_monteith_evaporative_energy': (r'$\mathregular{\lambda E}$', r'$\mathregular{[W\/m^{-2}_{ground}]}$'),
+    'boundary_resistance': (r'$\mathregular{r_a}$', r'$\mathregular{[h\/m^{-1}]}$'),
+    'source_temperature': (r'$\mathregular{T_m}$', r'$\mathregular{[^\circ C]}$'),
+    'temperature': (r'$\mathregular{T_s}$', r'$\mathregular{[^\circ C]}$'),
+    'PAR_direct': r'$\mathregular{R_{inc,\/PAR,\/direct}}$',
+    'PAR_diffuse': r'$\mathregular{R_{inc,\/PAR,\/diffuse}}$',
+    'LAI': (r'$\mathregular{L_t}$', r'$\mathregular{[m^{2}_{leaf}\/m^{-2}_{ground}]}$'),
+    'surface_conductance': (r'$\mathregular{g_{s,\/l}}$', r'$\mathregular{[m\/h^{-1}]}$'),
+    'incident_PAR': (r'$\mathregular{R_{inc}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
+    'absorbed_par': (r'$\mathregular{R_{abs}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
+    'shaded_fraction': (r'$\mathregular{\phi_{shaded}}$', '[-]')
+}

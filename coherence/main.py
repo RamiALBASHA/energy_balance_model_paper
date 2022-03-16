@@ -9,6 +9,7 @@ from pandas import DataFrame
 from coherence import sim, plots
 from coherence.sim import calc_absorbed_irradiance, solve_energy_balance, get_variable
 from sources.demo import plot_weather, get_grignon_weather_data
+from utils.config import UNITS_MAP
 from utils.van_genuchten_params import VanGenuchtenParams
 from utils.water_retention import calc_soil_water_potential
 
@@ -99,7 +100,7 @@ def examine_lai_effect():
     plots.compare_sunlit_shaded_temperatures(
         temperature_data=temperature_ls,
         figure_path=Path(__file__).parents[1] / 'figs/coherence/effect_lai.png',
-        xlabel=' '.join(plots.UNITS_MAP['LAI']))
+        xlabel=' '.join(UNITS_MAP['LAI']))
 
 
 def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_stability: bool,

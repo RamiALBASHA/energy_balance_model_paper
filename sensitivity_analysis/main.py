@@ -9,7 +9,7 @@ from crop_energy_balance.solver import Solver
 from matplotlib import colors
 from numpy import array, arange
 
-from coherence.plots import UNITS_MAP
+from utils.config import UNITS_MAP
 from coherence.sim import calc_absorbed_irradiance, get_energy_balance_inputs_and_params
 from sources.demo import get_grignon_weather_data
 from utils.van_genuchten_params import VanGenuchtenParams
