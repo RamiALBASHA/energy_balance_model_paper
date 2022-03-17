@@ -65,10 +65,12 @@ if __name__ == '__main__':
     results_dry = plots.extract_sim_obs_data(sim_obs={k: v for k, v in sim_obs_dict.items() if k in (901, 905)})
     results_wet = plots.extract_sim_obs_data(sim_obs={k: v for k, v in sim_obs_dict.items() if k not in (901, 905)})
 
+    vars_to_plot = (
+        'temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat', 'latent_heat', 'soil_heat')
     plots.plot_sim_vs_obs(
-        res_all={k: v for k, v in results_all.items() if k not in ('t_sunlit', 't_shaded', 't_air')},
-        res_wet={k: v for k, v in results_wet.items() if k not in ('t_sunlit', 't_shaded', 't_air')},
-        res_dry={k: v for k, v in results_dry.items() if k not in ('t_sunlit', 't_shaded', 't_air')},
+        res_all={k: v for k, v in results_all.items() if k in vars_to_plot},
+        res_wet={k: v for k, v in results_wet.items() if k in vars_to_plot},
+        res_dry={k: v for k, v in results_dry.items() if k in vars_to_plot},
         fig_name_suffix='wet')
 
     plots.plot_sim_vs_obs(
@@ -79,8 +81,9 @@ if __name__ == '__main__':
         fig_name_suffix='sunlit_shaded')
 
     plots.plot_delta_temperature(
-        temperature_air=results_all['t_air'],
-        temperature_canopy_sim=results_all['t_can']['sim'],
-        temperature_canopy_obs=results_all['t_can']['obs'])
+        temperature_air=results_all['temperature_air'],
+        temperature_canopy_sim=results_all['temperature_canopy']['sim'],
+        temperature_canopy_obs=results_all['temperature_canopy']['obs'])
 
     plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict)
+    plots.plot_errors(res=results_all)
