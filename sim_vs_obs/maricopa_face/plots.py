@@ -1,12 +1,14 @@
 from copy import deepcopy
 
+import statsmodels.api as sm
 from matplotlib import pyplot
+from numpy import array, linspace
 from pandas import DataFrame, isna
 
 from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, calc_apparent_temperature
 from sim_vs_obs.maricopa_face import base_functions
 from sim_vs_obs.maricopa_face.config import SensorInfos, PathInfos
-from utils import stats
+from utils import stats, config
 
 
 def add_1_1_line(ax):
@@ -164,6 +166,24 @@ def extract_sim_obs_data(sim_obs: dict):
     all_t_shaded = {'sim': [], 'obs': []}
     # all_t_soil2 = {'sim': [], 'obs': []}
 
+    all_incident_par_irradiance = []
+    all_incident_diffuse_par_irradiance = []
+    all_incident_direct_par_irradiance = []
+    all_wind_speed = []
+    all_vapor_pressure_deficit = []
+    all_soil_water_potential = []
+    all_richardson = []
+    all_monin_obukhov = []
+    all_aerodynamic_resistance = []
+    all_veg_abs_par = []
+    all_soil_abs_par = []
+    all_psi_u = []
+    all_psi_h = []
+    all_hours = []
+    all_net_longwave_radiation = []
+    all_height = []
+    all_gai = []
+
     for trt_id, trt_obs in sim_obs.items():
         for date_obs in get_dates(trt_obs.keys()):
 
@@ -175,6 +195,8 @@ def extract_sim_obs_data(sim_obs: dict):
             pattern_dict = {k: pattern_list.copy() for k in ('sim', 'obs')}
 
             par_inc = pattern_list.copy()
+            par_inc_direct = pattern_list.copy()
+            par_inc_diffuse = pattern_list.copy()
             par_abs_veg = pattern_list.copy()
             par_abs_sol = pattern_list.copy()
             vpd = pattern_list.copy()
@@ -182,6 +204,14 @@ def extract_sim_obs_data(sim_obs: dict):
             ra = pattern_list.copy()
             psi_soil = pattern_list.copy()
             t_air = pattern_list.copy()
+            richardson = pattern_list.copy()
+            monin_obukhov = pattern_list.copy()
+            psi_u = pattern_list.copy()
+            psi_h = pattern_list.copy()
+            net_longwave_radiation = pattern_list.copy()
+            heights = pattern_list.copy()
+            gai = pattern_list.copy()
+
             t_can = deepcopy(pattern_dict)
             t_soil = deepcopy(pattern_dict)
             net_radiation = deepcopy(pattern_dict)
@@ -197,6 +227,8 @@ def extract_sim_obs_data(sim_obs: dict):
                 solver, obs, obs2 = [trt_obs[dt_obs][s] for s in ('solver', 'obs_energy_balance', 'obs_sunlit_shaded')]
 
                 par_inc[i] = sum(solver.crop.inputs.incident_irradiance.values())
+                par_inc_direct[i] = solver.crop.inputs.incident_irradiance['direct']
+                par_inc_diffuse[i] = solver.crop.inputs.incident_irradiance['diffuse']
                 par_abs_veg[i] = get_canopy_abs_irradiance_from_solver(solver)
                 par_abs_sol[i] = solver.crop.inputs.absorbed_irradiance[-1]['lumped']
                 vpd[i] = solver.crop.inputs.vapor_pressure_deficit
@@ -204,6 +236,13 @@ def extract_sim_obs_data(sim_obs: dict):
                 ra[i] = solver.crop.state_variables.aerodynamic_resistance * 3600.
                 psi_soil[i] = solver.crop.inputs.soil_water_potential
                 t_air[i] = solver.crop.inputs.air_temperature - 273.15
+                richardson[i] = solver.crop.state_variables.richardson_number
+                monin_obukhov[i] = solver.crop.state_variables.monin_obukhov_length
+                psi_u[i] = solver.crop.state_variables.stability_correction_for_momentum
+                psi_h[i] = solver.crop.state_variables.stability_correction_for_heat
+                net_longwave_radiation[i] = solver.crop.state_variables.net_longwave_radiation
+                heights[i] = solver.crop.inputs.canopy_height
+                gai[i] = sum(solver.crop.inputs.leaf_layers.values())
 
                 t_can['sim'][i] = calc_apparent_temperature(solver, SensorInfos.irt_angle_below_horizon.value)
                 t_soil['sim'][i] = solver.crop[-1].temperature - 273.15
@@ -233,6 +272,24 @@ def extract_sim_obs_data(sim_obs: dict):
                     t_shaded['obs'][i] = obs2['shaded']
                     t_soil2['obs'][i] = obs2['soil']
 
+            all_incident_par_irradiance += par_inc
+            all_incident_diffuse_par_irradiance += par_inc_direct
+            all_incident_direct_par_irradiance += par_inc_diffuse
+            all_wind_speed += wind
+            all_vapor_pressure_deficit += vpd
+            all_soil_water_potential += psi_soil
+            all_richardson += richardson
+            all_monin_obukhov += monin_obukhov
+            all_aerodynamic_resistance += ra
+            all_veg_abs_par += par_abs_veg
+            all_soil_abs_par += par_abs_sol
+            all_psi_u += psi_u
+            all_psi_h += psi_h
+            all_hours += hours
+            all_net_longwave_radiation += net_longwave_radiation
+            all_height += heights
+            all_gai += gai
+
             all_t_can['sim'] += t_can['sim']
             all_t_soil['sim'] += t_soil['sim']
             all_net_radiation['sim'] += net_radiation['sim']
@@ -256,15 +313,32 @@ def extract_sim_obs_data(sim_obs: dict):
             all_t_air += t_air
 
     return dict(
-        t_air=all_t_air,
-        t_can=all_t_can,
-        t_soil=all_t_soil,
+        temperature_air=all_t_air,
+        temperature_canopy=all_t_can,
+        temperature_soil=all_t_soil,
         net_radiation=all_net_radiation,
-        sensible_heat=all_sensible_heat,
-        latent_heat=all_latent_heat,
-        soil_heat=all_soil_heat,
-        t_sunlit=all_t_sunlit,
-        t_shaded=all_t_shaded
+        sensible_heat_flux=all_sensible_heat,
+        latent_heat_flux=all_latent_heat,
+        soil_heat_flux=all_soil_heat,
+        temperature_sunlit=all_t_sunlit,
+        temperature_shaded=all_t_shaded,
+        incident_par=all_incident_diffuse_par_irradiance,
+        incident_diffuse_par_irradiance=all_incident_diffuse_par_irradiance,
+        incident_direct_par_irradiance=all_incident_direct_par_irradiance,
+        wind_speed=all_wind_speed,
+        vapor_pressure_deficit=all_vapor_pressure_deficit,
+        soil_water_potential=all_soil_water_potential,
+        richardson=all_richardson,
+        monin_obukhov=all_monin_obukhov,
+        aerodynamic_resistance=all_aerodynamic_resistance,
+        absorbed_par_veg=all_veg_abs_par,
+        absorbed_par_soil=all_soil_abs_par,
+        psi_u=all_psi_u,
+        psi_h=all_psi_h,
+        hour=all_hours,
+        net_longwave_radiation=all_net_longwave_radiation,
+        height=all_height,
+        gai=all_gai,
     )
 
 
@@ -382,13 +456,6 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
     axs[1, 6].legend(*[v[:2] for v in axs[1, 6].get_legend_handles_labels()])
     axs[1, 7].legend(*[v[:2] for v in axs[1, 7].get_legend_handles_labels()])
 
-    # for h in hours:
-    #     rnh, gh, hh, lh = [v[h] for v in (net_radiation['obs'], soil_heat['obs'], sensible_heat['obs'], latent_heat['obs'])]
-    #     if not None in (rnh, gh, hh, lh):
-    #         energy_balance_error = stats.calc_mean(rnh) - stats.calc_mean(gh) - stats.calc_mean(hh) - stats.calc_mean(lh)
-    #         axs[-1, -1].scatter(h, energy_balance_error, label='Rn-G-H-L', **props)
-    # axs[-1, -1].legend(*[v[:1] for v in axs[-1, -1].get_legend_handles_labels()])
-
     fig.savefig(PathInfos.source_figs.value / f'{counter}.png')
     pyplot.close('all')
     pass
@@ -466,4 +533,45 @@ def plot_irradiance(shoot_obj: dict, obs_df: DataFrame):
 
     fig.savefig(PathInfos.source_figs.value / 'irradiance.png')
     pyplot.close(fig)
+    pass
+
+
+def plot_errors(res: dict):
+    n_rows = 3
+    n_cols = 4
+
+    for k in ('temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat_flux', 'latent_heat_flux',
+              'soil_heat_flux', 'temperature_sunlit', 'temperature_shaded'):
+
+        fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharey='all')
+
+        idx, sim, obs = zip(*[(i, i_sim, i_obs) for i, (i_sim, i_obs) in enumerate(zip(res[k]['sim'], res[k]['obs']))
+                              if not any(isna([i_sim, i_obs]))])
+        error = [i_sim - i_obs for i_sim, i_obs in zip(sim, obs)]
+
+        for i_explanatory, explanatory in enumerate(
+                ('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
+                 'aerodynamic_resistance', 'absorbed_par_soil', 'absorbed_par_veg', 'hour',
+                 'net_longwave_radiation', 'height', 'gai')):
+            ax = axs[i_explanatory % n_rows, i_explanatory // n_rows]
+            explanatory_ls = [res[explanatory][i] for i in idx]
+            ax.scatter(explanatory_ls, error, marker='.', edgecolor=None, alpha=0.2)
+            ax.set(xlabel=' '.join(config.UNITS_MAP[explanatory]))
+
+            x = array(explanatory_ls)
+            x = sm.add_constant(x)
+            y = array(error)
+            results = sm.OLS(y, x).fit()
+
+            ax.plot(*zip(*[(i, results.params[0] + results.params[1] * i) for i in
+                           linspace(min(explanatory_ls), max(explanatory_ls), 2)]), 'k--')
+            p_value_slope = results.pvalues[1] / 2.
+            ax.text(0.1, 0.9, '*' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontweight='bold')
+
+        title = ' '.join(config.UNITS_MAP[k])
+        axs[1, 0].set_ylabel(' '.join((r'$\mathregular{\epsilon}$', title)), fontsize=16)
+        fig.tight_layout()
+        fig.savefig(PathInfos.source_figs.value / f'errors_{k}.png')
+        pyplot.close()
+
     pass
