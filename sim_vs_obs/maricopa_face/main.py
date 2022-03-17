@@ -65,8 +65,8 @@ if __name__ == '__main__':
     results_dry = plots.extract_sim_obs_data(sim_obs={k: v for k, v in sim_obs_dict.items() if k in (901, 905)})
     results_wet = plots.extract_sim_obs_data(sim_obs={k: v for k, v in sim_obs_dict.items() if k not in (901, 905)})
 
-    vars_to_plot = (
-        'temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat', 'latent_heat', 'soil_heat')
+    vars_to_plot = ('temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat_flux',
+                    'latent_heat_flux', 'soil_heat_flux')
     plots.plot_sim_vs_obs(
         res_all={k: v for k, v in results_all.items() if k in vars_to_plot},
         res_wet={k: v for k, v in results_wet.items() if k in vars_to_plot},
@@ -74,9 +74,9 @@ if __name__ == '__main__':
         fig_name_suffix='wet')
 
     plots.plot_sim_vs_obs(
-        res_all={k: v for k, v in results_all.items() if k in ('t_sunlit', 't_shaded')},
-        res_wet={k: v for k, v in results_wet.items() if k in ('t_sunlit', 't_shaded')},
-        res_dry={k: v for k, v in results_dry.items() if k in ('t_sunlit', 't_shaded')},
+        res_all={k: v for k, v in results_all.items() if k in ('temperature_sunlit', 'temperature_shaded')},
+        res_wet={k: v for k, v in results_wet.items() if k in ('temperature_sunlit', 'temperature_shaded')},
+        res_dry={k: v for k, v in results_dry.items() if k in ('temperature_sunlit', 'temperature_shaded')},
         alpha=1,
         fig_name_suffix='sunlit_shaded')
 
