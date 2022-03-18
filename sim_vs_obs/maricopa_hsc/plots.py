@@ -3,13 +3,15 @@ from math import radians
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import statsmodels.api as sm
 from matplotlib import cm, colors
 from matplotlib.ticker import MultipleLocator
-from pandas import DataFrame
+from numpy import array, linspace
+from pandas import DataFrame, isna
 
 from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, calc_apparent_temperature
 from sim_vs_obs.maricopa_hsc.base_functions import calc_neutral_aerodynamic_resistance
-from utils import stats
+from utils import stats, config
 
 MAP_UNITS = {
     't': [r'$\mathregular{T_{canopy}}$', r'$\mathregular{[^\circ C]}$'],
@@ -217,11 +219,11 @@ def plot_errors(all_solvers: dict, path_figs: Path):
         monin_obukhov=[],
         aerodynamic_resistance=[],
         neutral_aerodynamic_resistance=[],
-        soil_abs_par=[],
-        veg_abs_par=[],
+        absorbed_par_soil=[],
+        absorbed_par_veg=[],
         psi_u=[],
         psi_h=[],
-        hours=[],
+        hour=[],
         net_longwave_radiation=[],
         height=[],
         gai=[],
@@ -242,13 +244,13 @@ def plot_errors(all_solvers: dict, path_figs: Path):
                 summary['monin_obukhov'].append(solver.crop.state_variables.monin_obukhov_length)
                 summary['aerodynamic_resistance'].append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
                 summary['neutral_aerodynamic_resistance'].append(calc_neutral_aerodynamic_resistance(solver=solver))
-                summary['soil_abs_par'].append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
-                summary['veg_abs_par'].append(get_canopy_abs_irradiance_from_solver(solver=solver))
+                summary['absorbed_par_soil'].append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
+                summary['absorbed_par_veg'].append(get_canopy_abs_irradiance_from_solver(solver=solver))
                 summary['psi_u'].append(solver.crop.state_variables.stability_correction_for_momentum)
                 summary['psi_h'].append(solver.crop.state_variables.stability_correction_for_heat)
                 summary['temperature_sim'].append(calc_apparent_temperature(
                     eb_solver=solver, sensor_angle=radians(45 if d1 < datetime(2008, 1, 2) else 30)))
-                summary['hours'].append(hour)
+                summary['hour'].append(hour)
                 summary['net_longwave_radiation'].append(solver.crop.state_variables.net_longwave_radiation)
                 summary['height'].append(solver.crop.inputs.canopy_height)
                 summary['gai'].append(sum(solver.crop.inputs.leaf_layers.values()))
@@ -258,14 +260,30 @@ def plot_errors(all_solvers: dict, path_figs: Path):
 
     n_rows = 3
     n_cols = 4
-    fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharex='all')
+    fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharey='all')
     for i, explanatory in enumerate(('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
-                                     'aerodynamic_resistance', 'soil_abs_par', 'veg_abs_par', 'hours',
+                                     'aerodynamic_resistance', 'absorbed_par_soil', 'absorbed_par_veg', 'hour',
                                      'net_longwave_radiation', 'height', 'gai')):
         ax = axs[i % n_rows, i // n_rows]
-        ax.scatter(summary['temperature_error'], summary[explanatory], marker='.', alpha=0.2)
-        ax.set(ylabel=explanatory)
-    for ax in axs[-1, :]:
-        ax.set_xlabel(r'$\mathregular{T_{sim}-T_{obs}\/[^\circ C]}$')
+
+        explanatory_ls, error_ls = zip(
+            *[(ex, er) for ex, er in zip(summary[explanatory], summary['temperature_error'])
+              if not any(isna([ex, er]))])
+
+        ax.scatter(explanatory_ls, error_ls, marker='.', alpha=0.2)
+        ax.set(xlabel=' '.join(config.UNITS_MAP[explanatory]))
+
+        x = array(explanatory_ls)
+        x = sm.add_constant(x)
+        y = array(error_ls)
+        results = sm.OLS(y, x).fit()
+
+        ax.plot(*zip(*[(i, results.params[0] + results.params[1] * i) for i in
+                       linspace(min(explanatory_ls), max(explanatory_ls), 2)]), 'k--')
+        p_value_slope = results.pvalues[1] / 2.
+        ax.text(0.1, 0.9, '*' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontweight='bold')
+
+    axs[1, 0].set_ylabel(r'$\mathregular{T_{sim}-T_{obs}\/[^\circ C]}$', fontsize=16)
+    fig.tight_layout()
     fig.savefig(path_figs / 'errors.png')
     plt.close()
