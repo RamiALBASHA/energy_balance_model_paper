@@ -1,11 +1,13 @@
 from copy import deepcopy
 from pathlib import Path
 
+import statsmodels.api as sm
 from matplotlib import pyplot, ticker
+from numpy import array, linspace
 from pandas import isna
 
 from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver
-from utils import stats
+from utils import stats, config
 
 MAP_UNITS = {
     't': [r'$\mathregular{T_{leaf}}$', r'$\mathregular{[^\circ C]}$'],
@@ -135,11 +137,11 @@ def plot_errors(data: dict, path_figs_dir: Path):
         monin_obukhov=[],
         aerodynamic_resistance=[],
         neutral_aerodynamic_resistance=[],
-        soil_abs_par=[],
-        veg_abs_par=[],
+        absorbed_par_soil=[],
+        absorbed_par_veg=[],
         psi_u=[],
         psi_h=[],
-        hours=[],
+        hour=[],
         net_longwave_radiation=[],
         height=[],
         gai=[],
@@ -167,11 +169,11 @@ def plot_errors(data: dict, path_figs_dir: Path):
                 res[trt]['richardson'].append(solver.crop.state_variables.richardson_number)
                 res[trt]['monin_obukhov'].append(solver.crop.state_variables.monin_obukhov_length)
                 res[trt]['aerodynamic_resistance'].append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
-                res[trt]['soil_abs_par'].append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
-                res[trt]['veg_abs_par'].append(get_canopy_abs_irradiance_from_solver(solver=solver))
+                res[trt]['absorbed_par_soil'].append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
+                res[trt]['absorbed_par_veg'].append(get_canopy_abs_irradiance_from_solver(solver=solver))
                 res[trt]['psi_u'].append(solver.crop.state_variables.stability_correction_for_momentum)
                 res[trt]['psi_h'].append(solver.crop.state_variables.stability_correction_for_heat)
-                res[trt]['hours'].append(hour)
+                res[trt]['hour'].append(hour)
                 res[trt]['net_longwave_radiation'].append(solver.crop.state_variables.net_longwave_radiation)
                 res[trt]['height'].append(solver.crop.inputs.canopy_height)
                 res[trt]['gai'].append(sum(solver.crop.inputs.leaf_layers.values()))
@@ -183,16 +185,32 @@ def plot_errors(data: dict, path_figs_dir: Path):
     n_cols = 4
 
     for trt in treatments:
-        fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharex='all')
+        fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharey='all')
         for i, explanatory in enumerate(
                 ('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
-                 'aerodynamic_resistance', 'soil_abs_par', 'veg_abs_par', 'hours',
+                 'aerodynamic_resistance', 'absorbed_par_soil', 'absorbed_par_veg', 'hour',
                  'net_longwave_radiation', 'height', 'gai')):
             ax = axs[i % n_rows, i // n_rows]
-            ax.scatter(res[trt]['temperature_error'], res[trt][explanatory], marker='.', alpha=0.2)
-            ax.set(ylabel=explanatory)
-        for ax in axs[-1, :]:
-            ax.set_xlabel(r'$\mathregular{T_{sim}-T_{obs}\/[^\circ C]}$')
+
+            explanatory_ls, error_ls = zip(
+                *[(ex, er) for ex, er in zip(res[trt][explanatory], res[trt]['temperature_error'])
+                  if not any(isna([ex, er]))])
+
+            ax.scatter(explanatory_ls, error_ls, marker='.', alpha=0.2)
+            ax.set(xlabel=' '.join(config.UNITS_MAP[explanatory]))
+
+            x = array(explanatory_ls)
+            x = sm.add_constant(x)
+            y = array(error_ls)
+            results = sm.OLS(y, x).fit()
+
+            ax.plot(*zip(*[(i, results.params[0] + results.params[1] * i) for i in
+                           linspace(min(explanatory_ls), max(explanatory_ls), 2)]), 'k--')
+            p_value_slope = results.pvalues[1] / 2.
+            ax.text(0.1, 0.9, '*' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontweight='bold')
+
+        axs[1, 0].set_ylabel(r'$\mathregular{T_{sim}-T_{obs}\/[^\circ C]}$', fontsize=16)
+        fig.tight_layout()
         fig.savefig(path_figs_dir / f'errors_{trt}.png')
         pyplot.close()
 
