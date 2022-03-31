@@ -130,7 +130,9 @@ dmypy.json
 
 .idea/
 utils/*.png
+/sources/figs/
 /sources/maricopa_hsc/data_raw/
+/sources/maricopa_hsc/data_raw.7z
 /sources/maricopa_hsc/figs/
 /sources/maricopa_face/data_raw/
 /sources/maricopa_face/figs/
@@ -139,3 +141,6 @@ utils/*.png
 /sources/grignon/figs/
 /sim_vs_obs/maricopa_hsc/debug_stuff/
 /sources/maricopa_face/data_fmt/weather.csv
+/figs/
+/sources/spare/
+/misc/
