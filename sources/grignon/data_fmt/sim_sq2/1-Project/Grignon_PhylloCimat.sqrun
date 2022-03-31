@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<RunFile xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ItemsArray>
+    <RunItem name="PhylloClimat">
+      <Comments />
+      <Normal>
+        <OutputDirectory>..\3-Output</OutputDirectory>
+        <OutputPattern>$(ManagementName)</OutputPattern>
+        <ManagementItem>Extensif</ManagementItem>
+        <ParameterItem>Winter_wheat</ParameterItem>
+        <RunOptionItem>PhylloClimat</RunOptionItem>
+        <SiteItem>Grignon_2011_2012</SiteItem>
+        <SoilItem>Grignon</SoilItem>
+        <VarietyItem>Tremie</VarietyItem>
+        <ExperimentItem>Grignon_PhyloClimat</ExperimentItem>
+      </Normal>
+      <Multi>
+        <OutputDirectory>..\3-Output</OutputDirectory>
+        <OutputPattern>$(RunName)</OutputPattern>
+        <MultiRunsArray>
+          <MultiRunItem>
+            <ManagementItem>Extensif</ManagementItem>
+            <ParameterItem>Winter_wheat</ParameterItem>
+            <RunOptionItem>PhylloClimat</RunOptionItem>
+            <SiteItem>Grignon_2011_2012</SiteItem>
+            <SoilItem>Grignon</SoilItem>
+            <VarietyItem>Tremie</VarietyItem>
+            <ExperimentItem>Grignon_PhyloClimat</ExperimentItem>
+          </MultiRunItem>
+          <MultiRunItem>
+            <ManagementItem>Intensif</ManagementItem>
+            <ParameterItem>Winter_wheat</ParameterItem>
+            <RunOptionItem>PhylloClimat</RunOptionItem>
+            <SiteItem>Grignon_2011_2012</SiteItem>
+            <SoilItem>Grignon</SoilItem>
+            <VarietyItem>Tremie</VarietyItem>
+            <ExperimentItem>Grignon_PhyloClimat</ExperimentItem>
+          </MultiRunItem>
+        </MultiRunsArray>
+        <ExportNormalRuns>true</ExportNormalRuns>
+        <DailyOutputPattern>$(ManagementName)</DailyOutputPattern>
+        <MultiYear>false</MultiYear>
+        <FirstYear>0</FirstYear>
+        <LastYear>0</LastYear>
+      </Multi>
+      <Sensitivity>
+        <OutputDirectory>?</OutputDirectory>
+        <OutputPattern>$(vVer_)$(RunName)</OutputPattern>
+        <SensitivityRunsArray />
+        <ExportNormalRuns>false</ExportNormalRuns>
+        <DailyOutputPattern>$(vVer_)$(DeltaSensitivity_)$(ManagementName)_$(MultiYear?SowingYear)</DailyOutputPattern>
+        <OneByOne>true</OneByOne>
+      </Sensitivity>
+    </RunItem>
+  </ItemsArray>
+</RunFile>

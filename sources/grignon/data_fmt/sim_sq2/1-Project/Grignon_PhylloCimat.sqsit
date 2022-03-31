@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<SiteFile xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ItemsArray>
+    <SiteItem name="Grignon_2011_2012" format="YearJdayMinMaxRainRad">
+      <Comments>RG:RAYONNEMENT GLOBAL (JOULES/CM2)  10^-2 MJ/m²
+RR:HAUTEUR DES PRECIPITATIONS (MILLIMETRES)  ok 
+TN:TEMPERATURE MINIMALE (DEGRES CELSIUS)
+TVM:TENSION DE VAPEUR MOYENNE (MILLIBARS)  1 hPa (ok)
+TX:TEMPERATURE MAXIMALE (DEGRES CELSIUS)
+V:VITESSE MOYENNE DU VENT (METRES PAR SECONDE) 86.4 km/d
+
+pas besoin de V, &amp; TVM  dans nos conditions
+
+
+
+</Comments>
+      <Latitude>48.849</Latitude>
+      <Longitude>1.917</Longitude>
+      <Elevation>329</Elevation>
+      <MeasurementHeight>2</MeasurementHeight>
+      <SowingWindowType>3</SowingWindowType>
+      <MinSowingDate>2011-11-01T00:00:00</MinSowingDate>
+      <MaxSowingDate>2011-12-31T00:00:00</MaxSowingDate>
+      <MinSowWinLength>20</MinSowWinLength>
+      <InitSowWindow>42</InitSowWindow>
+      <CheckDaysTemp>10</CheckDaysTemp>
+      <CheckDaysPcp>3</CheckDaysPcp>
+      <TempSum>500</TempSum>
+      <TempThr>10</TempThr>
+      <PcpSum>3</PcpSum>
+      <WeatherFiles>
+        <WeatherFile file="..\2-WeatherData\Grignon2011_2012.sr" />
+      </WeatherFiles>
+    </SiteItem>
+  </ItemsArray>
+</SiteFile>

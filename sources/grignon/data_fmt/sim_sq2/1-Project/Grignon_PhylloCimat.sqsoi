@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<SoilFile xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ItemsArray>
+    <SoilItem name="Grignon">
+      <Comments>Grignon_1999_N0
+
+*** RU à partir des abaques **************
+
+*** N mineralisation rate constant **************
+calculé à partir de la fiche excel EstimateSoilNmineralisationParameters / Pas de Nmineral au semis --&gt; N mineralisation rate constant supposé à 1E-05
+
+*** Organic N in top 40cm **************
+Norg(pourmille) x Da (g/cm3) x Epaisseur couche considérée (cm) donne g/cm²  à multiplier par 10^-4
+Ici la couche considérée est de 40cm
+ 1.39*1.3*40/1000 =  0.07228 g/cm² soit 722,8gN/m²
+
+</Comments>
+      <hminn>0.3</hminn>
+      <hoptn>0.9</hoptn>
+      <minCDenit>1</minCDenit>
+      <maxCDenit>6</maxCDenit>
+      <minDenitPot>1</minDenitPot>
+      <maxDenitPot>20</maxDenitPot>
+      <halfSatFNO3denit>148</halfSatFNO3denit>
+      <tDenitOpt>47</tDenitOpt>
+      <scaleTdenitOpt>25</scaleTdenitOpt>
+      <wfpsc>0.6</wfpsc>
+      <pHminDenit>5.6</pHminDenit>
+      <pHmaxDenit>9.2</pHmaxDenit>
+      <maxDepthDenit>0.2</maxDepthDenit>
+      <IsKqCalc>false</IsKqCalc>
+      <IsKqlUsed>false</IsKqlUsed>
+      <IsOrgNCalc>false</IsOrgNCalc>
+      <CtoN>10</CtoN>
+      <Carbon>4</Carbon>
+      <Bd>1.65</Bd>
+      <Gravel>4</Gravel>
+      <Clay>30</Clay>
+      <Kq>0.4</Kq>
+      <Ko>3E-05</Ko>
+      <No>722.8</No>
+      <MicrobialUseEfficiency>0.5</MicrobialUseEfficiency>
+      <MaxMineralizationDepth>0.4</MaxMineralizationDepth>
+      <PH>6.5</PH>
+      <ParticleDensity>2.6</ParticleDensity>
+      <Fnx>0.8</Fnx>
+      <AmmoniumMin>1</AmmoniumMin>
+      <PHminNit>4</PHminNit>
+      <PHmaxNit>7.2</PHmaxNit>
+      <TNitOpt>32.5</TNitOpt>
+      <ScaleTnitOpt>16</ScaleTnitOpt>
+      <Hminn>0.3</Hminn>
+      <Hoptn>0.9</Hoptn>
+      <MinCDenit>1</MinCDenit>
+      <MaxCDenit>6</MaxCDenit>
+      <MinDenitPot>1</MinDenitPot>
+      <MaxDenitPot>20</MaxDenitPot>
+      <HalfSatFNO3denit>148</HalfSatFNO3denit>
+      <TDenitOpt>47</TDenitOpt>
+      <ScaleTdenitOpt>25</ScaleTdenitOpt>
+      <Wfpsc>0.6</Wfpsc>
+      <PHminDenit>5.6</PHminDenit>
+      <PHmaxDenit>9.2</PHmaxDenit>
+      <MaxDepthDenit>0.2</MaxDepthDenit>
+      <LayersArray>
+        <SoilLayer>
+          <Clay>30</Clay>
+          <Kql>0.76</Kql>
+          <SSAT>33.1</SSAT>
+          <SDUL>32.8</SDUL>
+          <SLL>14.6</SLL>
+          <Depth>1.2</Depth>
+        </SoilLayer>
+      </LayersArray>
+    </SoilItem>
+  </ItemsArray>
+</SoilFile>

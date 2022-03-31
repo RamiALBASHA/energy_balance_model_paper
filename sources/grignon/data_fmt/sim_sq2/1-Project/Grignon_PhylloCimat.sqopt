@@ -1,0 +1,1695 @@
+<?xml version="1.0"?>
+<RunOptionFile xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <ItemsArray>
+    <RunOptionItem name="PhylloClimat">
+      <Comments />
+      <RunOptionOutputDaily>
+        <SelectedOutput>
+          <Name>Leaf area index</Name>
+        </SelectedOutput>
+        <SelectedOutput>
+          <Name>Green area index</Name>
+        </SelectedOutput>
+        <SelectedOutput>
+          <Name>Total water in root zone </Name>
+        </SelectedOutput>
+        <SelectedOutput>
+          <Name>Fraction of plant available water</Name>
+        </SelectedOutput>
+        <SelectedOutput>
+          <Name>Water deficit in root zone </Name>
+        </SelectedOutput>
+        <SelectedOutput>
+          <Name>Total leaf (lamina + sheath) surface area for a given leaf cohort</Name>
+        </SelectedOutput>
+        <SelectedOutput>
+          <Name>Mainstem internode length for a given leaf cohort</Name>
+        </SelectedOutput>
+      </RunOptionOutputDaily>
+      <RunOptionOutputSummary>
+        <SelectedOutput>
+          <Name>Heading date</Name>
+        </SelectedOutput>
+        <SelectedOutput>
+          <Name>Anthesis date</Name>
+        </SelectedOutput>
+        <SelectedOutput>
+          <Name>Final mainstem leaf number</Name>
+        </SelectedOutput>
+        <SelectedOutput>
+          <Name>Maximum leaf area index</Name>
+        </SelectedOutput>
+        <SelectedOutput>
+          <Name>Leaf area index at anthesis</Name>
+        </SelectedOutput>
+        <SelectedOutput>
+          <Name>Total grain dry mass at maturity</Name>
+        </SelectedOutput>
+      </RunOptionOutputSummary>
+      <OutputPattern>Cus</OutputPattern>
+      <UseObservedGrainNumber>false</UseObservedGrainNumber>
+      <IgnoreGrainMaturation>false</IgnoreGrainMaturation>
+      <UseAirTemperatureForSenescence>false</UseAirTemperatureForSenescence>
+      <IsCutOnGrainFillNotUse>false</IsCutOnGrainFillNotUse>
+      <UnlimitedWater>false</UnlimitedWater>
+      <UnlimitedNitrogen>false</UnlimitedNitrogen>
+      <UnlimitedTemperature>false</UnlimitedTemperature>
+      <MaxTempThreshold>31</MaxTempThreshold>
+      <WCompensationLevel>100</WCompensationLevel>
+      <NCompensationLevel>100</NCompensationLevel>
+      <DoInteractions>true</DoInteractions>
+      <InteractionsW>false</InteractionsW>
+      <InteractionsN>false</InteractionsN>
+      <InteractionsT>false</InteractionsT>
+      <InteractionsWN>false</InteractionsWN>
+      <InteractionsWT>false</InteractionsWT>
+      <InteractionsNT>false</InteractionsNT>
+      <InteractionsWNT>true</InteractionsWNT>
+      <choosePhyllUse>Default</choosePhyllUse>
+      <ListOutputSummary>
+        <SelectedTuple>
+          <Name>Setup</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Experiment name</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Treatment name</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Site name</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil name</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Genotype</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Crop</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Run options</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Management</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Sowing</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Sowing year</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Sowing date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total mineral N fertilizer</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative irrigation from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Weather</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average air temperature from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average air temperature from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average air temperature from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average maximum air temperature from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average maximum air temperature from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average maximum air temperature from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Precipitations</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative precipitations from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative precipitations from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative precipitations from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Radiation_</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative incident PAR from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative incident PAR from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative incident PAR from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Humidity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average air vapor pressure deficit from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average air vapor pressure deficit from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average air vapor pressure deficit from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Atmospheric CO2 concentration</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Phenology</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Crop emergence date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>End of vernalization date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Floral initiation date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Terminal spikelet date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Beginning stem extension date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>First node detectable date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Flag leaf collar just visible date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Heading date</Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Anthesis date</Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>End endosperm cell division date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Phylosiogical maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Harvest date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Harvest year</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Final mainstem leaf number</Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Above Ground</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Surface area</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total shoot number at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Maximum leaf area index</Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf area index at anthesis</Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Green area index anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Maximum stem length (to base of ear)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Yield components</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Mainstem number at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Grain number</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average grain dry mass at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average grain N mass at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Dry mass harvest index at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>N harvest index at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Dry mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total above ground dry mass at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total above ground dry mass at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total grain dry mass at maturity</Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>True stem dry mass at anthesis (internodes)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>True stem dry mass at maturity (internodes)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf (lamina + sheath) dry mass at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf (lamina + sheath) dry mass at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf lamina dry mass at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf lamina dry mass at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf sheath dry mass at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf sheath dry mass at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf (lamina + sheath) dry mass at anthesis (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf (lamina + sheath) dry mass at maturity (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf lamina dry mass at anthesis (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf lamina dry mass at maturity (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf sheath dry mass at anthesis (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf sheath dry mass at maturity (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific lamina dry mass at anthesis (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific exposed sheath dry mass at anthesis (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Nitrogen</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total above ground N mass at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total above ground N mass at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total grain N mass at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>True stem N mass at anthesis (internodes)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>True stem N mass at maturity (internodes)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf (lamina + sheath) N mass at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf (lamina + sheath) N mass at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf lamina N mass at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf lamina N mass at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf sheath N mass at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf sheath N mass at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf (lamina + sheath) N mass at anthesis (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf (lamina + sheath) N mass at maturity (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf lamina N mass at anthesis (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf lamina N mass at maturity (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf sheath N mass at anthesis (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf sheath N mass at maturity (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific lamina N mass at anthesis (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific exposed sheath N mass at anthesis (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Grain Composition</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Grain protein concentration at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Grain starch concentration at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Storage Proteins</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Albumin-globulin N mass per grain at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Amphiphil N mass per grain at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Gliadin N mass per grain at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Glutenin N mass per grain at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Gliadin concentration (as % of total grain N) at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Glutein concentration (as % of total grain N) at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Gliadin concentration (as % of total grain DM) at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Glutein concentration (as % of total grain DM) at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Gliadin to glutein ratio at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil Temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average soil surface temperature from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average soil surface temperature from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average soil surface temperature from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average deep soil temperature from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average deep soil temperature from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average deep soil temperature from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Maxmum rooting depth</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil N</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total available soil N over season</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available soil mineral N in soil profil at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available soil mineral N in soil profil at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available soil mineral N in root zone at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available soil mineral N in root zone at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total soil mineral N in soil profil at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total soil mineral N in soil profil at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total soil mineral N in root zone at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total soil mineral N in root zone at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative N leaching from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative N mineralisation in soil profil from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative N denitrification in soil profil from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil water</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available water in soil profil at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available water in soil profil at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available water in root zone at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available water in root zone at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Fraction of available water at anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Fraction of available water at maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Water Use</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Potential evapotranspiration</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative potential evapotranspiration from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative potential evapotranspiration from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative potential evapotranspiration from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Evapotranspiration</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative evapotranspiration from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative evapotranspiration from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative evapotranspiration from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Transpiration</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative transpiration from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative transpiration from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative transpiration from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil evapotranspiration</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative evaporation from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative evaporation from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative evaporation from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Drainage</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative water drainage from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative water drainage from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative water drainage from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Water and N use efficiencies</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>NUE</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Nitrogen use efficiency</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Nitrogen utilisation efficiency</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Nitrogen upake efficiency</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>WUE</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Water use efficiency (based on above ground dry mass)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Water use efficiency (based on grain yield)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Energy Balance</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Radiation</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative intercepted PAR from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative intercepted PAR from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative intercepted PAR from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Canopy temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average canopy temperature from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average canopy temperature from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average canopy temperature from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average maximum canopy temperature from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average maximum canopy temperature from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average maximum canopy temperature from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Shoot temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average shoot temperature from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average shoot temperature from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average shoot temperature from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average maximum shoot temperature from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average maximum shoot temperature from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average maximum shoot temperature from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Vapor pressure deficit</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average air-canopy  vapor pressure deficit from sowing to anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average air-canopy  vapor pressure deficit from anthesis to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average air-canopy  vapor pressure deficit from sowing to maturity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+      </ListOutputSummary>
+      <ListOutputDaily>
+        <SelectedTuple>
+          <Name>Setup</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Experiment name</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Treatment name</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Site name</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil name</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Genotype</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Crop</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Run options</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Time</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Day of the year</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Days after sowing</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Hours</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Thermal time</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Air thermal time after sowing</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Shoot thermal time after sowing</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Shoot thermal time for development after sowing</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Shoot thermal time for grain after anthesis</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Management</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Sowing</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Sowing year</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Sowing date</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Mineral N fertilizer</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Irrigation</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Weather</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Day length</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Mean air temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Maximum air temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Minimum air temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Hourly air temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Precipitation</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Incident PAR</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Wind speed, daily average</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Humidity</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Air vapor pressure deficit, daily average</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Air vapor pressure, daily average</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Stress Factors</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Water Stress</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Dry mass drought factor</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Ear growth drought factor</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf expansion drought factor</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Senescence drought factor</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Transpiration drought factor</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil moisture stress factor</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Transpiration stress factor</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Evapotranspiration stress factor</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Water required to preserve water balance</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>N Stress</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>N required to preserve N balance</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>N nutrition index</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Dry matter stress factor</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Phenology</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Development phase number</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Zadoks growth stage</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Vernalisation progress</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Haun stage</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Above Ground</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Surface area</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf area index</Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Green area index</Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Stem length (to base of ear)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Mainstems</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Potential mainstem leaf (lamina + sheath) surface area for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Potential mainstem leaf lamina surface area for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Potential mainstem exposed leaf sheath surface area for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Tillers</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Potential tillers leaf (lamina + sheath) surface area for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Potential tillers leaf lamina surface area for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Potential tillers exposed leaf sheath surface area for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Yield components</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total shoot number</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Grain number</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average grain dry mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average grain N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Dry mass harvest index</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>N mass harvest index</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Dry mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total above ground dry mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total grain dry matter</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>True stem dry mass (internodes)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf (lamina + sheath) dry mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf lamina dry mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf sheath dry mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf (lamina + sheath) dry mass (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf lamina dry mass (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf sheath dry mass (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific leaf lamina dry mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific leaf sheath dry mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Nitrogen</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total above ground N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total grain N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>True stem N mass (internodes)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf (lamina + sheath) N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf lamina N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf sheath N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf (lamina + sheath) N mass (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf lamina N mass (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Leaf sheath N mass (green parts)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific leaf lamina N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific leaf sheath N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Above Ground Layers</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Surface area </Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total (mainstems + tillers)</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf (lamina + sheath) surface area for a given leaf cohort</Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf lamina surface area for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total exposed leaf sheath surface area for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Mainstem internode length for a given leaf cohort</Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Dry mass </Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total (mainstems + tillers) </Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf (lamina + sheath) dry mass for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf lamina dry mass for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf sheath dry mass for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific leaf lamina dry mass for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific leaf sheath dry mass for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Nitrogen </Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total (mainstems + tillers)  </Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total leaf (lamina + sheath)  N mass for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total lamina N mass for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total exposed sheath N mass for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific lamina N mass for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Specific exposed sheath N mass for a given leaf cohort</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Grain Composition</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>CN grain limitation</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average grain starch mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Storage Proteins</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average albumin-Globulin N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average amphiphil N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average gliadin N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Average glutenin N mass</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil Temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Mean soil surface temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Maximum soil surface temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Minimum soil surface temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Mean deep soil temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Rooting depth</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil N</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total mineral N in soil profil</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total mineral N in root zone</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available mineral N in soil profil</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available mineral N in root zone</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Excess mineral N in soil profil</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Excess mineral N in root zone</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Unavailable mineral N in soil profil</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Unavailable mineral N in root zone</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative N leaching</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative N mineralisation</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative denitrification</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>N leaching</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>N mineralisation</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Denitrification</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil Water</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total water in soil profil</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total water in root zone </Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available water in soil profil</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available water in root zone </Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Excess water in soil profil</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Excess water in root zone </Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Unavailable water in soil profil</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Unavailable water in root zone</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Fraction of plant available water</Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Water deficit in soil profil</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Water deficit in root zone </Name>
+          <Flag>true</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil Layers</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil Layer N</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total mineral N for a given soil layer</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available mineral N for a given soil layer</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Excess mineral N for a given soil layer</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Unavailable mineral N for a given soil layer</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil Layer Water</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Total water for a given soil layer</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Available water for a given soil layer</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Excess water for a given soil layer</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Unavailable water for a given soil layer</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Water Use</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Daily Water Use</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Daily potential evapotranspiration</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Daily evapotranspiration</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Daily plant transpiration</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Daily soil evaporation</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Daily water drainage</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative Water Use</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative potential evapotranspiration</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative evapotranspiration</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative plant transpiration</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative soil evaporation</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Cumulative water drainage</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Energy Balance</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Radiation</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Absorbed net radiation</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Longwave radiation</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Intercetped PAR</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Heat Flux</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Soil heat flux</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Crop heat flux</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Conductance</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Aerodynamic conductance</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Canopy Temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Mean canopy temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Maximum canopy temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Minimum canopy temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Shoot Temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Mean shoot temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Maximum shoot temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Minimum shoot temperature</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+        <SelectedTuple>
+          <Name>Air-canopy vapor pressure deficit</Name>
+          <Flag>false</Flag>
+        </SelectedTuple>
+      </ListOutputDaily>
+    </RunOptionItem>
+  </ItemsArray>
+</RunOptionFile>

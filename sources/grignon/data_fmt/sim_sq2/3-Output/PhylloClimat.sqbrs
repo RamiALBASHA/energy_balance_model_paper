@@ -1,0 +1,12 @@
+﻿SiriusQuality2.5 output file	2022-01-16	12:20:08		build:3.1.0.0
+Project	C:\1-Pierre\0-SQ\0-SQ2.0_DATA\Grignon_PhylloClimat\1-Project\Grignon_PhylloCimat.sqpro
+Management	Grignon_PhylloCimat.sqman
+Non-varietal parameters	NonVarietal_Winter_Wheat_2021-01-07.sqpar
+Run options	Grignon_PhylloCimat.sqopt
+Site	Grignon_PhylloCimat.sqsit
+Soil	Grignon_PhylloCimat.sqsoi
+Varietal parameters	Grignon_PhylloCimat.sqvar
+
+Treatment name (text)	Crop (text)	Run options (text)	Site name (text)	Soil name (text)	Genotype (text)	Heading date (yyyy-mm-dd)	Anthesis date (yyyy-mm-dd)	Final mainstem leaf number (number)	Maximum leaf area index (m²/m²)	Leaf area index at anthesis (m²/m²)	Total grain dry mass at maturity (kgDM/ha)
+Extensif	Winter_wheat	PhylloClimat	Grignon_2011_2012	Grignon	Tremie	2012-05-23	2012-05-28	10.71	2.37	2.37	7191
+Intensif	Winter_wheat	PhylloClimat	Grignon_2011_2012	Grignon	Tremie	2012-05-23	2012-05-28	10.62	5.68	5.58	10912
