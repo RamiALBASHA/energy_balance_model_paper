@@ -8,8 +8,8 @@ from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import calc_d
 
 
 class ParamsIrradiance(Enum):
-    leaf_reflectance = 0.08
-    leaf_transmittance = 0.07
+    leaf_reflectance = 0.1
+    leaf_transmittance = 0.1
     leaf_angle_distribution_factor = radians(56)
     sky_sectors_number = 3
     sky_type = 'soc'
