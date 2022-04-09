@@ -28,17 +28,6 @@ def calc_diff(sim_obs: dict, idx: int) -> float:
 
 
 def plot_comparison_energy_balance(sim_obs: dict):
-    all_t_can = {'sim': [], 'obs': []}
-    all_t_soil = {'sim': [], 'obs': []}
-    all_net_radiation = {'sim': [], 'obs': []}
-    all_sensible_heat = {'sim': [], 'obs': []}
-    all_latent_heat = {'sim': [], 'obs': []}
-    all_soil_heat = {'sim': [], 'obs': []}
-
-    all_t_sunlit = {'sim': [], 'obs': []}
-    all_t_shaded = {'sim': [], 'obs': []}
-    all_t_soil2 = {'sim': [], 'obs': []}
-
     counter = 0
     for trt_id, trt_obs in sim_obs.items():
         for date_obs in get_dates(trt_obs.keys()):
@@ -68,13 +57,6 @@ def plot_comparison_energy_balance(sim_obs: dict):
             t_sunlit = deepcopy(pattern_dict)
             t_shaded = deepcopy(pattern_dict)
             t_soil2 = deepcopy(pattern_dict)
-
-            # delta_t_can = pattern_list.copy()
-            # delta_t_sol = pattern_list.copy()
-            # delta_net_radiation = pattern_list.copy()
-            # delta_sensible_heat = pattern_list.copy()
-            # delta_latent_heat = pattern_list.copy()
-            # delta_soil_heat = pattern_list.copy()
 
             gai = sum(trt_obs[datetime_obs_ls[0]]['solver'].crop.inputs.leaf_layers.values())
 
@@ -118,33 +100,6 @@ def plot_comparison_energy_balance(sim_obs: dict):
                     t_shaded['obs'][i] = obs2['shaded']
                     t_soil2['obs'][i] = obs2['soil']
 
-                # delta_t_can[i] = calc_diff(sim_obs=t_can, idx=i)
-                # delta_t_sol[i] = calc_diff(sim_obs=t_can, idx=i)
-                # delta_net_radiation[i] = calc_diff(sim_obs=net_radiation, idx=i)
-                # delta_sensible_heat[i] = calc_diff(sim_obs=sensible_heat, idx=i)
-                # delta_latent_heat[i] = calc_diff(sim_obs=latent_heat, idx=i)
-                # delta_soil_heat[i] = calc_diff(sim_obs=soil_heat, idx=i)
-
-            all_t_can['sim'] += t_can['sim']
-            all_t_soil['sim'] += t_soil['sim']
-            all_net_radiation['sim'] += net_radiation['sim']
-            all_sensible_heat['sim'] += sensible_heat['sim']
-            all_latent_heat['sim'] += latent_heat['sim']
-            all_soil_heat['sim'] += soil_heat['sim']
-            all_t_sunlit['sim'] += t_sunlit['sim']
-            all_t_shaded['sim'] += t_shaded['sim']
-            all_t_soil2['sim'] += t_shaded['sim']
-
-            all_t_can['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_can['obs']]
-            all_t_soil['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_soil['obs']]
-            all_net_radiation['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in net_radiation['obs']]
-            all_sensible_heat['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in sensible_heat['obs']]
-            all_latent_heat['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in latent_heat['obs']]
-            all_soil_heat['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in soil_heat['obs']]
-            all_t_sunlit['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_sunlit['obs']]
-            all_t_shaded['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_shaded['obs']]
-            all_t_soil2['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_soil2['obs']]
-
             plot_daily_dynamic(f'{trt_id}_{counter}', date_obs, trt_id, gai, hours, par_inc, par_abs_veg, par_abs_sol,
                                vpd, t_air, psi_soil, wind, ra, t_can, t_soil, net_radiation, latent_heat, sensible_heat,
                                soil_heat, t_sunlit, t_shaded, t_soil2)
@@ -164,7 +119,6 @@ def extract_sim_obs_data(sim_obs: dict):
 
     all_t_sunlit = {'sim': [], 'obs': []}
     all_t_shaded = {'sim': [], 'obs': []}
-    # all_t_soil2 = {'sim': [], 'obs': []}
 
     all_incident_par_irradiance = []
     all_incident_diffuse_par_irradiance = []
@@ -221,7 +175,6 @@ def extract_sim_obs_data(sim_obs: dict):
 
             t_sunlit = deepcopy(pattern_dict)
             t_shaded = deepcopy(pattern_dict)
-            t_soil2 = deepcopy(pattern_dict)
 
             for i, dt_obs in enumerate(datetime_obs_ls):
                 solver, obs, obs2 = [trt_obs[dt_obs][s] for s in ('solver', 'obs_energy_balance', 'obs_sunlit_shaded')]
@@ -255,7 +208,6 @@ def extract_sim_obs_data(sim_obs: dict):
                 if solver.crop.leaves_category == 'sunlit-shaded':
                     t_sunlit['sim'][i] = solver.crop[max_layer_index]['sunlit'].temperature - 273.15
                     t_shaded['sim'][i] = solver.crop[max_layer_index]['shaded'].temperature - 273.15
-                    t_soil2['sim'][i] = solver.crop[-1].temperature - 273.15
 
                 if obs is not None:
                     i_latent_heat = [i_l for i_l in obs['L'] if i_l >= 0]
@@ -270,7 +222,6 @@ def extract_sim_obs_data(sim_obs: dict):
                 if obs2 is not None:
                     t_sunlit['obs'][i] = obs2['sunlit']
                     t_shaded['obs'][i] = obs2['shaded']
-                    t_soil2['obs'][i] = obs2['soil']
 
             all_incident_par_irradiance += par_inc
             all_incident_diffuse_par_irradiance += par_inc_direct
@@ -298,7 +249,6 @@ def extract_sim_obs_data(sim_obs: dict):
             all_soil_heat['sim'] += soil_heat['sim']
             all_t_sunlit['sim'] += t_sunlit['sim']
             all_t_shaded['sim'] += t_shaded['sim']
-            # all_t_soil2['sim'] += t_shaded['sim']
 
             all_t_can['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_can['obs']]
             all_t_soil['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_soil['obs']]
@@ -308,7 +258,6 @@ def extract_sim_obs_data(sim_obs: dict):
             all_soil_heat['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in soil_heat['obs']]
             all_t_sunlit['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_sunlit['obs']]
             all_t_shaded['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_shaded['obs']]
-            # all_t_soil2['obs'] += [sum(v) / len(v) if isinstance(v, list) else v for v in t_soil2['obs']]
 
             all_t_air += t_air
 
