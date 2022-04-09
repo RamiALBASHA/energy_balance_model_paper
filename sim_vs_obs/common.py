@@ -65,7 +65,7 @@ class ParamsEnergyBalanceBase(Enum):
     stomatal_sensibility = {
         "leuning": {"d_0": 7},
         "misson": {"psi_half_aperture": -1, "steepness": 2}}
-    soil_aerodynamic_resistance_shape_parameter = 2.5
+    soil_aerodynamic_resistance_shape_parameter = 2.0
     soil_roughness_length_for_momentum = 0.0125
     leaf_characteristic_length = 0.01
     leaf_boundary_layer_shape_parameter = 0.01
