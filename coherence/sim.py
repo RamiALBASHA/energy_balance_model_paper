@@ -6,6 +6,7 @@ from crop_energy_balance import (
     inputs as eb_inputs, params as eb_params, solver as eb_solver)
 from crop_irradiance.uniform_crops import (
     inputs as irradiance_inputs, params as irradiance_params, shoot as irradiance_canopy)
+from numpy import radians
 
 
 def get_irradiance_sim_inputs_and_params(
@@ -27,10 +28,11 @@ def get_irradiance_sim_inputs_and_params(
     common_params = dict(
         leaf_reflectance=0.08,
         leaf_transmittance=0.07,
-        leaves_to_sun_average_projection=0.5,
+        leaf_angle_distribution_factor=radians(56),
         sky_sectors_number=3,
         sky_type='soc',
-        canopy_reflectance_to_diffuse_irradiance=0.057)
+        canopy_reflectance_to_diffuse_irradiance=0.057,
+        clumping_factor=0.89)
     if is_lumped:
         sim_inputs = irradiance_inputs.LumpedInputs(model='de_pury', **common_inputs)
         sim_params = irradiance_params.LumpedParams(model='de_pury', **common_params)
