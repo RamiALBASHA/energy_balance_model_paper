@@ -9,9 +9,9 @@ from crop_energy_balance.solver import Solver
 from matplotlib import colors
 from numpy import array, arange
 
-from utils.config import UNITS_MAP
 from coherence.sim import calc_absorbed_irradiance, get_energy_balance_inputs_and_params
 from sources.demo import get_grignon_weather_data
+from utils.config import UNITS_MAP
 from utils.van_genuchten_params import VanGenuchtenParams
 from utils.water_retention import calc_soil_water_potential
 
@@ -28,35 +28,45 @@ MAP_PARAMS = {
     'residual_stomatal_conductance': r'$\mathregular{g_{s,\/res}}$',
     'diffuse_extinction_coef': r'$\mathregular{k_{diffuse}}$',
     'leaf_scattering_coefficient': r'$\mathregular{\sigma_s}$',
-    'absorbed_par_50': r'$\mathregular{R_{l,\/PAR,\/50}}$',
+    'absorbed_par_50': r'$\mathregular{R_{PAR,\/50}}$',
     'soil_resistance_to_vapor_shape_parameter_1': r'$\mathregular{a_s}$',
     'soil_resistance_to_vapor_shape_parameter_2': r'$\mathregular{b_s}$',
     'grignon_high_rad_high_vpd.csv': 'HH',
     'grignon_high_rad_low_vpd.csv': 'HL',
     'grignon_low_rad_high_vpd.csv': 'LH',
-    'grignon_low_rad_low_vpd.csv': 'LL'
+    'grignon_low_rad_low_vpd.csv': 'LL',
+    'source_temperature': r'$\mathregular{T_m}$',
+    'drag_coefficient': r'$\mathregular{C_d}$',
+    'ratio_heat_to_momentum_canopy_roughness_lengths': r'$\mathregular{\xi}$',
+    'richardon_threshold_free_convection': r'$\mathregular{{Ri}_{free}}$',
+    'free_convection_shape_parameter': r'$\mathregular{\eta}$'
 }
+
+
+def set_bounds(nominal_mean: float, interval_percentage: float) -> list:
+    return sorted(nominal_mean * (1 + p / 100.) for p in (-interval_percentage, interval_percentage))
 
 
 def eb_wrapper(leaves_category: str, inputs: dict, params: dict) -> Solver:
     solver = Solver(leaves_category=leaves_category,
                     inputs_dict=inputs,
                     params_dict=params)
-    solver.run()
+    solver.run(is_stability_considered=True)
     return solver
 
 
 def get_name_bound(param_fields: dict) -> tuple:
+    interval_percent = 20
     names, bounds = [], []
     for k, v in param_fields.items():
         if k != 'stomatal_sensibility':
             names.append(k)
-            bounds.append(v)
+            bounds.append(set_bounds(nominal_mean=v, interval_percentage=interval_percent))
         else:
             for model, param_dict in v.items():
                 for param_name, param_value in param_dict.items():
                     names.append('-'.join([k, model, param_name]))
-                    bounds.append(param_value)
+                    bounds.append(set_bounds(nominal_mean=param_value, interval_percentage=interval_percent))
     return names, bounds
 
 
@@ -140,14 +150,17 @@ def plot_single(ax, bar_height, k, sa, range_by_col=None, parameter_groups=None,
 
 def handle_var_name(k):
     if 'state_variables' in k:
-        ax_title = UNITS_MAP[k.split('.')[-1]][0]
+        try:
+            ax_title = UNITS_MAP[k.split('.')[-1]][0]
+        except KeyError:
+            ax_title = MAP_PARAMS[k.split('.')[-1]]
     else:
         leaf_layer = re.search('\[(.+?)\]', k).group(1)
         try:
             leaf_category = re.search("'(.+?)'", k).group(1)
         except AttributeError:
             leaf_category = 'lumped'
-        ax_title = r'$\mathregular{T_{s,\/%s,\/%s}}$' % (leaf_category, leaf_layer)
+        ax_title = r'$\mathregular{T_{s,\/%s,\/%s}}$' % (leaf_category, 'l' if leaf_layer == 0 else 'u')
     return ax_title
 
 
@@ -233,8 +246,10 @@ def build_heatmap_arrays(sa_dict: dict, params_order: list = None) -> (array, ar
 
 
 def set_output_variables(is_bigleaf: bool, is_lumped: bool, layers: dict) -> list:
-    res = ['crop.state_variables.total_penman_monteith_evaporative_energy',
-           'crop.state_variables.source_temperature']
+    # res = ['crop.state_variables.total_penman_monteith_evaporative_energy',
+    #        'crop.state_variables.source_temperature']
+    res = ['crop.state_variables.total_penman_monteith_evaporative_energy']
+
     layer_indices = [0] if is_bigleaf else [max(layers.keys()), min(layers.keys())]
     leaf_classes = [''] if is_lumped else ["['sunlit']", "['shaded']"]
     for layer_index in layer_indices:
@@ -270,7 +285,7 @@ def run_sensitivity_analysis(veg_layers: dict, canopy_type: str, leaf_type: str,
                 incident_diffuse_par_irradiance=weather_data['incident_diffuse_irradiance'],
                 solar_inclination_angle=weather_data['solar_declination'])
 
-            base_sa_inputs, base_sa_params = get_energy_balance_inputs_and_params(
+            base_sa_inputs, _ = get_energy_balance_inputs_and_params(
                 vegetative_layers=veg_layers,
                 absorbed_par_irradiance=absorbed_irradiance,
                 actual_weather_data=weather_data,
@@ -304,7 +319,7 @@ def run_sensitivity_analysis(veg_layers: dict, canopy_type: str, leaf_type: str,
 if __name__ == '__main__':
     path_root = Path(__file__).parent
     path_sources = path_root.parent / 'sources/sensitivity_analysis'
-    path_figs = path_root.parent / 'figs/sensitivity_analysis'
+    path_figs = path_sources / 'figs'
     path_figs.mkdir(parents=True, exist_ok=True)
 
     with open(path_sources / 'base_inputs.json', mode='r') as f:
@@ -320,14 +335,16 @@ if __name__ == '__main__':
                                     'stomatal_sensibility-misson-steepness',
                                     'absorbed_par_50'],
         'Leaf boundary-layer resistance': ['leaf_boundary_layer_shape_parameter',
-                                           'leaf_characteristic_length'],
+                                           'leaf_characteristic_length',
+                                           'wind_speed_extinction_coef'],
         'Soil aerodynamic resistance': ['soil_aerodynamic_resistance_shape_parameter',
                                         'soil_roughness_length_for_momentum'],
         'Soil surface resistance': ['soil_resistance_to_vapor_shape_parameter_1',
                                     'soil_resistance_to_vapor_shape_parameter_2'],
-        'Integral-related': ['diffuse_extinction_coef',
-                             'leaf_scattering_coefficient',
-                             'wind_speed_extinction_coef']
+        'Canopy aerodynamic resistance': ['drag_coefficient',
+                                          'ratio_heat_to_momentum_canopy_roughness_lengths',
+                                          'richardon_threshold_free_convection',
+                                          'free_convection_shape_parameter']
     }
 
     problem, param_values = sample(config_path=path_sources / 'param_fields.json')

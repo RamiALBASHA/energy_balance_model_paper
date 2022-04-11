@@ -1,23 +1,25 @@
 {
   "stomatal_sensibility": {
     "leuning": {
-      "d_0": [0.5, 1.5]
+      "d_0": 7.0
     },
     "misson": {
-      "psi_half_aperture": [-1.5, -0.5],
-      "steepness": [1.0, 3.0]
+      "psi_half_aperture": -1.0,
+      "steepness": 2.0
     }
   },
-  "soil_aerodynamic_resistance_shape_parameter": [1.25, 3.75],
-  "soil_roughness_length_for_momentum": [0.005, 0.015],
-  "leaf_characteristic_length": [0.005, 0.015],
-  "leaf_boundary_layer_shape_parameter": [0.005, 0.015],
-  "wind_speed_extinction_coef": [0.25, 0.75],
-  "maximum_stomatal_conductance": [30, 90],
-  "residual_stomatal_conductance": [0.5, 1.5],
-  "diffuse_extinction_coef": [0.32, 0.96],
-  "leaf_scattering_coefficient": [0.075, 0.225],
-  "absorbed_par_50": [33, 99],
-  "soil_resistance_to_vapor_shape_parameter_1": [4.103, 12.309],
-  "soil_resistance_to_vapor_shape_parameter_2": [2.1275, 6.3825]
+  "soil_aerodynamic_resistance_shape_parameter": 2.0,
+  "soil_roughness_length_for_momentum": 0.0125,
+  "leaf_characteristic_length": 0.01,
+  "leaf_boundary_layer_shape_parameter": 0.01,
+  "wind_speed_extinction_coef": 0.5,
+  "maximum_stomatal_conductance": 80.0,
+  "residual_stomatal_conductance": 0.1,
+  "absorbed_par_50": 43.0,
+  "soil_resistance_to_vapor_shape_parameter_1": 8.206,
+  "soil_resistance_to_vapor_shape_parameter_2": 4.255,
+  "drag_coefficient": 0.2,
+  "ratio_heat_to_momentum_canopy_roughness_lengths": 0.13513513513513511,
+  "richardon_threshold_free_convection": -0.8,
+  "free_convection_shape_parameter": 5.0
 }
