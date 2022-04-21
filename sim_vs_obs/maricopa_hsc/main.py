@@ -9,9 +9,13 @@ from sim_vs_obs.maricopa_hsc.base_functions import get_weather_data, set_energy_
 from sim_vs_obs.maricopa_hsc.config import PathInfos, WeatherInfo, ParamsInfo
 
 if __name__ == '__main__':
+    is_stability_corrected = False
+
     path_source_raw = PathInfos.source_raw.value
     path_source_fmt = PathInfos.source_fmt.value
-    path_figs = PathInfos.source_fmt.value.parent / 'figs'
+
+    figs_dir = 'corrected' if is_stability_corrected else 'neutral'
+    path_figs = PathInfos.source_fmt.value.parent / 'figs' / figs_dir
     path_figs.mkdir(parents=True, exist_ok=True)
 
     crop_representation = 'bigleaf_sunlit-shaded'
@@ -79,7 +83,7 @@ if __name__ == '__main__':
             solver = Solver(leaves_category='lumped' if is_lumped else 'sunlit_shaded',
                             inputs_dict=eb_inputs,
                             params_dict=eb_params)
-            solver.run(is_stability_considered=True)
+            solver.run(is_stability_considered=is_stability_corrected)
             solvers.append(solver)
 
         all_solvers[date_obs].update({
