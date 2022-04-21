@@ -7,6 +7,7 @@ from sim_vs_obs.grignon.config import (PathInfos, WeatherInfo, CanopyInfo, Uncer
 from sources.demo import get_grignon_weather_data
 
 if __name__ == '__main__':
+    is_stability_corrected = False
     canopy_info = CanopyInfo()
     number_layers = canopy_info.number_layers_sim
 
@@ -69,17 +70,18 @@ if __name__ == '__main__':
                 solver = Solver(leaves_category=canopy_info.leaves_category,
                                 inputs_dict=eb_inputs,
                                 params_dict=eb_params)
-                solver.run(is_stability_considered=True)
+                solver.run(is_stability_considered=is_stability_corrected)
                 sim_obs_dict[datetime_obs].update(
                     {treatment: {
                         'solver': solver,
                         'obs': temp_obs[temp_obs['time'] == datetime_obs].drop(['time', 'treatment'], axis=1)}})
                 print(f'{datetime_obs}\t{treatment}')
 
-    fig_path = PathInfos.source_fmt.value.parent / 'figs'
+    figs_dir = 'corrected' if is_stability_corrected else 'neutral'
+    fig_path = PathInfos.source_fmt.value.parent / 'figs' / figs_dir
     fig_path.mkdir(parents=True, exist_ok=True)
 
-    plots.plot_dynamic(data=sim_obs_dict, path_figs_dir=fig_path)
+    # plots.plot_dynamic(data=sim_obs_dict, path_figs_dir=fig_path)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path, relative_layer_index=-1)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path, relative_layer_index=0)
