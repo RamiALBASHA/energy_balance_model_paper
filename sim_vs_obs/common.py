@@ -77,8 +77,8 @@ class ParamsEnergyBalanceBase(Enum):
     leaf_emissivity = None
     soil_emissivity = None
     absorbed_par_50 = 43
-    soil_resistance_to_vapor_shape_parameter_1 = 8.206
-    soil_resistance_to_vapor_shape_parameter_2 = 4.255
+    soil_resistance_to_vapor_shape_parameter_1 = 8
+    soil_resistance_to_vapor_shape_parameter_2 = 5
     step_fraction = 0.5
     acceptable_temperature_error = 0.02
     maximum_iteration_number = 50
