@@ -70,7 +70,7 @@ class ParamsEnergyBalanceBase(Enum):
     leaf_characteristic_length = 0.01
     leaf_boundary_layer_shape_parameter = 0.01
     wind_speed_extinction_coef = 0.5
-    maximum_stomatal_conductance = 80.0
+    maximum_stomatal_conductance = 60.0
     residual_stomatal_conductance = 0.1
     diffuse_extinction_coef = None
     leaf_scattering_coefficient = None
