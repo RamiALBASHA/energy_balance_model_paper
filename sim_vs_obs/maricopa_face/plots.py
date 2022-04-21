@@ -1,4 +1,5 @@
 from copy import deepcopy
+from pathlib import Path
 
 import statsmodels.api as sm
 from matplotlib import pyplot
@@ -27,7 +28,7 @@ def calc_diff(sim_obs: dict, idx: int) -> float:
     return sim_obs['sim'][idx] - obs if obs is not None else None
 
 
-def plot_comparison_energy_balance(sim_obs: dict):
+def plot_comparison_energy_balance(sim_obs: dict, figure_dir: Path):
     counter = 0
     for trt_id, trt_obs in sim_obs.items():
         for date_obs in get_dates(trt_obs.keys()):
@@ -102,7 +103,7 @@ def plot_comparison_energy_balance(sim_obs: dict):
 
             plot_daily_dynamic(f'{trt_id}_{counter}', date_obs, trt_id, gai, hours, par_inc, par_abs_veg, par_abs_sol,
                                vpd, t_air, psi_soil, wind, ra, t_can, t_soil, net_radiation, latent_heat, sensible_heat,
-                               soil_heat, t_sunlit, t_shaded, t_soil2)
+                               soil_heat, t_sunlit, t_shaded, t_soil2, figure_dir)
             counter += 1
 
     pass
@@ -293,7 +294,7 @@ def extract_sim_obs_data(sim_obs: dict):
 
 def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_veg, par_abs_sol, vpd, t_air, psi_soil,
                        wind, ra, t_can, t_soil, net_radiation, latent_heat, sensible_heat, soil_heat, t_sunlit,
-                       t_shaded, t_soil2):
+                       t_shaded, t_soil2, figure_dir):
     props = {'marker': 'o', 'color': 'b', 'alpha': 0.1}
     fig, axs = pyplot.subplots(nrows=3, ncols=8, figsize=(18, 8))
 
@@ -405,12 +406,13 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
     axs[1, 6].legend(*[v[:2] for v in axs[1, 6].get_legend_handles_labels()])
     axs[1, 7].legend(*[v[:2] for v in axs[1, 7].get_legend_handles_labels()])
 
-    fig.savefig(PathInfos.source_figs.value / f'{counter}.png')
+    fig.savefig(figure_dir / f'{counter}.png')
     pyplot.close('all')
     pass
 
 
-def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, alpha: float = 0.1, fig_name_suffix: str = ''):
+def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path, alpha: float = 0.1,
+                    fig_name_suffix: str = ''):
     n_cols = len(res_all.keys())
     fig_size = [6.4, 4.8] if n_cols < 4 else [16, 4]
     fig, axs = pyplot.subplots(ncols=len(res_all.keys()), figsize=fig_size)
@@ -429,13 +431,14 @@ def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, alpha: float = 
         add_1_1_line(ax)
 
     fig.tight_layout()
-    fig.savefig(PathInfos.source_figs.value / f'all_sim_vs_obs_{fig_name_suffix}.png')
+    fig.savefig(figure_dir / f'all_sim_vs_obs_{fig_name_suffix}.png')
     pyplot.close('all')
 
     pass
 
 
-def plot_delta_temperature(temperature_air: list, temperature_canopy_sim: list, temperature_canopy_obs: list):
+def plot_delta_temperature(temperature_air: list, temperature_canopy_sim: list, temperature_canopy_obs: list,
+                           figure_dir: Path):
     fig, ax = pyplot.subplots()
     t_air, t_sim, t_obs = zip(*[(it_air, it_sim, it_obs) for it_air, it_sim, it_obs in
                                 zip(temperature_air, temperature_canopy_sim, temperature_canopy_obs) if
@@ -451,7 +454,7 @@ def plot_delta_temperature(temperature_air: list, temperature_canopy_sim: list, 
            ylabel=r'$\mathregular{T_{sim}-T_{air}\/[^\circ C]}$')
 
     fig.tight_layout()
-    fig.savefig(PathInfos.source_figs.value / f'all_sim_vs_obs_delta_temperature.png')
+    fig.savefig(figure_dir / f'all_sim_vs_obs_delta_temperature.png')
     pyplot.close('all')
 
     pass
@@ -485,7 +488,7 @@ def plot_irradiance(shoot_obj: dict, obs_df: DataFrame):
     pass
 
 
-def plot_errors(res: dict):
+def plot_errors(res: dict, figure_dir: Path):
     n_rows = 3
     n_cols = 4
 
@@ -520,7 +523,7 @@ def plot_errors(res: dict):
         title = ' '.join(config.UNITS_MAP[k])
         axs[1, 0].set_ylabel(' '.join((r'$\mathregular{\epsilon}$', title)), fontsize=16)
         fig.tight_layout()
-        fig.savefig(PathInfos.source_figs.value / f'errors_{k}.png')
+        fig.savefig(figure_dir / f'errors_{k}.png')
         pyplot.close()
 
     pass

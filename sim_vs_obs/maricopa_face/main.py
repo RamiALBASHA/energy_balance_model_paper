@@ -1,9 +1,11 @@
 from crop_energy_balance.solver import Solver
 
 from sim_vs_obs.maricopa_face import base_functions, plots
-from sim_vs_obs.maricopa_face.config import SimInfos
+from sim_vs_obs.maricopa_face.config import SimInfos, PathInfos
 
 if __name__ == '__main__':
+    is_stability_corrected = True
+
     weather_df = base_functions.read_weather()
     soil_df = base_functions.read_soil_moisture()
     area_df = base_functions.get_area_data()
@@ -49,7 +51,7 @@ if __name__ == '__main__':
                     solver = Solver(leaves_category=SimInfos.leaf_category.value,
                                     inputs_dict=eb_inputs,
                                     params_dict=eb_params)
-                    solver.run(is_stability_considered=True)
+                    solver.run(is_stability_considered=is_stability_corrected)
 
                     sim_obs_dict[treatment].update({
                         datetime_obs: {
@@ -67,23 +69,30 @@ if __name__ == '__main__':
 
     vars_to_plot = ('temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat_flux',
                     'latent_heat_flux', 'soil_heat_flux')
+
+    figs_dir = 'corrected' if is_stability_corrected else 'neutral'
+    figs_dir_path = PathInfos.source_figs.value / figs_dir
+    figs_dir_path.mkdir(parents=True, exist_ok=True)
+
     plots.plot_sim_vs_obs(
         res_all={k: v for k, v in results_all.items() if k in vars_to_plot},
         res_wet={k: v for k, v in results_wet.items() if k in vars_to_plot},
         res_dry={k: v for k, v in results_dry.items() if k in vars_to_plot},
-        fig_name_suffix='wet')
+        figure_dir=figs_dir_path, fig_name_suffix='wet')
 
     plots.plot_sim_vs_obs(
         res_all={k: v for k, v in results_all.items() if k in ('temperature_sunlit', 'temperature_shaded')},
         res_wet={k: v for k, v in results_wet.items() if k in ('temperature_sunlit', 'temperature_shaded')},
         res_dry={k: v for k, v in results_dry.items() if k in ('temperature_sunlit', 'temperature_shaded')},
+        figure_dir=figs_dir_path,
         alpha=1,
         fig_name_suffix='sunlit_shaded')
 
     plots.plot_delta_temperature(
         temperature_air=results_all['temperature_air'],
         temperature_canopy_sim=results_all['temperature_canopy']['sim'],
-        temperature_canopy_obs=results_all['temperature_canopy']['obs'])
+        temperature_canopy_obs=results_all['temperature_canopy']['obs'],
+        figure_dir=figs_dir_path)
 
-    plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict)
-    plots.plot_errors(res=results_all)
+    plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict, figure_dir=figs_dir_path)
+    plots.plot_errors(res=results_all, figure_dir=figs_dir_path)
