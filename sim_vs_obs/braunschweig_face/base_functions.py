@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from math import pi
 
 from alinea.caribu.sky_tools import Gensun
@@ -37,7 +37,8 @@ def read_temperature(year: int) -> DataFrame:
 
     df = read_excel(PATH_RAW, sheet_name=f'canopy_T{year}', skiprows=6)
     df.dropna(inplace=True)
-    df.loc[:, 'flag'] = df.apply(lambda x: (x['time'].minute == 0) and (x['time'].second == 0), axis=1)
+    df.loc[:, 'flag'] = df.apply(
+        lambda x: all([x['time'].minute == 0, x['time'].second == 0, isinstance(x['time'], time)]), axis=1)
     df = df[df['flag']]
     df.set_index(df.apply(lambda x: datetime.combine(x['date'], x['time']), axis=1), inplace=True)
     df.drop(['date', 'time', 'flag'], axis=1, inplace=True)
