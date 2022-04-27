@@ -2,11 +2,11 @@ from copy import deepcopy
 from pathlib import Path
 
 import statsmodels.api as sm
-from matplotlib import pyplot, ticker, colors
+from matplotlib import pyplot, ticker
 from numpy import array, linspace
 from pandas import isna
 
-from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver
+from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, CMAP, NORM_INCIDENT_PAR
 from utils import stats, config
 
 MAP_UNITS = {
@@ -105,9 +105,8 @@ def plot_sim_vs_obs(data: dict, path_figs_dir: Path, relative_layer_index: int =
             temperature_obs = obs_dict[var_to_plot][treatment]
             temperature_sim = sim_dict[var_to_plot][treatment]
             c = irradiance_dict[var_to_plot][treatment]
-            norm = colors.Normalize(0, vmax=500)
             im = ax.scatter(temperature_obs, temperature_sim, marker='.', alpha=0.5,
-                            edgecolor="none", c=c, cmap='hot', norm=norm)
+                            edgecolor="none", c=c, cmap=CMAP, norm=NORM_INCIDENT_PAR)
             ax.text(0.05, 0.9,
                     ''.join([r'$\mathregular{R^2=}$', f'{stats.calc_r2(temperature_obs, temperature_sim):.3f}']),
                     transform=ax.transAxes)
@@ -194,7 +193,6 @@ def plot_errors(data: dict, path_figs_dir: Path):
             res[trt].update({'temperature_error': [t_sim - t_obs for t_sim, t_obs in zip(res[trt]['temperature_sim'],
                                                                                          res[trt]['temperature_obs'])]})
 
-    norm = colors.Normalize(0, vmax=500)
     n_rows = 3
     n_cols = 4
 
@@ -211,8 +209,8 @@ def plot_errors(data: dict, path_figs_dir: Path):
             explanatory_ls, error_ls, c = zip(
                 *[(ex, er, c_i) for ex, er, c_i in zip(res[trt][explanatory], res[trt]['temperature_error'], par_inc)
                   if not any(isna([ex, er]))])
-            im = ax.scatter(explanatory_ls, error_ls, marker='.', alpha=0.5, edgecolor='none', c=c, cmap='hot',
-                            norm=norm)
+            im = ax.scatter(explanatory_ls, error_ls, marker='.', alpha=0.5, edgecolor='none', c=c, cmap=CMAP,
+                            norm=NORM_INCIDENT_PAR)
 
             ax.set(xlabel=' '.join(config.UNITS_MAP[explanatory]))
 
