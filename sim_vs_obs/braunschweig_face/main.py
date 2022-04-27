@@ -23,7 +23,7 @@ if __name__ == '__main__':
                     all_area_data=area_df,
                     treatment_id=plot_id,
                     repetition_id=rep_id)
-                trt_temperature_ser = base_functions.get_temperature_obs(
+                trt_temperature_ser = base_functions.get_temperature(
                     all_temperature_data=temperature_df,
                     treatment_id=plot_id,
                     repetition_id=rep_id)

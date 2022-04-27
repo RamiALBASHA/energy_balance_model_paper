@@ -75,7 +75,7 @@ def get_treatment_area(all_area_data: DataFrame, treatment_id: int, repetition_i
     return _interpolate_df(df)
 
 
-def get_temperature_obs(all_temperature_data: DataFrame, treatment_id: int, repetition_id: int) -> DataFrame:
+def get_temperature(all_temperature_data: DataFrame, treatment_id: int, repetition_id: int) -> Series:
     return all_temperature_data.loc[:, f'{treatment_id}_{repetition_id}']
 
 
