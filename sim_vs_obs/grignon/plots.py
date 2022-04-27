@@ -2,7 +2,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import statsmodels.api as sm
-from matplotlib import pyplot, ticker
+from matplotlib import pyplot, ticker, colors
 from numpy import array, linspace
 from pandas import isna
 
@@ -76,6 +76,7 @@ def plot_sim_vs_obs(data: dict, path_figs_dir: Path, relative_layer_index: int =
     fig, axs = pyplot.subplots(nrows=len(vars_to_plot), ncols=len(treatments), sharex='row', sharey='row')
     obs_dict = {s: {k: [] for k in treatments} for s in vars_to_plot}
     sim_dict = deepcopy(obs_dict)
+    irradiance_dict = deepcopy(obs_dict)
     for counter, datetime_obs in enumerate(data.keys()):
         for treatment in treatments:
             solver = data[datetime_obs][treatment]['solver']
@@ -95,13 +96,18 @@ def plot_sim_vs_obs(data: dict, path_figs_dir: Path, relative_layer_index: int =
                     sim_dict['t'][treatment].append(t_sim)
                     obs_dict['delta_t'][treatment].append(t_obs - t_air)
                     sim_dict['delta_t'][treatment].append(t_sim - t_air)
+                    inc_par = sum(solver.crop.inputs.incident_irradiance.values())
+                    irradiance_dict['t'][treatment].append(inc_par)
+                    irradiance_dict['delta_t'][treatment].append(inc_par)
 
     for ax_row, var_to_plot in zip(axs, vars_to_plot):
         for ax, treatment in zip(ax_row, treatments):
             temperature_obs = obs_dict[var_to_plot][treatment]
             temperature_sim = sim_dict[var_to_plot][treatment]
-
-            ax.scatter(temperature_obs, temperature_sim, marker='o', alpha=0.1)
+            c = irradiance_dict[var_to_plot][treatment]
+            norm = colors.Normalize(0, vmax=500)
+            im = ax.scatter(temperature_obs, temperature_sim, marker='.', alpha=0.5,
+                            edgecolor="none", c=c, cmap='hot', norm=norm)
             ax.text(0.05, 0.9,
                     ''.join([r'$\mathregular{R^2=}$', f'{stats.calc_r2(temperature_obs, temperature_sim):.3f}']),
                     transform=ax.transAxes)
@@ -111,6 +117,7 @@ def plot_sim_vs_obs(data: dict, path_figs_dir: Path, relative_layer_index: int =
             ax.plot(lims, lims, 'k--', linewidth=0.5)
 
             ax.set_xlabel(' '.join(['obs'] + MAP_UNITS[var_to_plot]))
+
     for ax, var_to_plot in zip(axs[:, 0], vars_to_plot):
         ax.set_ylabel(' '.join(['sim'] + MAP_UNITS[var_to_plot]))
     for ax, treatment in zip(axs[0, :], treatments):
@@ -118,6 +125,12 @@ def plot_sim_vs_obs(data: dict, path_figs_dir: Path, relative_layer_index: int =
 
     fig.tight_layout()
     fig.subplots_adjust(wspace=0)
+
+    fig.subplots_adjust(bottom=0.25)
+    cbar_ax = fig.add_axes([0.37, 0.1, 0.30, 0.04])
+    fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
+    cbar_ax.set_ylabel(' '.join(config.UNITS_MAP['incident_par']), va="top", ha='right', rotation=0)
+
     fig.savefig(path_figs_dir / f"sim_vs_obs_{'all' if relative_layer_index is None else relative_layer_index}.png")
     pass
 
@@ -157,7 +170,7 @@ def plot_errors(data: dict, path_figs_dir: Path):
             obs = data[datetime_obs][trt]['obs']
             canopy_layers = [k for k in solver.crop.components_keys if k != -1]
 
-            for hour, layer in enumerate(canopy_layers):
+            for i, layer in enumerate(canopy_layers):
                 res[trt]['temperature_obs'].append(obs[obs['leaf_level'] == layer]['temperature'].mean())
                 res[trt]['temperature_air'].append(solver.crop.inputs.air_temperature - 273.15)
                 res[trt]['temperature_sim'].append(solver.crop[layer].temperature - 273.15)
@@ -173,7 +186,7 @@ def plot_errors(data: dict, path_figs_dir: Path):
                 res[trt]['absorbed_par_veg'].append(get_canopy_abs_irradiance_from_solver(solver=solver))
                 res[trt]['psi_u'].append(solver.crop.state_variables.stability_correction_for_momentum)
                 res[trt]['psi_h'].append(solver.crop.state_variables.stability_correction_for_heat)
-                res[trt]['hour'].append(hour)
+                res[trt]['hour'].append(datetime_obs.hour)
                 res[trt]['net_longwave_radiation'].append(solver.crop.state_variables.net_longwave_radiation)
                 res[trt]['height'].append(solver.crop.inputs.canopy_height)
                 res[trt]['gai'].append(sum(solver.crop.inputs.leaf_layers.values()))
@@ -181,22 +194,26 @@ def plot_errors(data: dict, path_figs_dir: Path):
             res[trt].update({'temperature_error': [t_sim - t_obs for t_sim, t_obs in zip(res[trt]['temperature_sim'],
                                                                                          res[trt]['temperature_obs'])]})
 
+    norm = colors.Normalize(0, vmax=500)
     n_rows = 3
     n_cols = 4
 
     for trt in treatments:
+        par_inc = [par_dir + par_diff for par_dir, par_diff in
+                   zip(res[trt]['incident_direct_par_irradiance'], res[trt]['incident_diffuse_par_irradiance'])]
         fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharey='all')
-        for i, explanatory in enumerate(
-                ('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
-                 'aerodynamic_resistance', 'absorbed_par_soil', 'absorbed_par_veg', 'hour',
-                 'net_longwave_radiation', 'height', 'gai')):
+        explanatory_vars = ('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
+                            'aerodynamic_resistance', 'absorbed_par_soil', 'absorbed_par_veg', 'hour',
+                            'net_longwave_radiation', 'height', 'gai')
+        for i, explanatory in enumerate(explanatory_vars):
             ax = axs[i % n_rows, i // n_rows]
 
-            explanatory_ls, error_ls = zip(
-                *[(ex, er) for ex, er in zip(res[trt][explanatory], res[trt]['temperature_error'])
+            explanatory_ls, error_ls, c = zip(
+                *[(ex, er, c_i) for ex, er, c_i in zip(res[trt][explanatory], res[trt]['temperature_error'], par_inc)
                   if not any(isna([ex, er]))])
+            im = ax.scatter(explanatory_ls, error_ls, marker='.', alpha=0.5, edgecolor='none', c=c, cmap='hot',
+                            norm=norm)
 
-            ax.scatter(explanatory_ls, error_ls, marker='.', alpha=0.2)
             ax.set(xlabel=' '.join(config.UNITS_MAP[explanatory]))
 
             x = array(explanatory_ls)
@@ -208,6 +225,11 @@ def plot_errors(data: dict, path_figs_dir: Path):
                            linspace(min(explanatory_ls), max(explanatory_ls), 2)]), 'k--')
             p_value_slope = results.pvalues[1] / 2.
             ax.text(0.1, 0.9, '*' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontweight='bold')
+
+            if i == len(explanatory_vars) - 1:
+                colorbar_ax = axs.flatten()[-1]
+                fig.colorbar(im, ax=colorbar_ax, orientation='horizontal',
+                             label=' '.join(config.UNITS_MAP['incident_par']))
 
         axs[1, 0].set_ylabel(r'$\mathregular{T_{sim}-T_{obs}\/[^\circ C]}$', fontsize=16)
         fig.tight_layout()
