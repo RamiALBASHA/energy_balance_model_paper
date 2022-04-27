@@ -18,7 +18,7 @@ class SimInfos(Enum):
 
 
 class ExpInfos(Enum):
-    years = [2014, 2014]
+    years = [2014, 2015]
     nb_repetitions = (1, 2, 3)
     canopy_height_max = 1.
     measurement_height = 2.

@@ -79,6 +79,14 @@ def get_temperature(all_temperature_data: DataFrame, treatment_id: int, repetiti
     return all_temperature_data.loc[:, f'{treatment_id}_{repetition_id}']
 
 
+def get_temperature_obs(trt_temperature: Series, datetime_obs) -> float:
+    try:
+        res = trt_temperature.loc[datetime_obs]
+    except KeyError:
+        res = None
+    return res
+
+
 def set_simulation_dates(obs: list[DataFrame]) -> date_range:
     date_beg = max([df.index.min() for df in obs]).date()
     date_end = min([df.index.max() for df in obs]).date()
