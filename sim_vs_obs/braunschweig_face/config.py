@@ -1,4 +1,5 @@
 from enum import Enum
+from math import radians
 from pathlib import Path
 
 
@@ -23,6 +24,7 @@ class ExpInfos(Enum):
     canopy_height_max = 1.
     measurement_height = 2.
     atmospheric_pressure = 101.3
+    irt_angle_below_horizon = radians(45)
 
 
 class ExpIdInfos(Enum):

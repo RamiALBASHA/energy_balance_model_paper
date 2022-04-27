@@ -3,9 +3,12 @@ from datetime import timedelta
 from crop_energy_balance.solver import Solver
 
 from sim_vs_obs.braunschweig_face import base_functions
-from sim_vs_obs.braunschweig_face.config import ExpIdInfos, ExpInfos, SimInfos
+from sim_vs_obs.braunschweig_face import plots
+from sim_vs_obs.braunschweig_face.config import ExpIdInfos, ExpInfos, SimInfos, PathInfos
 
 if __name__ == '__main__':
+    path_figs = PathInfos.source_figs.value
+    path_figs.mkdir(parents=True, exist_ok=True)
     repetition_ids = ExpInfos.nb_repetitions.value
 
     for year in ExpInfos.years.value:
@@ -16,6 +19,8 @@ if __name__ == '__main__':
         soil_moisture_df = base_functions.read_soil_moisture(year=year)
 
         plot_ids = [s for s in plot_ids if str(s) in set([col.split('_')[0] for col in temperature_df.columns])]
+
+        sim_obs_dict = {plot_id: {rep_id: {} for rep_id in repetition_ids} for plot_id in plot_ids}
 
         for plot_id in plot_ids:
             for rep_id in repetition_ids:
@@ -51,3 +56,12 @@ if __name__ == '__main__':
                                         inputs_dict=eb_inputs,
                                         params_dict=eb_params)
                         solver.run(is_stability_considered=True)
+                        sim_obs_dict[plot_id][rep_id].update({
+                            sim_datetime: {
+                                'solver': solver,
+                                'obs_temperature': base_functions.get_temperature_obs(
+                                    trt_temperature=trt_temperature_ser,
+                                    datetime_obs=sim_datetime)}
+                        })
+    plots.plot_dynamic_result(sim_obs=sim_obs_dict, path_figs=path_figs)
+    plots.plot_all_1_1(sim_obs=sim_obs_dict, path_figs=path_figs)
