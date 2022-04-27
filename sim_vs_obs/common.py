@@ -1,10 +1,14 @@
-from math import radians
 from enum import Enum
+from math import radians
 
 from crop_energy_balance.solver import Solver
 from crop_irradiance.uniform_crops import inputs, params, shoot
 from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import calc_direct_black_extinction_coefficient, \
     calc_sunlit_fraction_per_leaf_layer, calc_sunlit_fraction
+from matplotlib import colors
+
+NORM_INCIDENT_PAR = colors.Normalize(0, vmax=500)
+CMAP = 'hot'
 
 
 class ParamsIrradiance(Enum):
