@@ -7,8 +7,8 @@ from sim_vs_obs.braunschweig_face import plots
 from sim_vs_obs.braunschweig_face.config import ExpIdInfos, ExpInfos, SimInfos, PathInfos
 
 if __name__ == '__main__':
-    path_figs = PathInfos.source_figs.value
-    path_figs.mkdir(parents=True, exist_ok=True)
+    is_stability_corrected = True
+
     repetition_ids = ExpInfos.nb_repetitions.value
 
     for year in ExpInfos.years.value:
@@ -55,7 +55,7 @@ if __name__ == '__main__':
                         solver = Solver(leaves_category=SimInfos.leaf_category.value,
                                         inputs_dict=eb_inputs,
                                         params_dict=eb_params)
-                        solver.run(is_stability_considered=True)
+                        solver.run(is_stability_considered=is_stability_corrected)
                         sim_obs_dict[plot_id][rep_id].update({
                             sim_datetime: {
                                 'solver': solver,
@@ -63,5 +63,10 @@ if __name__ == '__main__':
                                     trt_temperature=trt_temperature_ser,
                                     datetime_obs=sim_datetime)}
                         })
-    plots.plot_dynamic_result(sim_obs=sim_obs_dict, path_figs=path_figs)
-    plots.plot_all_1_1(sim_obs=sim_obs_dict, path_figs=path_figs)
+
+    figs_dir = 'corrected' if is_stability_corrected else 'neutral'
+    fig_path = PathInfos.source_fmt.value.parent / 'figs' / figs_dir
+    fig_path.mkdir(parents=True, exist_ok=True)
+
+    plots.plot_dynamic_result(sim_obs=sim_obs_dict, path_figs=fig_path)
+    plots.plot_all_1_1(sim_obs=sim_obs_dict, path_figs=fig_path)
