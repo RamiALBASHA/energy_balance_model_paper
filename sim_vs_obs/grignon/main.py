@@ -7,7 +7,7 @@ from sim_vs_obs.grignon.config import (PathInfos, WeatherInfo, CanopyInfo, Uncer
 from sources.demo import get_grignon_weather_data
 
 if __name__ == '__main__':
-    is_stability_corrected = False
+    is_stability_corrected = True
     canopy_info = CanopyInfo()
     number_layers = canopy_info.number_layers_sim
 
