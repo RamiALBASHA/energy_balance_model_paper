@@ -81,7 +81,7 @@ if __name__ == '__main__':
     fig_path = PathInfos.source_fmt.value.parent / 'figs' / figs_dir
     fig_path.mkdir(parents=True, exist_ok=True)
 
-    # plots.plot_dynamic(data=sim_obs_dict, path_figs_dir=fig_path)
+    plots.plot_dynamic(data=sim_obs_dict, path_figs_dir=fig_path)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path, relative_layer_index=-1)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path, relative_layer_index=0)
