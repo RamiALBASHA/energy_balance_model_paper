@@ -6,7 +6,7 @@ from numpy import array, linspace
 from pandas import isna
 
 from sim_vs_obs.braunschweig_face.config import ExpInfos
-from sim_vs_obs.common import calc_apparent_temperature, get_canopy_abs_irradiance_from_solver
+from sim_vs_obs.common import calc_apparent_temperature, get_canopy_abs_irradiance_from_solver, NORM_INCIDENT_PAR, CMAP
 from utils import config
 from utils.stats import calc_rmse, calc_r2
 
@@ -58,10 +58,10 @@ def plot_all_1_1(sim_obs: dict, path_figs: Path, add_color_map: bool = True):
                 temperature_air.append(solver.inputs.air_temperature - 273.15)
                 incident_irradiance.append(sum(solver.crop.inputs.incident_irradiance.values()))
     if add_color_map:
-        ax.scatter(temperature_obs, temperature_sim, marker='.', edgecolor=None, alpha=0.2,
-                   c=incident_irradiance, vmin=min(incident_irradiance), vmax=max(incident_irradiance), cmap='jet')
+        ax.scatter(temperature_obs, temperature_sim, marker='.', edgecolor='none', alpha=0.5,
+                   c=incident_irradiance, cmap=CMAP)
     else:
-        ax.scatter(temperature_obs, temperature_sim, alpha=0.2, edgecolor=None)
+        ax.scatter(temperature_obs, temperature_sim, alpha=0.5, edgecolor='none')
 
     temperature_obs, temperature_sim, temperature_air, incident_irradiance = zip(
         *[(x, y, z, r) for x, y, z, r in zip(temperature_obs, temperature_sim, temperature_air, incident_irradiance) if
@@ -78,11 +78,10 @@ def plot_all_1_1(sim_obs: dict, path_figs: Path, add_color_map: bool = True):
     delta_t_sim = [t_sim - t_air for t_sim, t_air in zip(temperature_sim, temperature_air)]
     delta_t_obs = [t_obs - t_air for t_obs, t_air in zip(temperature_obs, temperature_air)]
     if add_color_map:
-        im = ax_t_diff.scatter(delta_t_obs, delta_t_sim, marker='.', edgecolor=None, alpha=0.2,
-                               c=incident_irradiance, vmin=min(incident_irradiance), vmax=max(incident_irradiance),
-                               cmap='jet')
+        im = ax_t_diff.scatter(delta_t_obs, delta_t_sim, marker='.', edgecolor='none', alpha=0.5,
+                               c=incident_irradiance, norm=NORM_INCIDENT_PAR, cmap=CMAP)
     else:
-        ax_t_diff.scatter(delta_t_obs, delta_t_sim, alpha=0.2)
+        ax_t_diff.scatter(delta_t_obs, delta_t_sim, alpha=0.5)
     lims = [sorted([v for v in (delta_t_obs + delta_t_sim) if v is not None])[i] for i in (0, -1)]
     ax_t_diff.plot(lims, lims, 'k--')
     ax_t_diff.text(0.05, 0.9,
@@ -94,7 +93,7 @@ def plot_all_1_1(sim_obs: dict, path_figs: Path, add_color_map: bool = True):
     if add_color_map:
         fig.subplots_adjust(bottom=0.2)
         cbar_ax = fig.add_axes([0.37, 0.1, 0.30, 0.04])
-        fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
+        fig.colorbar(im, cax=cbar_ax, orientation='horizontal', label=' '.join(config.UNITS_MAP['incident_par']))
 
     fig.savefig(path_figs / f'all_sim_obs.png')
     pyplot.close('all')
@@ -192,10 +191,10 @@ def plot_error(sim_obs: dict, path_figs: Path, add_colormap: bool = True):
         ax = axs[i_explanatory % n_rows, i_explanatory // n_rows]
         explanatory_ls = [res[explanatory][i] for i in idx]
         if add_colormap:
-            im = ax.scatter(explanatory_ls, error, marker='.', edgecolor=None, alpha=0.2, c=c, vmin=min(c), vmax=max(c),
-                            cmap='jet')
+            im = ax.scatter(explanatory_ls, error, marker='.', edgecolor='none', alpha=0.5, c=c, norm=NORM_INCIDENT_PAR,
+                            cmap=CMAP)
         else:
-            ax.scatter(explanatory_ls, error, marker='.', edgecolor=None, alpha=0.2)
+            ax.scatter(explanatory_ls, error, marker='.', edgecolor='none', alpha=0.5)
 
         ax.set(xlabel=' '.join(config.UNITS_MAP[explanatory]))
 
@@ -210,7 +209,7 @@ def plot_error(sim_obs: dict, path_figs: Path, add_colormap: bool = True):
         ax.text(0.1, 0.9, '*' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontweight='bold')
 
         if add_colormap and (i_explanatory == len(explanatory_vars) - 1):
-            fig.colorbar(im, ax=axs.flatten()[-1])
+            fig.colorbar(im, ax=axs.flatten()[-1], label=' '.join(config.UNITS_MAP['incident_par']))
 
     title = ' '.join(config.UNITS_MAP['temperature_canopy'])
     axs[1, 0].set_ylabel(' '.join((r'$\mathregular{\epsilon}$', title)), fontsize=16)
