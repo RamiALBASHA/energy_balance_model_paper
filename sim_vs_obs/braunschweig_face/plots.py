@@ -40,12 +40,13 @@ def plot_dynamic_result(sim_obs: dict, path_figs: Path):
                 pyplot.close('all')
 
 
-def plot_all_1_1(sim_obs: dict, path_figs: Path):
+def plot_all_1_1(sim_obs: dict, path_figs: Path, add_color_map: bool = True):
     fig, (ax, ax_t_diff) = pyplot.subplots(ncols=2)
 
     temperature_sim = []
     temperature_obs = []
     temperature_air = []
+    incident_irradiance = []
     for trt_id in sim_obs.keys():
         for rep_id in sim_obs[trt_id].keys():
             for datetime_sim, res in sim_obs[trt_id][rep_id].items():
@@ -55,9 +56,15 @@ def plot_all_1_1(sim_obs: dict, path_figs: Path):
                     eb_solver=solver,
                     sensor_angle=ExpInfos.irt_angle_below_horizon.value))
                 temperature_air.append(solver.inputs.air_temperature - 273.15)
-    ax.scatter(temperature_obs, temperature_sim, alpha=0.1)
-    temperature_obs, temperature_sim, temperature_air = zip(
-        *[(x, y, z) for x, y, z in zip(temperature_obs, temperature_sim, temperature_air) if
+                incident_irradiance.append(sum(solver.crop.inputs.incident_irradiance.values()))
+    if add_color_map:
+        ax.scatter(temperature_obs, temperature_sim, marker='.', edgecolor=None, alpha=0.2,
+                   c=incident_irradiance, vmin=min(incident_irradiance), vmax=max(incident_irradiance), cmap='jet')
+    else:
+        ax.scatter(temperature_obs, temperature_sim, alpha=0.2, edgecolor=None)
+
+    temperature_obs, temperature_sim, temperature_air, incident_irradiance = zip(
+        *[(x, y, z, r) for x, y, z, r in zip(temperature_obs, temperature_sim, temperature_air, incident_irradiance) if
           ((x is not None) and (y is not None))])
     ax.text(0.05, 0.9,
             ''.join([r'$\mathregular{R^2=}$', f'{calc_r2(temperature_obs, temperature_sim):.3f}']),
@@ -70,7 +77,12 @@ def plot_all_1_1(sim_obs: dict, path_figs: Path):
 
     delta_t_sim = [t_sim - t_air for t_sim, t_air in zip(temperature_sim, temperature_air)]
     delta_t_obs = [t_obs - t_air for t_obs, t_air in zip(temperature_obs, temperature_air)]
-    ax_t_diff.scatter(delta_t_obs, delta_t_sim, alpha=0.1)
+    if add_color_map:
+        im = ax_t_diff.scatter(delta_t_obs, delta_t_sim, marker='.', edgecolor=None, alpha=0.2,
+                               c=incident_irradiance, vmin=min(incident_irradiance), vmax=max(incident_irradiance),
+                               cmap='jet')
+    else:
+        ax_t_diff.scatter(delta_t_obs, delta_t_sim, alpha=0.2)
     lims = [sorted([v for v in (delta_t_obs + delta_t_sim) if v is not None])[i] for i in (0, -1)]
     ax_t_diff.plot(lims, lims, 'k--')
     ax_t_diff.text(0.05, 0.9,
@@ -78,6 +90,11 @@ def plot_all_1_1(sim_obs: dict, path_figs: Path):
                    transform=ax_t_diff.transAxes)
     ax_t_diff.text(0.05, 0.8, f'RMSE={calc_rmse(delta_t_obs, delta_t_sim):.3f} °C',
                    transform=ax_t_diff.transAxes)
+
+    if add_color_map:
+        fig.subplots_adjust(bottom=0.2)
+        cbar_ax = fig.add_axes([0.37, 0.1, 0.30, 0.04])
+        fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
 
     fig.savefig(path_figs / f'all_sim_obs.png')
     pyplot.close('all')
@@ -155,26 +172,31 @@ def extract_sim_obs_data(sim_obs: dict):
         gai=all_gai)
 
 
-def plot_error(sim_obs: dict, path_figs: Path):
+def plot_error(sim_obs: dict, path_figs: Path, add_colormap: bool = True):
     res = extract_sim_obs_data(sim_obs=sim_obs)
 
     n_rows = 3
     n_cols = 4
     fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharey='all')
-
+    im = None
     idx, sim, obs = zip(*[(i, i_sim, i_obs) for i, (i_sim, i_obs) in
                           enumerate(zip(res['temperature_canopy']['sim'], res['temperature_canopy']['obs']))
                           if not any(isna([i_sim, i_obs]))])
 
     error = [i_sim - i_obs for i_sim, i_obs in zip(sim, obs)]
-
-    for i_explanatory, explanatory in enumerate(
-            ('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
-             'aerodynamic_resistance', 'absorbed_par_soil', 'absorbed_par_veg', 'hour',
-             'net_longwave_radiation', 'gai')):
+    c = [res['incident_par'][i] for i in idx]
+    explanatory_vars = ('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
+                        'aerodynamic_resistance', 'absorbed_par_soil', 'absorbed_par_veg', 'hour',
+                        'net_longwave_radiation', 'gai')
+    for i_explanatory, explanatory in enumerate(explanatory_vars):
         ax = axs[i_explanatory % n_rows, i_explanatory // n_rows]
         explanatory_ls = [res[explanatory][i] for i in idx]
-        ax.scatter(explanatory_ls, error, marker='.', edgecolor=None, alpha=0.2)
+        if add_colormap:
+            im = ax.scatter(explanatory_ls, error, marker='.', edgecolor=None, alpha=0.2, c=c, vmin=min(c), vmax=max(c),
+                            cmap='jet')
+        else:
+            ax.scatter(explanatory_ls, error, marker='.', edgecolor=None, alpha=0.2)
+
         ax.set(xlabel=' '.join(config.UNITS_MAP[explanatory]))
 
         x = array(explanatory_ls)
@@ -187,10 +209,13 @@ def plot_error(sim_obs: dict, path_figs: Path):
         p_value_slope = results.pvalues[1] / 2.
         ax.text(0.1, 0.9, '*' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontweight='bold')
 
+        if add_colormap and (i_explanatory == len(explanatory_vars) - 1):
+            fig.colorbar(im, ax=axs.flatten()[-1])
+
     title = ' '.join(config.UNITS_MAP['temperature_canopy'])
     axs[1, 0].set_ylabel(' '.join((r'$\mathregular{\epsilon}$', title)), fontsize=16)
     fig.tight_layout()
     fig.savefig(path_figs / f'errors_temperature_canopy.png')
-    pyplot.close()
+    pyplot.close('all')
 
     pass
