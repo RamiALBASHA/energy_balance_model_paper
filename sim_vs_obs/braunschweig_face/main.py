@@ -11,6 +11,7 @@ if __name__ == '__main__':
 
     repetition_ids = ExpInfos.nb_repetitions.value
 
+    sim_obs_dict = {}
     for year in ExpInfos.years.value:
         plot_ids = ExpIdInfos.get_studied_plot_ids(year=year)
         weather_df = base_functions.read_weather(year=year)
@@ -20,7 +21,7 @@ if __name__ == '__main__':
 
         plot_ids = [s for s in plot_ids if str(s) in set([col.split('_')[0] for col in temperature_df.columns])]
 
-        sim_obs_dict = {plot_id: {rep_id: {} for rep_id in repetition_ids} for plot_id in plot_ids}
+        sim_obs_dict.update({plot_id: {rep_id: {} for rep_id in repetition_ids} for plot_id in plot_ids})
 
         for plot_id in plot_ids:
             for rep_id in repetition_ids:
