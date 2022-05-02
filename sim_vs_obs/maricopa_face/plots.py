@@ -272,7 +272,7 @@ def extract_sim_obs_data(sim_obs: dict):
         soil_heat_flux=all_soil_heat,
         temperature_sunlit=all_t_sunlit,
         temperature_shaded=all_t_shaded,
-        incident_par=all_incident_diffuse_par_irradiance,
+        incident_par=all_incident_par_irradiance,
         incident_diffuse_par_irradiance=all_incident_diffuse_par_irradiance,
         incident_direct_par_irradiance=all_incident_direct_par_irradiance,
         wind_speed=all_wind_speed,
