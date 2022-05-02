@@ -9,7 +9,7 @@ from matplotlib.ticker import MultipleLocator
 from numpy import array, linspace
 from pandas import DataFrame, isna
 
-from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, calc_apparent_temperature
+from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, calc_apparent_temperature, CMAP, NORM_INCIDENT_PAR
 from sim_vs_obs.maricopa_hsc.base_functions import calc_neutral_aerodynamic_resistance
 from utils import stats, config
 
@@ -38,16 +38,17 @@ def compare_temperature(obs: list, sim: list, ax: plt.Subplot = None, return_ax:
     ax.plot(xylims, xylims, 'k--')
 
     if write_stats:
-        ax.text(0.1, 0.9, f"R2 = {stats.calc_r2(sim, obs):.3f}", transform=ax.transAxes)
+        ax.text(0.1, 0.9, f"R² = {stats.calc_r2(sim, obs):.3f}", transform=ax.transAxes)
         ax.text(0.1, 0.8, f"RMSE = {stats.calc_rmse(sim, obs):.3f}", transform=ax.transAxes)
     if return_ax:
         return ax
 
 
-def plot_results(all_solvers: dict, path_figs: Path):
+def plot_results(all_solvers: dict, path_figs: Path, is_colormap: bool = True):
     all_sim_t = []
     all_obs_t = []
     all_air_t = []
+    all_incident_par = []
 
     x_ls = range(24)
     for d1, v1 in all_solvers.items():
@@ -55,6 +56,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
             fig, axs = plt.subplots(3, 4, figsize=(12, 8))
 
             temp_obs = plot_res['temp_obs']
+            incident_par = []
             incident_diffuse_par_irradiance = []
             incident_direct_par_irradiance = []
             wind_speed = []
@@ -76,6 +78,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
             sensor_angle_below_horizon = radians(45 if d1 < datetime(2008, 1, 2) else 30)
 
             for solver in plot_res['solvers']:
+                incident_par.append(sum(solver.crop.inputs.incident_irradiance.values()))
                 incident_diffuse_par_irradiance.append(solver.crop.inputs.incident_irradiance['diffuse'])
                 incident_direct_par_irradiance.append(solver.crop.inputs.incident_irradiance['direct'])
                 wind_speed.append(solver.crop.inputs.wind_speed / 3600.)
@@ -97,49 +100,7 @@ def plot_results(all_solvers: dict, path_figs: Path):
             all_sim_t += temp_sim
             all_obs_t += temp_obs
             all_air_t += air_temperature
-
-            axs[0, 0].plot(x_ls, incident_diffuse_par_irradiance, label=r'$\mathregular{{PAR}_{diff}}$')
-            axs[0, 0].plot(x_ls, incident_direct_par_irradiance, label=r'$\mathregular{{PAR}_{dir}}$')
-            axs[0, 0].plot(x_ls, soil_abs_par, label=r'$\mathregular{{PAR}_{abs,\/soil}}$', linewidth=2)
-            axs[0, 0].plot(x_ls, veg_abs_par, label=r'$\mathregular{{PAR}_{abs,\/veg}}$', c='k', linewidth=3)
-            axs[0, 0].set_ylim((0, 500))
-            axs[0, 0].legend()
-
-            axs[0, 1].plot(x_ls, wind_speed, label='u')
-            axs[0, 1].set_ylim(0, 6)
-            axs[0, 1].legend()
-
-            axs[1, 1].plot(x_ls, richardson, label='Ri')
-            axs[1, 1].hlines([-0.8] * len(x_ls), min(x_ls), max(x_ls), linewidth=2, color='red')
-            axs[1, 1].set_ylim((-10, 3))
-            axs[1, 1].legend()
-
-            axs[2, 1].plot(x_ls, air_temperature, label=r'$\mathregular{T_{air}}$', color='black', linestyle='--')
-            axs[2, 1].plot(x_ls, temp_obs, label=r'$\mathregular{T_{can,\/obs}}$', color='orange')
-            axs[2, 1].plot(x_ls, temp_sim, label=r'$\mathregular{T_{can,\/sim}}$', color='blue')
-            axs[2, 1].scatter(x_ls, [v if v else None for v in is_forced_aerodynamic_resistance], label='forced')
-            axs[2, 1].set_ylim(-5, 60)
-            axs[2, 1].legend(fontsize='x-small')
-
-            axs[1, 0].plot(x_ls, vapor_pressure_deficit, label='VPD')
-            axs[1, 0].set_ylim(0, 6)
-            axs[1, 0].legend()
-
-            axs[2, 0].plot(x_ls, soil_water_potential, label=r'$\mathregular{\Psi_{soil}}$')
-            axs[2, 0].legend()
-
-            axs[0, 3].scatter(temp_obs, temp_sim, alpha=0.5)
-            axs[0, 3].plot((-5, 40), (-5, 40), 'k--')
-            axs[0, 3].set(xlim=(-5, 40), ylim=(-5, 40), xlabel='obs T', ylabel='sim T')
-            roughness_length_for_momentum = plot_res["solvers"][0].crop.state_variables.roughness_length_for_momentum
-            canopy_height = plot_res["solvers"][0].crop.inputs.canopy_height
-            zero_displacement_height = plot_res["solvers"][0].crop.state_variables.zero_displacement_height
-            axs[0, 3].text(0.1, 0.8, f'z0u/h ={roughness_length_for_momentum / canopy_height:.3f}',
-                           transform=axs[0, 3].transAxes)
-            axs[0, 3].text(0.1, 0.6, f'd/h ={zero_displacement_height / canopy_height:.3f}',
-                           transform=axs[0, 3].transAxes)
-            axs[0, 3].yaxis.set_label_position("right")
-            axs[0, 3].yaxis.tick_right()
+            all_incident_par += incident_par
 
             axs[1, 3].scatter(
                 [t_obs - t_air for t_obs, t_air in zip(temp_obs, air_temperature)],
@@ -184,32 +145,47 @@ def plot_results(all_solvers: dict, path_figs: Path):
             plt.close(fig)
 
     fig_summary, axs_summary = plt.subplots(ncols=2)
-    df = DataFrame(data={'sim_t': all_sim_t, 'obs_t': all_obs_t, 'air_t': all_air_t})
+    df = DataFrame(data={'sim_t': all_sim_t, 'obs_t': all_obs_t, 'air_t': all_air_t, 'par_inc': all_incident_par})
     df.loc[:, 'sim_delta_t'] = df['sim_t'] - df['air_t']
     df.loc[:, 'obs_delta_t'] = df['obs_t'] - df['air_t']
 
+    im = None
     for ax, var_to_plot in zip(axs_summary, ('t', 'delta_t')):
         x = df[f'obs_{var_to_plot}'].tolist()
         y = df[f'sim_{var_to_plot}'].tolist()
         lims = [sorted(x + y)[i] for i in [0, -1]]
-        ax.scatter(x, y, marker='o', alpha=0.1)
+        if is_colormap:
+            kwargs = dict(c=df['par_inc'].to_list(), alpha=0.5, marker='.', edgecolor='none',
+                          cmap=CMAP, norm=NORM_INCIDENT_PAR)
+        else:
+            kwargs = dict(alpha=0.1, edgecolor='none')
+
+        im = ax.scatter(x, y, **kwargs)
         ax.plot(lims, lims, 'k--')
-        ax.text(0.1, 0.9, f"R2 = {stats.calc_r2(x, y):.3f}", transform=ax.transAxes)
+        ax.text(0.1, 0.9, f"R² = {stats.calc_r2(x, y):.3f}", transform=ax.transAxes)
         ax.text(0.1, 0.8, f"RMSE = {stats.calc_rmse(x, y):.3f}", transform=ax.transAxes)
         ax.set(xlabel=' '.join(['obs'] + MAP_UNITS[var_to_plot]), ylabel=' '.join(['sim'] + MAP_UNITS[var_to_plot]))
+        ax.set_aspect('equal')
 
     fig_summary.tight_layout()
+    if is_colormap:
+        fig_summary.subplots_adjust(bottom=0.25)
+        cbar_ax = fig_summary.add_axes([0.37, 0.1, 0.30, 0.04])
+        fig_summary.colorbar(im, cax=cbar_ax, orientation='horizontal')
+        cbar_ax.set_ylabel(' '.join(config.UNITS_MAP['incident_par']), va="top", ha='right', rotation=0)
+
     fig_summary.savefig(path_figs / 'sim_vs_obs.png')
     plt.close()
     pass
 
 
-def plot_errors(all_solvers: dict, path_figs: Path):
+def plot_errors(all_solvers: dict, path_figs: Path, is_colormap: bool = True):
     summary = dict(
         temperature_air=[],
         temperature_obs=[],
         temperature_sim=[],
 
+        incident_par=[],
         incident_diffuse_par_irradiance=[],
         incident_direct_par_irradiance=[],
         wind_speed=[],
@@ -234,6 +210,7 @@ def plot_errors(all_solvers: dict, path_figs: Path):
             summary['temperature_obs'] += plot_res['temp_obs']
 
             for hour, solver in enumerate(plot_res['solvers']):
+                summary['incident_par'].append(sum(solver.crop.inputs.incident_irradiance.values()))
                 summary['incident_diffuse_par_irradiance'].append(solver.crop.inputs.incident_irradiance['diffuse'])
                 summary['incident_direct_par_irradiance'].append(solver.crop.inputs.incident_irradiance['direct'])
                 summary['wind_speed'].append(solver.crop.inputs.wind_speed / 3600.)
@@ -266,11 +243,16 @@ def plot_errors(all_solvers: dict, path_figs: Path):
                                      'net_longwave_radiation', 'height', 'gai')):
         ax = axs[i % n_rows, i // n_rows]
 
-        explanatory_ls, error_ls = zip(
-            *[(ex, er) for ex, er in zip(summary[explanatory], summary['temperature_error'])
+        explanatory_ls, error_ls, idx = zip(
+            *[(ex, er, j) for j, (ex, er) in enumerate(zip(summary[explanatory], summary['temperature_error']))
               if not any(isna([ex, er]))])
 
-        ax.scatter(explanatory_ls, error_ls, marker='.', alpha=0.2)
+        if is_colormap:
+            kwargs = dict(c=summary['incident_par'], alpha=0.5, cmap=CMAP, norm=NORM_INCIDENT_PAR)
+        else:
+            kwargs = dict(alpha=0.2)
+
+        im = ax.scatter(explanatory_ls, error_ls, marker='.', edgecolor='none', **kwargs)
         ax.set(xlabel=' '.join(config.UNITS_MAP[explanatory]))
 
         x = array(explanatory_ls)
@@ -284,6 +266,10 @@ def plot_errors(all_solvers: dict, path_figs: Path):
         ax.text(0.1, 0.9, '*' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontweight='bold')
 
     axs[1, 0].set_ylabel(r'$\mathregular{T_{sim}-T_{obs}\/[^\circ C]}$', fontsize=16)
+    if is_colormap:
+        cbar_ax = fig.colorbar(im, ax=axs.flatten()[-1], orientation='horizontal')
+        cbar_ax.set_label(' '.join(config.UNITS_MAP['incident_par']))
+
     fig.tight_layout()
     fig.savefig(path_figs / 'errors.png')
     plt.close()
