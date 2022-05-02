@@ -2,11 +2,11 @@ from copy import deepcopy
 from pathlib import Path
 
 import statsmodels.api as sm
-from matplotlib import pyplot
+from matplotlib import pyplot, ticker
 from numpy import array, linspace
 from pandas import DataFrame, isna
 
-from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, calc_apparent_temperature
+from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, calc_apparent_temperature, CMAP, NORM_INCIDENT_PAR
 from sim_vs_obs.maricopa_face import base_functions
 from sim_vs_obs.maricopa_face.config import SensorInfos, PathInfos
 from utils import stats, config
@@ -16,6 +16,14 @@ def add_1_1_line(ax):
     lims = [sorted(list(ax.get_xlim()) + list(ax.get_ylim()))[idx] for idx in (0, -1)]
     ax.plot(lims, lims, 'k--', label='1:1')
     return ax
+
+
+def set_ax_ticks(ax):
+    ticks = ax.yaxis.get_ticklocs()
+    ax.yaxis.set_ticks(ticks)
+    ax.xaxis.set_ticks(ticks)
+    ax.xaxis.set_ticklabels(ax.get_xticks(), rotation=90)
+    ax.xaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
 
 
 def get_dates(t_ls: list) -> list:
@@ -411,26 +419,44 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
     pass
 
 
-def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path, alpha: float = 0.1,
+def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path, alpha: float = 0.5,
                     fig_name_suffix: str = ''):
-    n_cols = len(res_all.keys())
+    n_cols = len([k for k in res_all.keys() if k != 'incident_par'])
     fig_size = [6.4, 4.8] if n_cols < 4 else [16, 4]
-    fig, axs = pyplot.subplots(ncols=len(res_all.keys()), figsize=fig_size)
-    for res, c in (res_wet, 'blue'), (res_dry, 'red'):
+    fig, axs = pyplot.subplots(ncols=n_cols, figsize=fig_size)
+
+    for res, label in (res_wet, 'wet'), (res_dry, 'dry'):
+        try:
+            c = res.pop('incident_par')
+            cmap_kwargs = {'marker': '.', 'edgecolor': 'none', 'c': c, 'cmap': CMAP, 'norm': NORM_INCIDENT_PAR}
+        except KeyError:
+            c = None
+            cmap_kwargs = {}
+        im = None
         for ax, (k, v) in zip(axs, res.items()):
             obs_ls, sim_ls = v['obs'], v['sim']
-            # obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
-            ax.scatter(obs_ls, sim_ls, alpha=alpha)
+            im = ax.scatter(obs_ls, sim_ls, alpha=alpha, label=label, **cmap_kwargs)
 
     for ax, (k, v) in zip(axs, res_all.items()):
         obs_ls, sim_ls = v['obs'], v['sim']
         obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
         ax.text(0.1, 0.9, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.3f}', transform=ax.transAxes)
         ax.text(0.1, 0.8, f'R²={stats.calc_r2(obs_ls, sim_ls):.3f}', transform=ax.transAxes)
-        ax.set_title(k)
+        ax.set_title(config.UNITS_MAP[k][0])
         add_1_1_line(ax)
+        set_ax_ticks(ax)
 
     fig.tight_layout()
+
+    if c:
+        cbar_ax = fig.add_axes([0.37, 0.1, 0.30, 0.04])
+        fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
+        cbar_ax.set_ylabel(' '.join(config.UNITS_MAP['incident_par']), va="top", ha='right', rotation=0)
+
+    axs.flatten()[-1].legend(loc='lower right')
+    for ax in axs:
+        ax.set_aspect(aspect='equal')
+
     fig.savefig(figure_dir / f'all_sim_vs_obs_{fig_name_suffix}.png')
     pyplot.close('all')
 
@@ -438,20 +464,32 @@ def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Pat
 
 
 def plot_delta_temperature(temperature_air: list, temperature_canopy_sim: list, temperature_canopy_obs: list,
-                           figure_dir: Path):
+                           figure_dir: Path, incident_par: list = None):
     fig, ax = pyplot.subplots()
-    t_air, t_sim, t_obs = zip(*[(it_air, it_sim, it_obs) for it_air, it_sim, it_obs in
-                                zip(temperature_air, temperature_canopy_sim, temperature_canopy_obs) if
-                                not any(isna([it_air, it_sim, it_obs]))])
+    t_air, t_sim, t_obs, idx = zip(
+        *[(it_air, it_sim, it_obs, i) for i, (it_air, it_sim, it_obs) in
+          enumerate(zip(temperature_air, temperature_canopy_sim, temperature_canopy_obs)) if
+          not any(isna([it_air, it_sim, it_obs]))])
     delta_t_sim = [it_sim - it_air for it_sim, it_air in zip(t_sim, t_air)]
     delta_t_obs = [it_obs - it_air for it_obs, it_air in zip(t_obs, t_air)]
 
-    ax.scatter(delta_t_obs, delta_t_sim, alpha=0.1)
+    if incident_par:
+        kwargs = dict(c=[incident_par[i] for i in idx], marker='.', edgecolor='none', cmap=CMAP, norm=NORM_INCIDENT_PAR,
+                      alpha=0.5)
+    else:
+        kwargs = dict(alpha=0.1, edgecolor='none')
+
+    im = ax.scatter(delta_t_obs, delta_t_sim, **kwargs)
     ax.text(0.1, 0.9, f'RMSE={stats.calc_rmse(delta_t_obs, delta_t_sim):.3f}', transform=ax.transAxes)
     ax.text(0.1, 0.8, f'R²={stats.calc_r2(delta_t_obs, delta_t_sim):.3f}', transform=ax.transAxes)
     add_1_1_line(ax)
     ax.set(xlabel=r'$\mathregular{T_{obs}-T_{air}\/[^\circ C]}$',
            ylabel=r'$\mathregular{T_{sim}-T_{air}\/[^\circ C]}$')
+    ax.set_aspect('equal')
+
+    if incident_par:
+        cbar_ax = fig.colorbar(im, ax=ax)
+        cbar_ax.set_label(' '.join(config.UNITS_MAP['incident_par']))
 
     fig.tight_layout()
     fig.savefig(figure_dir / f'all_sim_vs_obs_delta_temperature.png')
@@ -488,7 +526,7 @@ def plot_irradiance(shoot_obj: dict, obs_df: DataFrame):
     pass
 
 
-def plot_errors(res: dict, figure_dir: Path):
+def plot_errors(res: dict, figure_dir: Path, is_colormap: bool = True):
     n_rows = 3
     n_cols = 4
 
@@ -500,14 +538,18 @@ def plot_errors(res: dict, figure_dir: Path):
         idx, sim, obs = zip(*[(i, i_sim, i_obs) for i, (i_sim, i_obs) in enumerate(zip(res[k]['sim'], res[k]['obs']))
                               if not any(isna([i_sim, i_obs]))])
         error = [i_sim - i_obs for i_sim, i_obs in zip(sim, obs)]
-
         for i_explanatory, explanatory in enumerate(
                 ('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
                  'aerodynamic_resistance', 'absorbed_par_soil', 'absorbed_par_veg', 'hour',
                  'net_longwave_radiation', 'height', 'gai')):
             ax = axs[i_explanatory % n_rows, i_explanatory // n_rows]
             explanatory_ls = [res[explanatory][i] for i in idx]
-            ax.scatter(explanatory_ls, error, marker='.', edgecolor=None, alpha=0.2)
+            if is_colormap:
+                kwargs = dict(c=[res['incident_par'][i] for i in idx], alpha=0.5, cmap=CMAP, norm=NORM_INCIDENT_PAR)
+            else:
+                kwargs = dict(alpha=0.2)
+
+            im = ax.scatter(explanatory_ls, error, marker='.', edgecolor='none', **kwargs)
             ax.set(xlabel=' '.join(config.UNITS_MAP[explanatory]))
 
             x = array(explanatory_ls)
@@ -523,6 +565,11 @@ def plot_errors(res: dict, figure_dir: Path):
         title = ' '.join(config.UNITS_MAP[k])
         axs[1, 0].set_ylabel(' '.join((r'$\mathregular{\epsilon}$', title)), fontsize=16)
         fig.tight_layout()
+
+        if is_colormap:
+            cbar_ax = fig.colorbar(im, ax=axs.flatten()[-1], orientation='horizontal')
+            cbar_ax.set_label(' '.join(config.UNITS_MAP['incident_par']))
+
         fig.savefig(figure_dir / f'errors_{k}.png')
         pyplot.close()
 

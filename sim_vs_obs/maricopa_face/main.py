@@ -68,7 +68,7 @@ if __name__ == '__main__':
     results_wet = plots.extract_sim_obs_data(sim_obs={k: v for k, v in sim_obs_dict.items() if k not in (901, 905)})
 
     vars_to_plot = ('temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat_flux',
-                    'latent_heat_flux', 'soil_heat_flux')
+                    'latent_heat_flux', 'soil_heat_flux', 'incident_par')
 
     figs_dir = 'corrected' if is_stability_corrected else 'neutral'
     figs_dir_path = PathInfos.source_figs.value / figs_dir
@@ -92,6 +92,7 @@ if __name__ == '__main__':
         temperature_air=results_all['temperature_air'],
         temperature_canopy_sim=results_all['temperature_canopy']['sim'],
         temperature_canopy_obs=results_all['temperature_canopy']['obs'],
+        incident_par=results_all['incident_par'],
         figure_dir=figs_dir_path)
 
     plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict, figure_dir=figs_dir_path)
