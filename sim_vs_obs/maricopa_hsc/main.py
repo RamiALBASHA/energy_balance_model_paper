@@ -9,7 +9,7 @@ from sim_vs_obs.maricopa_hsc.base_functions import get_weather_data, set_energy_
 from sim_vs_obs.maricopa_hsc.config import PathInfos, WeatherInfo, ParamsInfo
 
 if __name__ == '__main__':
-    is_stability_corrected = False
+    is_stability_corrected = True
 
     path_source_raw = PathInfos.source_raw.value
     path_source_fmt = PathInfos.source_fmt.value
