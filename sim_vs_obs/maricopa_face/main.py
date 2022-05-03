@@ -97,3 +97,9 @@ if __name__ == '__main__':
 
     plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict, figure_dir=figs_dir_path)
     plots.plot_errors(res=results_all, figure_dir=figs_dir_path)
+    plots.plot_mixed(
+        sim_obs_dict=sim_obs_dict,
+        res_all=results_all,
+        res_wet=results_wet,
+        res_dry=results_dry,
+        figure_dir=figs_dir_path)
