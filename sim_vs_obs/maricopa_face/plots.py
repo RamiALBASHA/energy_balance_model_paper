@@ -455,6 +455,8 @@ def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Pat
         obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
         ax.text(0.1, 0.9, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.1f}', transform=ax.transAxes, **text_kwargs)
         ax.text(0.1, 0.8, f'R²={stats.calc_r2(obs_ls, sim_ls):.2f}', transform=ax.transAxes, **text_kwargs)
+        ax.text(0.1, 0.7, f'nNSE={stats.calc_normaized_nash_sutcliffe(sim=sim_ls, obs=obs_ls):.2f}',
+                transform=ax.transAxes, **text_kwargs)
         ax.set_title(config.UNITS_MAP[k][0])
         add_1_1_line(ax)
         set_ax_ticks(ax)
