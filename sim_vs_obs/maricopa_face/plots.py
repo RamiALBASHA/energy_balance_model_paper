@@ -1,10 +1,11 @@
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 
 import statsmodels.api as sm
-from matplotlib import pyplot, ticker
+from matplotlib import pyplot, ticker, gridspec, dates
 from numpy import array, linspace
-from pandas import DataFrame, isna
+from pandas import DataFrame, isna, date_range
 
 from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, calc_apparent_temperature, CMAP, NORM_INCIDENT_PAR
 from sim_vs_obs.maricopa_face import base_functions
@@ -117,7 +118,7 @@ def plot_comparison_energy_balance(sim_obs: dict, figure_dir: Path):
     pass
 
 
-def extract_sim_obs_data(sim_obs: dict):
+def extract_sim_obs_data(sim_obs: dict, look_into: dict[int: date_range] = None):
     all_t_air = []
     all_t_can = {'sim': [], 'obs': []}
     all_t_soil = {'sim': [], 'obs': []}
@@ -147,9 +148,13 @@ def extract_sim_obs_data(sim_obs: dict):
     all_height = []
     all_gai = []
 
-    for trt_id, trt_obs in sim_obs.items():
-        for date_obs in get_dates(trt_obs.keys()):
+    treatment_ids = sim_obs.keys() if look_into is None else look_into.keys()
 
+    for trt_id in treatment_ids:
+        trt_obs = sim_obs[trt_id]
+        dates_ls = get_dates(trt_obs.keys()) if (look_into is None) or (look_into[trt_id] is None) else get_dates(
+            look_into[trt_id])
+        for date_obs in dates_ls:
             datetime_obs_ls = sorted(v for v in trt_obs.keys() if v.date() == date_obs)
             hours = [t.hour for t in datetime_obs_ls]
             nb_hours = len(hours)
@@ -420,28 +425,36 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
 
 
 def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path, alpha: float = 0.5,
-                    fig_name_suffix: str = ''):
-    n_cols = len([k for k in res_all.keys() if k != 'incident_par'])
-    fig_size = [6.4, 4.8] if n_cols < 4 else [16, 4]
-    fig, axs = pyplot.subplots(ncols=n_cols, figsize=fig_size)
+                    axs: array = None, fig_name_suffix: str = '', text_kwargs: dict = None):
+    if text_kwargs is None:
+        text_kwargs = {}
+
+    if axs is None:
+        n_cols = len([k for k in res_all.keys() if k != 'incident_par'])
+        fig_size = [6.4, 4.8] if n_cols < 4 else [16, 4]
+        fig, axs = pyplot.subplots(ncols=n_cols, figsize=fig_size)
+        is_return_axs = False
+    else:
+        fig = axs[0].get_figure()
+        is_return_axs = True
 
     for res, label in (res_wet, 'wet'), (res_dry, 'dry'):
         try:
             c = res.pop('incident_par')
-            cmap_kwargs = {'marker': '.', 'edgecolor': 'none', 'c': c, 'cmap': CMAP, 'norm': NORM_INCIDENT_PAR}
+            cmap_kwargs = {'c': c, 'cmap': CMAP, 'norm': NORM_INCIDENT_PAR}
         except KeyError:
             c = None
             cmap_kwargs = {}
         im = None
         for ax, (k, v) in zip(axs, res.items()):
             obs_ls, sim_ls = v['obs'], v['sim']
-            im = ax.scatter(obs_ls, sim_ls, alpha=alpha, label=label, **cmap_kwargs)
+            im = ax.scatter(obs_ls, sim_ls, alpha=alpha, label=label, marker='.', edgecolor='none', **cmap_kwargs)
 
     for ax, (k, v) in zip(axs, res_all.items()):
         obs_ls, sim_ls = v['obs'], v['sim']
         obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
-        ax.text(0.1, 0.9, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.3f}', transform=ax.transAxes)
-        ax.text(0.1, 0.8, f'R²={stats.calc_r2(obs_ls, sim_ls):.3f}', transform=ax.transAxes)
+        ax.text(0.1, 0.9, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.1f}', transform=ax.transAxes, **text_kwargs)
+        ax.text(0.1, 0.8, f'R²={stats.calc_r2(obs_ls, sim_ls):.2f}', transform=ax.transAxes, **text_kwargs)
         ax.set_title(config.UNITS_MAP[k][0])
         add_1_1_line(ax)
         set_ax_ticks(ax)
@@ -457,8 +470,11 @@ def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Pat
     for ax in axs:
         ax.set_aspect(aspect='equal')
 
-    fig.savefig(figure_dir / f'all_sim_vs_obs_{fig_name_suffix}.png')
-    pyplot.close('all')
+    if is_return_axs:
+        return axs
+    else:
+        fig.savefig(figure_dir / f'all_sim_vs_obs_{fig_name_suffix}.png')
+        pyplot.close('all')
 
     pass
 
@@ -572,5 +588,96 @@ def plot_errors(res: dict, figure_dir: Path, is_colormap: bool = True):
 
         fig.savefig(figure_dir / f'errors_{k}.png')
         pyplot.close()
+
+    pass
+
+
+def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path):
+    vars_to_plot = ['net_radiation', 'sensible_heat_flux', 'latent_heat_flux', 'soil_heat_flux']
+    vars_to_plot_dynamic = vars_to_plot + ['gai']
+    nb_vars_to_plot = len(vars_to_plot)
+
+    look_into = [
+        (910, date_range(start=datetime(1996, 1, 31), end=datetime(1996, 2, 4, 23), freq='H')),
+        (910, date_range(start=datetime(1996, 2, 28), end=datetime(1996, 3, 3, 23), freq='H'))]
+    nb_cols = len(look_into)
+
+    fig = pyplot.figure(figsize=(7.48, 10))
+    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, hspace=0)
+
+    gs_dynamic = gs[0].subgridspec(nrows=len(vars_to_plot_dynamic), ncols=nb_cols, wspace=0.025, hspace=0.)
+    axs_dynamic = array([fig.add_subplot(ss) for ss in gs_dynamic]).reshape(nb_vars_to_plot + 1, nb_cols)
+    gs_summary = gs[-1].subgridspec(nrows=1, ncols=nb_vars_to_plot, wspace=0.35)
+    axs_summary = [fig.add_subplot(ss) for ss in gs_summary]
+    axs_summary = plot_sim_vs_obs(
+        res_all={k: v for k, v in res_all.items() if k in vars_to_plot},
+        res_wet={k: v for k, v in res_wet.items() if k in vars_to_plot},
+        res_dry={k: v for k, v in res_dry.items() if k in vars_to_plot},
+        axs=array(axs_summary),
+        alpha=0.2,
+        text_kwargs={'fontsize': 8},
+        figure_dir=Path())
+    axs_summary[-1].get_legend().remove()
+
+    for j, (expe_id, dates_ls) in enumerate(look_into):
+        s = extract_sim_obs_data(
+            sim_obs=sim_obs_dict,
+            look_into={expe_id: dates_ls})
+
+        axs_dynamic[0, j].plot(dates_ls, s['gai'], label='LAI', linewidth=0.75)
+        axs_dynamic[0, 0].set_ylabel('\n'.join(config.UNITS_MAP['gai']), fontsize=8)
+        for k, ax in zip(vars_to_plot, axs_dynamic[1:, j]):
+            ax.scatter(dates_ls, s[k]['obs'], label='obs', marker='.', edgecolor='none')
+            ax.plot(dates_ls, s[k]['sim'], label='sim', linewidth=0.75)
+            if j == 0:
+                ax.set_ylabel('\n'.join(config.UNITS_MAP[k]), fontsize=8)
+
+    _format_dynamic_axs(axs_dynamic=axs_dynamic)
+    _format_summary_axs(axs_summary=axs_summary)
+
+    fig.tight_layout()
+    fig.savefig(figure_dir / 'mixed.png')
+    pyplot.close('all')
+
+
+def _format_dynamic_axs(axs_dynamic: array):
+    d_x = .005  # how big to make the diagonal lines in axes coordinates
+    d_y = 10 * d_x
+    for ax in axs_dynamic[:, 0]:
+        ax.yaxis.tick_left()
+        ax.spines['right'].set_visible(False)
+        kwargs = dict(transform=ax.transAxes, color='k', clip_on=False, linewidth=0.5)
+        ax.plot((1 - d_x, 1 + d_x), (-d_y, +d_y), **kwargs)
+        ax.plot((1 - d_x, 1 + d_x), (1 - d_y, 1 + d_y), **kwargs)
+
+    for ax in axs_dynamic[:, 1]:
+        ax.spines['left'].set_visible(False)
+        ax.yaxis.tick_right()
+        ax.tick_params(labelright=False)
+        kwargs = dict(transform=ax.transAxes, color='k', clip_on=False, linewidth=0.5)
+        ax.plot((-d_x, +d_x), (1 - d_y, 1 + d_y), **kwargs)
+        ax.plot((-d_x, +d_x), (-d_y, +d_y), **kwargs)
+
+    for axs in axs_dynamic:
+        y_lim = [sorted([v for ax in axs for v in ax.get_ylim()])[i] for i in (0, -1)]
+        for ax in axs:
+            ax.set_ylim(y_lim)
+            ax.xaxis.set_major_locator(dates.DayLocator())
+            ax.xaxis.set_major_formatter(dates.DateFormatter("%d %b"))
+            ax.tick_params(axis='both', which='major', labelsize=8)
+            ax.tick_params(axis='x', labelrotation=45)
+
+    for ax in axs_dynamic[:-1].flatten():
+        ax.xaxis.set_visible(False)
+
+    pass
+
+
+def _format_summary_axs(axs_summary: array):
+    energy_balance_unit = config.UNITS_MAP["energy_balance"][1]
+    for ax in axs_summary:
+        ax.tick_params(axis='both', which='major', labelsize=8)
+        ax.set_xlabel(f'obs {energy_balance_unit}', fontsize=8)
+    axs_summary[0].set_ylabel(f'sim {energy_balance_unit}', fontsize=8)
 
     pass
