@@ -425,7 +425,7 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
 
 
 def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path, alpha: float = 0.5,
-                    axs: array = None, fig_name_suffix: str = '', text_kwargs: dict = None):
+                    axs: array = None, fig_name_suffix: str = '', text_kwargs: dict = None, cbar_dims: list = None):
     if text_kwargs is None:
         text_kwargs = {}
 
@@ -464,13 +464,14 @@ def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Pat
     fig.tight_layout()
 
     if c:
-        cbar_ax = fig.add_axes([0.37, 0.1, 0.30, 0.04])
+        cbar_dims = [0.37, 0.1, 0.30, 0.04] if cbar_dims is None else cbar_dims
+        cbar_ax = fig.add_axes(cbar_dims)
         fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
         cbar_ax.set_ylabel(' '.join(config.UNITS_MAP['incident_par']), va="top", ha='right', rotation=0)
 
     axs.flatten()[-1].legend(loc='lower right')
     for ax in axs:
-        ax.set_aspect(aspect='equal')
+        ax.set_aspect(aspect='equal', anchor='C')
 
     if is_return_axs:
         return axs
@@ -606,19 +607,20 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
     nb_cols = len(look_into)
 
     fig = pyplot.figure(figsize=(7.48, 10))
-    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, hspace=0, height_ratios=[2.5, 1])
+    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, hspace=0, height_ratios=[1.75, 1])
 
     gs_dynamic = gs[0].subgridspec(nrows=len(vars_to_plot_dynamic), ncols=nb_cols, wspace=0.025, hspace=0.)
     axs_dynamic = array([fig.add_subplot(ss) for ss in gs_dynamic]).reshape(nb_vars_to_plot_dynamic, nb_cols)
     gs_summary = gs[-1].subgridspec(nrows=1, ncols=nb_vars_to_plot_summary, wspace=0.35)
     axs_summary = [fig.add_subplot(ss) for ss in gs_summary]
     axs_summary = plot_sim_vs_obs(
-        res_all={k: v for k, v in res_all.items() if k in vars_to_plot_summary},
-        res_wet={k: v for k, v in res_wet.items() if k in vars_to_plot_summary},
-        res_dry={k: v for k, v in res_dry.items() if k in vars_to_plot_summary},
+        res_all={k: v for k, v in res_all.items() if k in vars_to_plot_summary + ['incident_par']},
+        res_wet={k: v for k, v in res_wet.items() if k in vars_to_plot_summary + ['incident_par']},
+        res_dry={k: v for k, v in res_dry.items() if k in vars_to_plot_summary + ['incident_par']},
         axs=array(axs_summary),
         alpha=0.2,
         text_kwargs={'fontsize': 8},
+        cbar_dims=[0.37, 0.05, 0.30, 0.01],
         figure_dir=Path())
     axs_summary[-1].get_legend().remove()
 
