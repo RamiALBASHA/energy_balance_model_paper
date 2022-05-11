@@ -510,8 +510,10 @@ def plot_delta_temperature(temperature_air: list, temperature_canopy_sim: list, 
     ax.set_aspect('equal')
 
     if incident_par:
-        cbar_ax = fig.colorbar(im, ax=ax)
-        cbar_ax.set_label(' '.join(config.UNITS_MAP['incident_par']))
+        c_bar = fig.colorbar(im, ax=ax, orientation='horizontal')
+        c_bar.set_label(' '.join(config.UNITS_MAP['incident_par']))
+        if IS_BINARY_COLORBAR:
+            format_binary_colorbar(cbar=c_bar)
 
     fig.tight_layout()
     fig.savefig(figure_dir / f'all_sim_vs_obs_delta_temperature.png')
@@ -589,8 +591,10 @@ def plot_errors(res: dict, figure_dir: Path, is_colormap: bool = True):
         fig.tight_layout()
 
         if is_colormap:
-            cbar_ax = fig.colorbar(im, ax=axs.flatten()[-1], orientation='horizontal')
-            cbar_ax.set_label(' '.join(config.UNITS_MAP['incident_par']))
+            c_bar = fig.colorbar(im, ax=axs.flatten()[-1], orientation='horizontal')
+            c_bar.set_label(' '.join(config.UNITS_MAP['incident_par']))
+            if IS_BINARY_COLORBAR:
+                format_binary_colorbar(cbar=c_bar)
 
         fig.savefig(figure_dir / f'errors_{k}.png')
         pyplot.close()
