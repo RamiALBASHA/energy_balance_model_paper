@@ -595,9 +595,10 @@ def plot_errors(res: dict, figure_dir: Path, is_colormap: bool = True):
 
 
 def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path):
-    vars_to_plot = ['net_radiation', 'sensible_heat_flux', 'latent_heat_flux', 'soil_heat_flux']
-    vars_to_plot_dynamic = vars_to_plot + ['gai']
-    nb_vars_to_plot = len(vars_to_plot)
+    vars_to_plot_summary = ['net_radiation', 'sensible_heat_flux', 'latent_heat_flux', 'soil_heat_flux']
+    vars_to_plot_dynamic = ['gai'] + vars_to_plot_summary + ['temperature_canopy', 'temperature_canopy-temperature_air']
+    nb_vars_to_plot_summary = len(vars_to_plot_summary)
+    nb_vars_to_plot_dynamic = len(vars_to_plot_dynamic)
 
     look_into = [
         (910, date_range(start=datetime(1996, 1, 31), end=datetime(1996, 2, 4, 23), freq='H')),
@@ -605,16 +606,16 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
     nb_cols = len(look_into)
 
     fig = pyplot.figure(figsize=(7.48, 10))
-    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, hspace=0)
+    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, hspace=0, height_ratios=[2.5, 1])
 
     gs_dynamic = gs[0].subgridspec(nrows=len(vars_to_plot_dynamic), ncols=nb_cols, wspace=0.025, hspace=0.)
-    axs_dynamic = array([fig.add_subplot(ss) for ss in gs_dynamic]).reshape(nb_vars_to_plot + 1, nb_cols)
-    gs_summary = gs[-1].subgridspec(nrows=1, ncols=nb_vars_to_plot, wspace=0.35)
+    axs_dynamic = array([fig.add_subplot(ss) for ss in gs_dynamic]).reshape(nb_vars_to_plot_dynamic, nb_cols)
+    gs_summary = gs[-1].subgridspec(nrows=1, ncols=nb_vars_to_plot_summary, wspace=0.35)
     axs_summary = [fig.add_subplot(ss) for ss in gs_summary]
     axs_summary = plot_sim_vs_obs(
-        res_all={k: v for k, v in res_all.items() if k in vars_to_plot},
-        res_wet={k: v for k, v in res_wet.items() if k in vars_to_plot},
-        res_dry={k: v for k, v in res_dry.items() if k in vars_to_plot},
+        res_all={k: v for k, v in res_all.items() if k in vars_to_plot_summary},
+        res_wet={k: v for k, v in res_wet.items() if k in vars_to_plot_summary},
+        res_dry={k: v for k, v in res_dry.items() if k in vars_to_plot_summary},
         axs=array(axs_summary),
         alpha=0.2,
         text_kwargs={'fontsize': 8},
@@ -625,14 +626,19 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
         s = extract_sim_obs_data(
             sim_obs=sim_obs_dict,
             look_into={expe_id: dates_ls})
+        s = add_delta_temperature(s)
 
         axs_dynamic[0, j].plot(dates_ls, s['gai'], label='LAI', linewidth=0.75)
         axs_dynamic[0, 0].set_ylabel('\n'.join(config.UNITS_MAP['gai']), fontsize=8)
-        for k, ax in zip(vars_to_plot, axs_dynamic[1:, j]):
+        for k, ax in zip(vars_to_plot_dynamic[1:], axs_dynamic[1:, j]):
             ax.scatter(dates_ls, s[k]['obs'], label='obs', marker='.', edgecolor='none')
             ax.plot(dates_ls, s[k]['sim'], label='sim', linewidth=0.75)
             if j == 0:
-                ax.set_ylabel('\n'.join(config.UNITS_MAP[k]), fontsize=8)
+                if k == 'temperature_canopy-temperature_air':
+                    var_name = '-'.join([config.UNITS_MAP[ki][0] for ki in k.split('-')])
+                    ax.set_ylabel('\n'.join((var_name, config.UNITS_MAP['temperature'][1])), fontsize=8)
+                else:
+                    ax.set_ylabel('\n'.join(config.UNITS_MAP[k]), fontsize=8)
 
     _format_dynamic_axs(axs_dynamic=axs_dynamic)
     _format_summary_axs(axs_summary=axs_summary)
@@ -683,3 +689,15 @@ def _format_summary_axs(axs_summary: array):
     axs_summary[0].set_ylabel(f'sim {energy_balance_unit}', fontsize=8)
 
     pass
+
+
+def add_delta_temperature(s: dict) -> dict:
+    s.update({'temperature_canopy-temperature_air': {'sim': [], 'obs': []}})
+    temperature_air = s['temperature_air']
+
+    for k in ('sim', 'obs'):
+        temperature_canopy = s['temperature_canopy'][k]
+        s['temperature_canopy-temperature_air'][k] = [t_can - t_air if all((t_can, t_air)) else None for t_can, t_air
+                                                      in zip(temperature_canopy, temperature_air)]
+
+    return s
