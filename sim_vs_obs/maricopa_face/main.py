@@ -43,7 +43,7 @@ if __name__ == '__main__':
                 for datetime_obs, weather_hourly in weather_at_date.iterrows():
                     eb_inputs, eb_params = base_functions.set_energy_balance_inputs(
                         leaf_layers=gai_profile,
-                        is_lumped=False,
+                        is_lumped=SimInfos.leaf_category.value == 'lumped',
                         weather_data=weather_hourly,
                         canopy_height=canopy_height / 100.,
                         soil_data=soil_data)
