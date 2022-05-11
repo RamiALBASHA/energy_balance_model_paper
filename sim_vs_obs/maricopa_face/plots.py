@@ -7,7 +7,8 @@ from matplotlib import pyplot, ticker, gridspec, dates
 from numpy import array, linspace
 from pandas import DataFrame, isna, date_range
 
-from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, calc_apparent_temperature, CMAP, NORM_INCIDENT_PAR
+from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_apparent_temperature, CMAP,
+                               NORM_INCIDENT_PAR, IS_BINARY_COLORBAR, format_binary_colorbar)
 from sim_vs_obs.maricopa_face import base_functions
 from sim_vs_obs.maricopa_face.config import SensorInfos, PathInfos
 from utils import stats, config
@@ -466,8 +467,10 @@ def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Pat
     if c:
         cbar_dims = [0.37, 0.1, 0.30, 0.04] if cbar_dims is None else cbar_dims
         cbar_ax = fig.add_axes(cbar_dims)
-        fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
+        c_bar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
         cbar_ax.set_ylabel(' '.join(config.UNITS_MAP['incident_par']), va="top", ha='right', rotation=0)
+        if IS_BINARY_COLORBAR:
+            format_binary_colorbar(cbar=c_bar, **text_kwargs)
 
     axs.flatten()[-1].legend(loc='lower right')
     for ax in axs:
