@@ -1,12 +1,15 @@
 from copy import deepcopy
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import statsmodels.api as sm
-from matplotlib import pyplot, ticker
+from matplotlib import pyplot, ticker, gridspec, dates
 from numpy import array, linspace
-from pandas import isna
+from pandas import isna, date_range
 
-from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, CMAP, NORM_INCIDENT_PAR
+from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, CMAP, NORM_INCIDENT_PAR, IS_BINARY_COLORBAR,
+                               format_binary_colorbar)
+from sim_vs_obs.grignon.config import CanopyInfo
 from utils import stats, config
 
 MAP_UNITS = {
@@ -127,8 +130,10 @@ def plot_sim_vs_obs(data: dict, path_figs_dir: Path, relative_layer_index: int =
 
     fig.subplots_adjust(bottom=0.25)
     cbar_ax = fig.add_axes([0.37, 0.1, 0.30, 0.04])
-    fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
+    cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
     cbar_ax.set_ylabel(' '.join(config.UNITS_MAP['incident_par']), va="top", ha='right', rotation=0)
+    if IS_BINARY_COLORBAR:
+        format_binary_colorbar(cbar=cbar)
 
     fig.savefig(path_figs_dir / f"sim_vs_obs_{'all' if relative_layer_index is None else relative_layer_index}.png")
     pass
@@ -234,4 +239,66 @@ def plot_errors(data: dict, path_figs_dir: Path):
         fig.savefig(path_figs_dir / f'errors_{trt}.png')
         pyplot.close()
 
+    pass
+
+
+def plot_mixed(data: dict, path_figs_dir: Path):
+    hours = (6, 9, 12, 15, 18)
+    nb_hours = len(hours)
+    look_into = (
+        ('intensive', datetime(2012, 3, 30)),)
+
+    for treatment, date_obs in look_into:
+        fig = pyplot.figure(figsize=(9 / 2.54, 18 / 2.54))
+        gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, height_ratios=[1, 5])
+        gs_dynamic = gs[0].subgridspec(nrows=1, ncols=1)
+        ax_dynamic = [fig.add_subplot(s) for s in gs_dynamic][0]
+        gs_profiles = gs[1].subgridspec(nrows=nb_hours, ncols=1, hspace=0.)
+        axs_profile = [fig.add_subplot(s) for s in gs_profiles]
+
+        datetime_range = date_range(start=date_obs, end=date_obs + timedelta(hours=23), freq='H')
+        for dt_obs in datetime_range:
+            solver, obs_data = [data[dt_obs][treatment][k] for k in ('solver', 'obs')]
+            layer_indices = solver.crop.components_keys.copy()
+            layer_indices = [i for i in layer_indices if i != -1]
+            if CanopyInfo().is_lumped:
+                sim = {layer: solver.crop[layer].temperature - 273.15 for layer in layer_indices}
+            else:
+                sim = {layer: sum([component.temperature - 273.15 * component.surface_fraction
+                                   for component in solver.crop[layer].keys()]) for layer in layer_indices}
+            obs = {layer: obs_data[obs_data['leaf_level'] == layer]['temperature'].to_list() for layer in layer_indices}
+
+            for v in obs.values():
+                ax_dynamic.scatter([dt_obs] * len(v), v, marker='s', c='red', alpha=0.3, label='obs')
+            ax_dynamic.scatter([dt_obs] * len(sim.values()), sim.values(), marker='.', c='blue', label='sim')
+
+            if dt_obs.hour in hours:
+                ax_profile = axs_profile[hours.index(dt_obs.hour)]
+                for k, v in obs.items():
+                    ax_profile.scatter(v, [k] * len(v), marker='s', c='red', alpha=0.3, label='obs')
+                ax_profile.scatter(*zip(*[(v, k) for (k, v) in sim.items()]), marker='.', c='blue', label='sim')
+
+        t_lims = ax_dynamic.get_ylim()
+        layer_indices = range(5, 10)
+        for ax_profile, hour in zip(axs_profile, hours):
+            ax_profile.set(ylim=(4.25, 10.5), xlim=t_lims)
+            ax_profile.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+            ax_profile.set_yticks(layer_indices)
+            ax_profile.text(0.86, 0.875, f'{hour:02d}:00', fontsize=9, ha='left', transform=ax_profile.transAxes)
+            if hour != hours[-1]:
+                ax_dynamic.xaxis.set_visible(False)
+
+        axs_profile[2].set_ylabel('Layer index [-]', rotation=90, ha='center')
+        axs_profile[-1].set_xlabel(' '.join(config.UNITS_MAP['temperature']))
+
+        ax_dynamic.xaxis.set_major_locator(dates.HourLocator(interval=3))
+        ax_dynamic.xaxis.set_major_formatter(dates.DateFormatter("%H"))
+        # ax_dynamic.tick_params(axis='both', which='major', labelsize=8)
+        ax_dynamic.set(xlabel=f'hour of the day (DOY {date_obs.date().timetuple().tm_yday})',
+                       ylabel=' '.join(config.UNITS_MAP['temperature']))
+
+        fig.tight_layout()
+        fig.savefig(path_figs_dir / 'mixed.png')
+        pyplot.close('all')
+        pass
     pass
