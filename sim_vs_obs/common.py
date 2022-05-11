@@ -5,10 +5,23 @@ from crop_energy_balance.solver import Solver
 from crop_irradiance.uniform_crops import inputs, params, shoot
 from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import calc_direct_black_extinction_coefficient, \
     calc_sunlit_fraction_per_leaf_layer, calc_sunlit_fraction
-from matplotlib import colors
+from matplotlib import colors, colorbar
 
-NORM_INCIDENT_PAR = colors.Normalize(0, vmax=500)
-CMAP = 'hot'
+IS_BINARY_COLORBAR = True
+if IS_BINARY_COLORBAR:
+    CMAP = colors.ListedColormap(['DarkBlue', 'LightBlue'])
+    NORM_INCIDENT_PAR = colors.Normalize(0, vmax=1)
+else:
+    NORM_INCIDENT_PAR = colors.Normalize(0, vmax=500)
+    CMAP = 'hot'
+
+
+def format_binary_colorbar(cbar: colorbar.Colorbar, **kwargs: dict):
+    cbar_ax = cbar.ax
+    cbar.set_ticks([])
+    for text, x_pos in (('night', 0.25), ('day', 0.75)):
+        cbar_ax.text(x_pos, 0.5, text, transform=cbar_ax.transAxes, ha='center', va='center', **kwargs)
+    pass
 
 
 class ParamsIrradiance(Enum):
