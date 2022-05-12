@@ -388,3 +388,12 @@ def plot_errors(all_solvers: dict, path_figs: Path, is_colormap: bool = True):
     fig.tight_layout()
     fig.savefig(path_figs / 'errors.png')
     plt.close()
+
+
+def export_results(results: dict, path_csv: Path):
+    df = DataFrame(data=results)
+    df.rename({'sim_t': 't_sim', 'obs_t': 't_obs', 'air_t': 't_air'}, axis=1, inplace=True)
+    df.loc[:, 'delta_t_sim'] = df['t_sim'] - df['t_air']
+    df.loc[:, 'delta_t_obs'] = df['t_obs'] - df['t_air']
+    df.to_csv(path_csv / 'results.csv', index=False)
+    pass

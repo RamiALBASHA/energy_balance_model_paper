@@ -96,3 +96,4 @@ if __name__ == '__main__':
     results = plots.extract_results(all_solvers=all_solvers)
     plots.plot_summary(results=results, path_figs=path_figs)
     plots.plot_errors(all_solvers=all_solvers, path_figs=path_figs)
+    plots.export_results(results=results, path_csv=path_figs)
