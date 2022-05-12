@@ -3,7 +3,7 @@ from pathlib import Path
 import statsmodels.api as sm
 from matplotlib import pyplot
 from numpy import array, linspace
-from pandas import isna
+from pandas import isna, DataFrame
 
 from sim_vs_obs.braunschweig_face.config import ExpInfos
 from sim_vs_obs.common import (calc_apparent_temperature, get_canopy_abs_irradiance_from_solver, NORM_INCIDENT_PAR,
@@ -173,25 +173,24 @@ def extract_sim_obs_data(sim_obs: dict):
         gai=all_gai)
 
 
-def plot_error(sim_obs: dict, path_figs: Path, add_colormap: bool = True):
-    res = extract_sim_obs_data(sim_obs=sim_obs)
-
+def plot_error(summary_data: dict, path_figs: Path, add_colormap: bool = True):
     n_rows = 3
     n_cols = 4
     fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharey='all')
     im = None
     idx, sim, obs = zip(*[(i, i_sim, i_obs) for i, (i_sim, i_obs) in
-                          enumerate(zip(res['temperature_canopy']['sim'], res['temperature_canopy']['obs']))
+                          enumerate(
+                              zip(summary_data['temperature_canopy']['sim'], summary_data['temperature_canopy']['obs']))
                           if not any(isna([i_sim, i_obs]))])
 
     error = [i_sim - i_obs for i_sim, i_obs in zip(sim, obs)]
-    c = [res['incident_par'][i] for i in idx]
+    c = [summary_data['incident_par'][i] for i in idx]
     explanatory_vars = ('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
                         'aerodynamic_resistance', 'absorbed_par_soil', 'absorbed_par_veg', 'hour',
                         'net_longwave_radiation', 'gai')
     for i_explanatory, explanatory in enumerate(explanatory_vars):
         ax = axs[i_explanatory % n_rows, i_explanatory // n_rows]
-        explanatory_ls = [res[explanatory][i] for i in idx]
+        explanatory_ls = [summary_data[explanatory][i] for i in idx]
         if add_colormap:
             im = ax.scatter(explanatory_ls, error, marker='.', edgecolor='none', alpha=0.5, c=c, norm=NORM_INCIDENT_PAR,
                             cmap=CMAP)
@@ -220,5 +219,19 @@ def plot_error(sim_obs: dict, path_figs: Path, add_colormap: bool = True):
     fig.tight_layout()
     fig.savefig(path_figs / f'errors_temperature_canopy.png')
     pyplot.close('all')
+
+    pass
+
+
+def export_results(summary_data: dict, path_csv: Path):
+    df = DataFrame(data={
+        'temperature_canopy_sim': summary_data['temperature_canopy']['sim'],
+        'temperature_canopy_obs': summary_data['temperature_canopy']['obs'],
+        'temperature_air': summary_data['temperature_air'],
+        'incident_par': summary_data['incident_par']})
+    df.loc[:, 'delta_temperature_canopy_sim'] = df['temperature_canopy_sim'] - df['temperature_air']
+    df.loc[:, 'delta_temperature_canopy_obs'] = df['temperature_canopy_obs'] - df['temperature_air']
+    df.dropna(inplace=True)
+    df.to_csv(path_csv / 'results.csv', index=False)
 
     pass

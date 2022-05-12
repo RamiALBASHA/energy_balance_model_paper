@@ -71,4 +71,6 @@ if __name__ == '__main__':
 
     plots.plot_dynamic_result(sim_obs=sim_obs_dict, path_figs=fig_path)
     plots.plot_all_1_1(sim_obs=sim_obs_dict, path_figs=fig_path)
-    plots.plot_error(sim_obs=sim_obs_dict, path_figs=fig_path)
+    summary_data = plots.extract_sim_obs_data(sim_obs=sim_obs_dict)
+    plots.plot_error(summary_data=summary_data, path_figs=fig_path)
+    plots.export_results(summary_data=summary_data, path_csv=fig_path)
