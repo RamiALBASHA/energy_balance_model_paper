@@ -9,7 +9,8 @@ from matplotlib.ticker import MultipleLocator
 from numpy import array, linspace
 from pandas import DataFrame, isna
 
-from sim_vs_obs.common import get_canopy_abs_irradiance_from_solver, calc_apparent_temperature, CMAP, NORM_INCIDENT_PAR
+from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_apparent_temperature,
+                               CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
 from sim_vs_obs.maricopa_hsc.base_functions import calc_neutral_aerodynamic_resistance
 from utils import stats, config
 
@@ -171,8 +172,9 @@ def plot_results(all_solvers: dict, path_figs: Path, is_colormap: bool = True):
     if is_colormap:
         fig_summary.subplots_adjust(bottom=0.25)
         cbar_ax = fig_summary.add_axes([0.37, 0.1, 0.30, 0.04])
-        fig_summary.colorbar(im, cax=cbar_ax, orientation='horizontal')
+        cbar = fig_summary.colorbar(im, cax=cbar_ax, orientation='horizontal')
         cbar_ax.set_ylabel(' '.join(config.UNITS_MAP['incident_par']), va="top", ha='right', rotation=0)
+        format_binary_colorbar(cbar)
 
     fig_summary.savefig(path_figs / 'sim_vs_obs.png')
     plt.close()
@@ -267,8 +269,9 @@ def plot_errors(all_solvers: dict, path_figs: Path, is_colormap: bool = True):
 
     axs[1, 0].set_ylabel(r'$\mathregular{T_{sim}-T_{obs}\/[^\circ C]}$', fontsize=16)
     if is_colormap:
-        cbar_ax = fig.colorbar(im, ax=axs.flatten()[-1], orientation='horizontal')
-        cbar_ax.set_label(' '.join(config.UNITS_MAP['incident_par']))
+        cbar = fig.colorbar(im, ax=axs.flatten()[-1], orientation='horizontal')
+        cbar.set_label(' '.join(config.UNITS_MAP['incident_par']))
+        format_binary_colorbar(cbar=cbar)
 
     fig.tight_layout()
     fig.savefig(path_figs / 'errors.png')
