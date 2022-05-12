@@ -103,6 +103,49 @@ def plot_results(all_solvers: dict, path_figs: Path, is_colormap: bool = True):
             all_air_t += air_temperature
             all_incident_par += incident_par
 
+            axs[0, 0].plot(x_ls, incident_diffuse_par_irradiance, label=r'$\mathregular{{PAR}_{diff}}$')
+            axs[0, 0].plot(x_ls, incident_direct_par_irradiance, label=r'$\mathregular{{PAR}_{dir}}$')
+            axs[0, 0].plot(x_ls, soil_abs_par, label=r'$\mathregular{{PAR}_{abs,\/soil}}$', linewidth=2)
+            axs[0, 0].plot(x_ls, veg_abs_par, label=r'$\mathregular{{PAR}_{abs,\/veg}}$', c='k', linewidth=3)
+            axs[0, 0].set_ylim((0, 500))
+            axs[0, 0].legend()
+
+            axs[0, 1].plot(x_ls, wind_speed, label='u')
+            axs[0, 1].set_ylim(0, 6)
+            axs[0, 1].legend()
+
+            axs[1, 1].plot(x_ls, richardson, label='Ri')
+            axs[1, 1].hlines([-0.8] * len(x_ls), min(x_ls), max(x_ls), linewidth=2, color='red')
+            axs[1, 1].set_ylim((-10, 3))
+            axs[1, 1].legend()
+
+            axs[2, 1].plot(x_ls, air_temperature, label=r'$\mathregular{T_{air}}$', color='black', linestyle='--')
+            axs[2, 1].plot(x_ls, temp_obs, label=r'$\mathregular{T_{can,\/obs}}$', color='orange')
+            axs[2, 1].plot(x_ls, temp_sim, label=r'$\mathregular{T_{can,\/sim}}$', color='blue')
+            axs[2, 1].scatter(x_ls, [v if v else None for v in is_forced_aerodynamic_resistance], label='forced')
+            axs[2, 1].set_ylim(-5, 60)
+            axs[2, 1].legend(fontsize='x-small')
+
+            axs[1, 0].plot(x_ls, vapor_pressure_deficit, label='VPD')
+            axs[1, 0].set_ylim(0, 6)
+            axs[1, 0].legend()
+
+            axs[2, 0].plot(x_ls, soil_water_potential, label=r'$\mathregular{\Psi_{soil}}$')
+            axs[2, 0].legend()
+
+            axs[0, 3].scatter(temp_obs, temp_sim, alpha=0.5)
+            axs[0, 3].plot((-5, 40), (-5, 40), 'k--')
+            axs[0, 3].set(xlim=(-5, 40), ylim=(-5, 40), xlabel='obs T', ylabel='sim T')
+            roughness_length_for_momentum = plot_res["solvers"][0].crop.state_variables.roughness_length_for_momentum
+            canopy_height = plot_res["solvers"][0].crop.inputs.canopy_height
+            zero_displacement_height = plot_res["solvers"][0].crop.state_variables.zero_displacement_height
+            axs[0, 3].text(0.1, 0.8, f'z0u/h ={roughness_length_for_momentum / canopy_height:.3f}',
+                           transform=axs[0, 3].transAxes)
+            axs[0, 3].text(0.1, 0.6, f'd/h ={zero_displacement_height / canopy_height:.3f}',
+                           transform=axs[0, 3].transAxes)
+            axs[0, 3].yaxis.set_label_position("right")
+            axs[0, 3].yaxis.tick_right()
+
             axs[1, 3].scatter(
                 [t_obs - t_air for t_obs, t_air in zip(temp_obs, air_temperature)],
                 [t_sim - t_air for t_sim, t_air in zip(temp_sim, air_temperature)],
