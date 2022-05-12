@@ -8,7 +8,7 @@ from numpy import array, linspace
 from pandas import DataFrame, isna, date_range
 
 from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_apparent_temperature, CMAP,
-                               NORM_INCIDENT_PAR, IS_BINARY_COLORBAR, format_binary_colorbar)
+                               NORM_INCIDENT_PAR, format_binary_colorbar)
 from sim_vs_obs.maricopa_face import base_functions
 from sim_vs_obs.maricopa_face.config import SensorInfos, PathInfos
 from utils import stats, config
@@ -469,8 +469,7 @@ def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Pat
         cbar_ax = fig.add_axes(cbar_dims)
         c_bar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
         cbar_ax.set_ylabel(' '.join(config.UNITS_MAP['incident_par']), va="top", ha='right', rotation=0)
-        if IS_BINARY_COLORBAR:
-            format_binary_colorbar(cbar=c_bar, **text_kwargs)
+        format_binary_colorbar(cbar=c_bar, **text_kwargs)
 
     axs.flatten()[-1].legend(loc='lower right')
     for ax in axs:
@@ -512,8 +511,7 @@ def plot_delta_temperature(temperature_air: list, temperature_canopy_sim: list, 
     if incident_par:
         c_bar = fig.colorbar(im, ax=ax, orientation='horizontal')
         c_bar.set_label(' '.join(config.UNITS_MAP['incident_par']))
-        if IS_BINARY_COLORBAR:
-            format_binary_colorbar(cbar=c_bar)
+        format_binary_colorbar(cbar=c_bar)
 
     fig.tight_layout()
     fig.savefig(figure_dir / f'all_sim_vs_obs_delta_temperature.png')
@@ -593,8 +591,7 @@ def plot_errors(res: dict, figure_dir: Path, is_colormap: bool = True):
         if is_colormap:
             c_bar = fig.colorbar(im, ax=axs.flatten()[-1], orientation='horizontal')
             c_bar.set_label(' '.join(config.UNITS_MAP['incident_par']))
-            if IS_BINARY_COLORBAR:
-                format_binary_colorbar(cbar=c_bar)
+            format_binary_colorbar(cbar=c_bar)
 
         fig.savefig(figure_dir / f'errors_{k}.png')
         pyplot.close()

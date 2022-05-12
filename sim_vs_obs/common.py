@@ -17,11 +17,13 @@ else:
 
 
 def format_binary_colorbar(cbar: colorbar.Colorbar, **kwargs: dict):
-    cbar_ax = cbar.ax
-    cbar.set_ticks([])
-    for text, x_pos in (('night', 0.25), ('day', 0.75)):
-        cbar_ax.text(x_pos, 0.5, text, transform=cbar_ax.transAxes, ha='center', va='center', **kwargs)
-    pass
+    if IS_BINARY_COLORBAR:
+        cbar_ax = cbar.ax
+        cbar.set_ticks([])
+        for text, x_pos in (('night', 0.25), ('day', 0.75)):
+            cbar_ax.text(x_pos, 0.5, text, transform=cbar_ax.transAxes, ha='center', va='center', **kwargs)
+    else:
+        pass
 
 
 class ParamsIrradiance(Enum):

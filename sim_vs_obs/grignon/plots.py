@@ -7,8 +7,7 @@ from matplotlib import pyplot, ticker, gridspec, dates
 from numpy import array, linspace
 from pandas import isna, date_range
 
-from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, CMAP, NORM_INCIDENT_PAR, IS_BINARY_COLORBAR,
-                               format_binary_colorbar)
+from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
 from sim_vs_obs.grignon.config import CanopyInfo
 from utils import stats, config
 
@@ -132,8 +131,7 @@ def plot_sim_vs_obs(data: dict, path_figs_dir: Path, relative_layer_index: int =
     cbar_ax = fig.add_axes([0.37, 0.1, 0.30, 0.04])
     cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
     cbar_ax.set_ylabel(' '.join(config.UNITS_MAP['incident_par']), va="top", ha='right', rotation=0)
-    if IS_BINARY_COLORBAR:
-        format_binary_colorbar(cbar=cbar)
+    format_binary_colorbar(cbar=cbar)
 
     fig.savefig(path_figs_dir / f"sim_vs_obs_{'all' if relative_layer_index is None else relative_layer_index}.png")
     pass
@@ -231,8 +229,9 @@ def plot_errors(data: dict, path_figs_dir: Path):
 
             if i == len(explanatory_vars) - 1:
                 colorbar_ax = axs.flatten()[-1]
-                fig.colorbar(im, ax=colorbar_ax, orientation='horizontal',
-                             label=' '.join(config.UNITS_MAP['incident_par']))
+                cbar = fig.colorbar(im, ax=colorbar_ax, orientation='horizontal',
+                                    label=' '.join(config.UNITS_MAP['incident_par']))
+                format_binary_colorbar(cbar=cbar)
 
         axs[1, 0].set_ylabel(r'$\mathregular{T_{sim}-T_{obs}\/[^\circ C]}$', fontsize=16)
         fig.tight_layout()
