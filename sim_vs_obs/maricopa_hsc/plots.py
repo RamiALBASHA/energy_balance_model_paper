@@ -45,7 +45,70 @@ def compare_temperature(obs: list, sim: list, ax: plt.Subplot = None, return_ax:
         return ax
 
 
-def plot_results(all_solvers: dict, path_figs: Path, is_colormap: bool = True):
+def extract_results(all_solvers: dict) -> dict:
+    all_sim_t = []
+    all_obs_t = []
+    all_air_t = []
+    all_incident_par = []
+
+    for d1, v1 in all_solvers.items():
+        for plot_id, plot_res in v1.items():
+
+            temp_obs = plot_res['temp_obs']
+            incident_par = []
+            incident_diffuse_par_irradiance = []
+            incident_direct_par_irradiance = []
+            wind_speed = []
+            vapor_pressure_deficit = []
+            air_temperature = []
+            soil_water_potential = []
+            richardson = []
+            monin_obukhov = []
+            aerodynamic_resistance = []
+            neutral_aerodynamic_resistance = []
+            soil_abs_par = []
+            veg_abs_par = []
+            psi_u = []
+            psi_h = []
+            emissivity_sky = []
+            is_forced_aerodynamic_resistance = []
+            temp_sim = []
+
+            sensor_angle_below_horizon = radians(45 if d1 < datetime(2008, 1, 2) else 30)
+
+            for solver in plot_res['solvers']:
+                incident_par.append(sum(solver.crop.inputs.incident_irradiance.values()))
+                incident_diffuse_par_irradiance.append(solver.crop.inputs.incident_irradiance['diffuse'])
+                incident_direct_par_irradiance.append(solver.crop.inputs.incident_irradiance['direct'])
+                wind_speed.append(solver.crop.inputs.wind_speed / 3600.)
+                vapor_pressure_deficit.append(solver.crop.inputs.vapor_pressure_deficit)
+                air_temperature.append(solver.crop.inputs.air_temperature - 273.15)
+                soil_water_potential.append(solver.crop.inputs.soil_water_potential)
+                richardson.append(solver.crop.state_variables.richardson_number)
+                monin_obukhov.append(solver.crop.state_variables.monin_obukhov_length)
+                aerodynamic_resistance.append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
+                neutral_aerodynamic_resistance.append(calc_neutral_aerodynamic_resistance(solver=solver))
+                soil_abs_par.append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
+                veg_abs_par.append(get_canopy_abs_irradiance_from_solver(solver=solver))
+                psi_u.append(solver.crop.state_variables.stability_correction_for_momentum)
+                psi_h.append(solver.crop.state_variables.stability_correction_for_heat)
+                emissivity_sky.append(solver.crop.params.simulation.atmospheric_emissivity)
+                is_forced_aerodynamic_resistance.append(solver.is_forced_aerodynamic_resistance)
+                temp_sim.append(calc_apparent_temperature(eb_solver=solver, sensor_angle=sensor_angle_below_horizon))
+
+            all_sim_t += temp_sim
+            all_obs_t += temp_obs
+            all_air_t += air_temperature
+            all_incident_par += incident_par
+
+    return {
+        'sim_t': all_sim_t,
+        'obs_t': all_obs_t,
+        'air_t': all_air_t,
+        'par_inc': all_incident_par}
+
+
+def plot_dynamic(all_solvers: dict, path_figs: Path):
     all_sim_t = []
     all_obs_t = []
     all_air_t = []
@@ -188,8 +251,13 @@ def plot_results(all_solvers: dict, path_figs: Path, is_colormap: bool = True):
             fig.savefig(path_figs / f"{plot_id}_{d1.date().strftime('%Y%m%d')}.png")
             plt.close(fig)
 
+    pass
+
+
+def plot_summary(results: dict, path_figs: Path, is_colormap: bool = True):
+
     fig_summary, axs_summary = plt.subplots(ncols=2)
-    df = DataFrame(data={'sim_t': all_sim_t, 'obs_t': all_obs_t, 'air_t': all_air_t, 'par_inc': all_incident_par})
+    df = DataFrame(data=results)
     df.loc[:, 'sim_delta_t'] = df['sim_t'] - df['air_t']
     df.loc[:, 'obs_delta_t'] = df['obs_t'] - df['air_t']
 
@@ -221,6 +289,7 @@ def plot_results(all_solvers: dict, path_figs: Path, is_colormap: bool = True):
 
     fig_summary.savefig(path_figs / 'sim_vs_obs.png')
     plt.close()
+
     pass
 
 
