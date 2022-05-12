@@ -245,7 +245,8 @@ def plot_mixed(data: dict, path_figs_dir: Path):
     hours = (6, 9, 12, 15, 18)
     nb_hours = len(hours)
     look_into = (
-        ('intensive', datetime(2012, 3, 30)),)
+        ('intensive', datetime(2012, 3, 30)),
+        ('extensive', datetime(2012, 3, 30)))
 
     for treatment, date_obs in look_into:
         fig = pyplot.figure(figsize=(9 / 2.54, 18 / 2.54))
@@ -297,7 +298,7 @@ def plot_mixed(data: dict, path_figs_dir: Path):
                        ylabel=' '.join(config.UNITS_MAP['temperature']))
 
         fig.tight_layout()
-        fig.savefig(path_figs_dir / 'mixed.png')
+        fig.savefig(path_figs_dir / f'mixed_{treatment}.png')
         pyplot.close('all')
         pass
     pass
