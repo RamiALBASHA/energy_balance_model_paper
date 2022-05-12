@@ -392,8 +392,12 @@ def plot_errors(all_solvers: dict, path_figs: Path, is_colormap: bool = True):
 
 def export_results(results: dict, path_csv: Path):
     df = DataFrame(data=results)
-    df.rename({'sim_t': 't_sim', 'obs_t': 't_obs', 'air_t': 't_air'}, axis=1, inplace=True)
-    df.loc[:, 'delta_t_sim'] = df['t_sim'] - df['t_air']
-    df.loc[:, 'delta_t_obs'] = df['t_obs'] - df['t_air']
+    df.rename({'sim_t': 'temperature_canopy_sim',
+               'obs_t': 'temperature_canopy_obs',
+               'air_t': 'temperature_air',
+               'par_inc': 'incident_par'},
+              axis=1, inplace=True)
+    df.loc[:, 'delta_temperature_canopy_sim'] = df['temperature_canopy_sim'] - df['temperature_air']
+    df.loc[:, 'delta_temperature_canopy_obs'] = df['temperature_canopy_obs'] - df['temperature_air']
     df.to_csv(path_csv / 'results.csv', index=False)
     pass
