@@ -707,3 +707,19 @@ def add_delta_temperature(s: dict) -> dict:
                                                       in zip(temperature_canopy, temperature_air)]
 
     return s
+
+
+def export_results(summary_data: dict, path_csv: Path):
+    df = DataFrame(data={
+        'temperature_canopy_sim': summary_data['temperature_canopy']['sim'],
+        'temperature_canopy_obs': summary_data['temperature_canopy']['obs'],
+        'temperature_air': summary_data['temperature_air'],
+        'incident_par': [par_dir + par_diff for par_dir, par_diff in
+                         zip(summary_data['incident_diffuse_par_irradiance'],
+                             summary_data['incident_direct_par_irradiance'])]})
+    df.loc[:, 'delta_temperature_canopy_sim'] = df['temperature_canopy_sim'] - df['temperature_air']
+    df.loc[:, 'delta_temperature_canopy_obs'] = df['temperature_canopy_obs'] - df['temperature_air']
+    df.dropna(inplace=True)
+
+    df.to_csv(path_csv / 'results.csv', index=False)
+    pass

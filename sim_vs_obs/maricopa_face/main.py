@@ -103,3 +103,4 @@ if __name__ == '__main__':
         res_wet=results_wet,
         res_dry=results_dry,
         figure_dir=figs_dir_path)
+    plots.export_results(summary_data=results_all, path_csv=figs_dir_path)
