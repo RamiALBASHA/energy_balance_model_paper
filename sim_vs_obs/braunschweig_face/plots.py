@@ -6,7 +6,8 @@ from numpy import array, linspace
 from pandas import isna
 
 from sim_vs_obs.braunschweig_face.config import ExpInfos
-from sim_vs_obs.common import calc_apparent_temperature, get_canopy_abs_irradiance_from_solver, NORM_INCIDENT_PAR, CMAP
+from sim_vs_obs.common import (calc_apparent_temperature, get_canopy_abs_irradiance_from_solver, NORM_INCIDENT_PAR,
+                               CMAP, format_binary_colorbar)
 from utils import config
 from utils.stats import calc_rmse, calc_r2
 
@@ -93,7 +94,8 @@ def plot_all_1_1(sim_obs: dict, path_figs: Path, add_color_map: bool = True):
     if add_color_map:
         fig.subplots_adjust(bottom=0.2)
         cbar_ax = fig.add_axes([0.37, 0.1, 0.30, 0.04])
-        fig.colorbar(im, cax=cbar_ax, orientation='horizontal', label=' '.join(config.UNITS_MAP['incident_par']))
+        cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal', label=' '.join(config.UNITS_MAP['incident_par']))
+        format_binary_colorbar(cbar=cbar)
 
     fig.savefig(path_figs / f'all_sim_obs.png')
     pyplot.close('all')
@@ -209,7 +211,9 @@ def plot_error(sim_obs: dict, path_figs: Path, add_colormap: bool = True):
         ax.text(0.1, 0.9, '*' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontweight='bold')
 
         if add_colormap and (i_explanatory == len(explanatory_vars) - 1):
-            fig.colorbar(im, ax=axs.flatten()[-1], label=' '.join(config.UNITS_MAP['incident_par']))
+            cbar = fig.colorbar(im, ax=axs.flatten()[-1], label=' '.join(config.UNITS_MAP['incident_par']),
+                                orientation='horizontal')
+            format_binary_colorbar(cbar=cbar)
 
     title = ' '.join(config.UNITS_MAP['temperature_canopy'])
     axs[1, 0].set_ylabel(' '.join((r'$\mathregular{\epsilon}$', title)), fontsize=16)
