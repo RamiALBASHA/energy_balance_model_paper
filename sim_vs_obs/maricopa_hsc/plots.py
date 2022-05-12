@@ -399,5 +399,7 @@ def export_results(results: dict, path_csv: Path):
               axis=1, inplace=True)
     df.loc[:, 'delta_temperature_canopy_sim'] = df['temperature_canopy_sim'] - df['temperature_air']
     df.loc[:, 'delta_temperature_canopy_obs'] = df['temperature_canopy_obs'] - df['temperature_air']
+    df.dropna(inplace=True)
+
     df.to_csv(path_csv / 'results.csv', index=False)
     pass
