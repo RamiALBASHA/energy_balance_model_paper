@@ -5,7 +5,7 @@ from pathlib import Path
 import statsmodels.api as sm
 from matplotlib import pyplot, ticker, gridspec, dates
 from numpy import array, linspace
-from pandas import isna, date_range
+from pandas import isna, date_range, DataFrame, concat
 
 from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
 from sim_vs_obs.grignon.config import CanopyInfo
@@ -137,7 +137,7 @@ def plot_sim_vs_obs(data: dict, path_figs_dir: Path, relative_layer_index: int =
     pass
 
 
-def plot_errors(data: dict, path_figs_dir: Path):
+def extract_sim_obs_data(data: dict):
     common = dict(
         temperature_air=[],
         temperature_obs=[],
@@ -196,12 +196,17 @@ def plot_errors(data: dict, path_figs_dir: Path):
             res[trt].update({'temperature_error': [t_sim - t_obs for t_sim, t_obs in zip(res[trt]['temperature_sim'],
                                                                                          res[trt]['temperature_obs'])]})
 
+    return res
+
+
+def plot_errors(summary_data: dict, path_figs_dir: Path):
     n_rows = 3
     n_cols = 4
 
-    for trt in treatments:
+    for trt in summary_data.keys():
         par_inc = [par_dir + par_diff for par_dir, par_diff in
-                   zip(res[trt]['incident_direct_par_irradiance'], res[trt]['incident_diffuse_par_irradiance'])]
+                   zip(summary_data[trt]['incident_direct_par_irradiance'],
+                       summary_data[trt]['incident_diffuse_par_irradiance'])]
         fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharey='all')
         explanatory_vars = ('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
                             'aerodynamic_resistance', 'absorbed_par_soil', 'absorbed_par_veg', 'hour',
@@ -210,7 +215,8 @@ def plot_errors(data: dict, path_figs_dir: Path):
             ax = axs[i % n_rows, i // n_rows]
 
             explanatory_ls, error_ls, c = zip(
-                *[(ex, er, c_i) for ex, er, c_i in zip(res[trt][explanatory], res[trt]['temperature_error'], par_inc)
+                *[(ex, er, c_i) for ex, er, c_i in
+                  zip(summary_data[trt][explanatory], summary_data[trt]['temperature_error'], par_inc)
                   if not any(isna([ex, er]))])
             im = ax.scatter(explanatory_ls, error_ls, marker='.', alpha=0.5, edgecolor='none', c=c, cmap=CMAP,
                             norm=NORM_INCIDENT_PAR)
@@ -301,4 +307,26 @@ def plot_mixed(data: dict, path_figs_dir: Path):
         fig.savefig(path_figs_dir / f'mixed_{treatment}.png')
         pyplot.close('all')
         pass
+    pass
+
+
+def export_results(summary_data: dict, path_csv: Path):
+    df_ls = []
+    for treatment, trt_data in summary_data.items():
+        df = DataFrame(data={
+            'temperature_canopy_sim': trt_data['temperature_sim'],
+            'temperature_canopy_obs': trt_data['temperature_obs'],
+            'temperature_air': trt_data['temperature_air'],
+            'incident_par': [par_dir + par_diff for par_dir, par_diff in
+                             zip(trt_data['incident_diffuse_par_irradiance'],
+                                 trt_data['incident_direct_par_irradiance'])]})
+        df.loc[:, 'delta_temperature_canopy_sim'] = df['temperature_canopy_sim'] - df['temperature_air']
+        df.loc[:, 'delta_temperature_canopy_obs'] = df['temperature_canopy_obs'] - df['temperature_air']
+        df.dropna(inplace=True)
+
+        df.to_csv(path_csv / f'results_{treatment}.csv', index=False)
+
+        df_ls.append(df)
+
+    concat(df_ls).to_csv(path_csv / 'results.csv', index=False)
     pass

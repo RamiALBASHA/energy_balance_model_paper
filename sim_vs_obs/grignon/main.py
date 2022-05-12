@@ -85,5 +85,8 @@ if __name__ == '__main__':
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path, relative_layer_index=-1)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path, relative_layer_index=0)
-    plots.plot_errors(data=sim_obs_dict, path_figs_dir=fig_path)
     plots.plot_mixed(data=sim_obs_dict, path_figs_dir=fig_path)
+
+    summary_data = plots.extract_sim_obs_data(data=sim_obs_dict)
+    plots.plot_errors(summary_data=summary_data, path_figs_dir=fig_path)
+    plots.export_results(summary_data=summary_data, path_csv=fig_path)
