@@ -77,16 +77,17 @@ if __name__ == '__main__':
                         'obs': temp_obs[temp_obs['time'] == datetime_obs].drop(['time', 'treatment'], axis=1)}})
                 print(f'{datetime_obs}\t{treatment}')
 
-    figs_dir = 'corrected' if is_stability_corrected else 'neutral'
-    fig_path = PathInfos.source_fmt.value.parent / 'figs' / figs_dir
-    fig_path.mkdir(parents=True, exist_ok=True)
+    outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
+    outputs_sub_dir = '_'.join(['bigleaf' if canopy_info.is_big_leaf else 'layered', canopy_info.leaves_category])
+    path_outputs = PathInfos.source_fmt.value.parent / 'outputs' / outputs_dir / outputs_sub_dir
+    path_outputs.mkdir(parents=True, exist_ok=True)
 
-    plots.plot_dynamic(data=sim_obs_dict, path_figs_dir=fig_path)
-    plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path)
-    plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path, relative_layer_index=-1)
-    plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=fig_path, relative_layer_index=0)
-    plots.plot_mixed(data=sim_obs_dict, path_figs_dir=fig_path)
+    plots.plot_dynamic(data=sim_obs_dict, path_figs_dir=path_outputs)
+    plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=path_outputs)
+    plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=path_outputs, relative_layer_index=-1)
+    plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=path_outputs, relative_layer_index=0)
+    plots.plot_mixed(data=sim_obs_dict, path_figs_dir=path_outputs)
 
     summary_data = plots.extract_sim_obs_data(data=sim_obs_dict)
-    plots.plot_errors(summary_data=summary_data, path_figs_dir=fig_path)
-    plots.export_results(summary_data=summary_data, path_csv=fig_path)
+    plots.plot_errors(summary_data=summary_data, path_figs_dir=path_outputs)
+    plots.export_results(summary_data=summary_data, path_csv=path_outputs)
