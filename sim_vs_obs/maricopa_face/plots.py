@@ -548,12 +548,17 @@ def plot_irradiance(shoot_obj: dict, obs_df: DataFrame):
     pass
 
 
-def plot_errors(res: dict, figure_dir: Path, is_colormap: bool = True):
+def plot_errors(res: dict, figure_dir: Path, leaves_category: str, is_colormap: bool = True):
     n_rows = 3
     n_cols = 4
 
-    for k in ('temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat_flux', 'latent_heat_flux',
-              'soil_heat_flux', 'temperature_sunlit', 'temperature_shaded'):
+    vars_to_plot = ['temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat_flux', 'latent_heat_flux',
+                    'soil_heat_flux']
+
+    if leaves_category == 'sunlit-shaded':
+        vars_to_plot += ['temperature_sunlit', 'temperature_shaded']
+
+    for k in vars_to_plot:
 
         fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharey='all')
 
