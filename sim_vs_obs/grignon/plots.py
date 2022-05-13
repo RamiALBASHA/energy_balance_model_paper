@@ -7,6 +7,7 @@ from matplotlib import pyplot, ticker, gridspec, dates
 from numpy import array, linspace
 from pandas import isna, date_range, DataFrame, concat
 
+from crop_energy_balance.solver import Solver
 from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
 from sim_vs_obs.grignon.config import CanopyInfo
 from utils import stats, config
@@ -15,6 +16,15 @@ MAP_UNITS = {
     't': [r'$\mathregular{T_{leaf}}$', r'$\mathregular{[^\circ C]}$'],
     'delta_t': [r'$\mathregular{T_{leaf}-T_{air}}$', r'$\mathregular{[^\circ C]}$'],
 }
+
+
+def calc_layer_temperature(solver: Solver, layer_index: int) -> float:
+    if CanopyInfo().is_lumped:
+        t_sim = solver.crop[layer_index].temperature - 273.15
+    else:
+        t_sim = sum([(component.temperature - 273.15) * component.surface_fraction
+                     for component in solver.crop[layer_index].values()])
+    return t_sim
 
 
 def plot_dynamic(data: dict, path_figs_dir: Path):
@@ -52,7 +62,7 @@ def plot_dynamic(data: dict, path_figs_dir: Path):
                 x_obs_avg.append(obs_temperature.mean())
                 x_obs += obs_temperature.to_list()
                 y_obs += [layer] * len(obs_temperature)
-                x_sim.append(solver.crop[layer].temperature - 273.15)
+                x_sim.append(calc_layer_temperature(solver=solver, layer_index=layer))
 
             ax_h.scatter(x_obs, y_obs, marker='s', c='red', alpha=0.3)
             ax_h.scatter(x_sim, canopy_layers, marker='o', c='blue')
@@ -92,7 +102,7 @@ def plot_sim_vs_obs(data: dict, path_figs_dir: Path, relative_layer_index: int =
             for layer in layers:
                 t_obs = obs[obs['leaf_level'] == layer]['temperature'].mean()
                 if not isna(t_obs):
-                    t_sim = solver.crop[layer].temperature - 273.15
+                    t_sim = calc_layer_temperature(solver=solver, layer_index=layer)
                     t_air = solver.crop.inputs.air_temperature - 273.15
                     obs_dict['t'][treatment].append(t_obs)
                     sim_dict['t'][treatment].append(t_sim)
@@ -175,7 +185,7 @@ def extract_sim_obs_data(data: dict):
             for i, layer in enumerate(canopy_layers):
                 res[trt]['temperature_obs'].append(obs[obs['leaf_level'] == layer]['temperature'].mean())
                 res[trt]['temperature_air'].append(solver.crop.inputs.air_temperature - 273.15)
-                res[trt]['temperature_sim'].append(solver.crop[layer].temperature - 273.15)
+                res[trt]['temperature_sim'].append(calc_layer_temperature(solver=solver, layer_index=layer))
                 res[trt]['incident_diffuse_par_irradiance'].append(solver.crop.inputs.incident_irradiance['diffuse'])
                 res[trt]['incident_direct_par_irradiance'].append(solver.crop.inputs.incident_irradiance['direct'])
                 res[trt]['wind_speed'].append(solver.crop.inputs.wind_speed / 3600.)
@@ -267,11 +277,7 @@ def plot_mixed(data: dict, path_figs_dir: Path):
             solver, obs_data = [data[dt_obs][treatment][k] for k in ('solver', 'obs')]
             layer_indices = solver.crop.components_keys.copy()
             layer_indices = [i for i in layer_indices if i != -1]
-            if CanopyInfo().is_lumped:
-                sim = {layer: solver.crop[layer].temperature - 273.15 for layer in layer_indices}
-            else:
-                sim = {layer: sum([component.temperature - 273.15 * component.surface_fraction
-                                   for component in solver.crop[layer].keys()]) for layer in layer_indices}
+            sim = {layer: calc_layer_temperature(solver=solver, layer_index=layer) for layer in layer_indices}
             obs = {layer: obs_data[obs_data['leaf_level'] == layer]['temperature'].to_list() for layer in layer_indices}
 
             for v in obs.values():
@@ -292,7 +298,7 @@ def plot_mixed(data: dict, path_figs_dir: Path):
             ax_profile.set_yticks(layer_indices)
             ax_profile.text(0.86, 0.875, f'{hour:02d}:00', fontsize=9, ha='left', transform=ax_profile.transAxes)
             if hour != hours[-1]:
-                ax_dynamic.xaxis.set_visible(False)
+                ax_profile.xaxis.set_visible(False)
 
         axs_profile[2].set_ylabel('Layer index [-]', rotation=90, ha='center')
         axs_profile[-1].set_xlabel(' '.join(config.UNITS_MAP['temperature']))
