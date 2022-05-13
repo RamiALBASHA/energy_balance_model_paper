@@ -10,18 +10,18 @@ from sim_vs_obs.maricopa_hsc.config import PathInfos, WeatherInfo, ParamsInfo
 
 if __name__ == '__main__':
     is_stability_corrected = True
-
-    path_source_raw = PathInfos.source_raw.value
-    path_source_fmt = PathInfos.source_fmt.value
-
-    figs_dir = 'corrected' if is_stability_corrected else 'neutral'
-    path_figs = PathInfos.source_fmt.value.parent / 'figs' / figs_dir
-    path_figs.mkdir(parents=True, exist_ok=True)
-
     crop_representation = 'bigleaf_sunlit-shaded'
 
     is_bigleaf = 'bigleaf' in crop_representation
     is_lumped = 'lumped' in crop_representation
+
+    path_source_raw = PathInfos.source_raw.value
+    path_source_fmt = PathInfos.source_fmt.value
+
+    outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
+    path_outputs = PathInfos.source_fmt.value.parent / 'outputs' / outputs_dir / crop_representation
+    path_outputs.mkdir(parents=True, exist_ok=True)
+
     if is_bigleaf:
         lai_distribution_ratios = [1]
     else:
@@ -91,9 +91,9 @@ if __name__ == '__main__':
                 'solvers': solvers,
                 'temp_obs': crop_weather['canopy_temperature'].tolist()}})
 
-    plots.plot_dynamic(all_solvers=all_solvers, path_figs=path_figs)
+    plots.plot_dynamic(all_solvers=all_solvers, path_figs=path_outputs)
 
     results = plots.extract_results(all_solvers=all_solvers)
-    plots.plot_summary(results=results, path_figs=path_figs)
-    plots.plot_errors(all_solvers=all_solvers, path_figs=path_figs)
-    plots.export_results(results=results, path_csv=path_figs)
+    plots.plot_summary(results=results, path_figs=path_outputs)
+    plots.plot_errors(all_solvers=all_solvers, path_figs=path_outputs)
+    plots.export_results(results=results, path_csv=path_outputs)
