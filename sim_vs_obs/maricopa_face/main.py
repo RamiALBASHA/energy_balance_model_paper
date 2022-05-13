@@ -70,37 +70,40 @@ if __name__ == '__main__':
     vars_to_plot = ('temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat_flux',
                     'latent_heat_flux', 'soil_heat_flux', 'incident_par')
 
-    figs_dir = 'corrected' if is_stability_corrected else 'neutral'
-    figs_dir_path = PathInfos.source_figs.value / figs_dir
-    figs_dir_path.mkdir(parents=True, exist_ok=True)
+    outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
+    outputs_sub_dir = '_'.join(['bigleaf' if SimInfos.is_bigleaf.value else 'layered', SimInfos.leaf_category.value])
+
+    path_outputs = PathInfos.source_outputs.value / outputs_dir / outputs_sub_dir
+    path_outputs.mkdir(parents=True, exist_ok=True)
 
     plots.plot_sim_vs_obs(
         res_all={k: v for k, v in results_all.items() if k in vars_to_plot},
         res_wet={k: v for k, v in results_wet.items() if k in vars_to_plot},
         res_dry={k: v for k, v in results_dry.items() if k in vars_to_plot},
-        figure_dir=figs_dir_path, fig_name_suffix='wet')
+        figure_dir=path_outputs, fig_name_suffix='wet')
 
-    plots.plot_sim_vs_obs(
-        res_all={k: v for k, v in results_all.items() if k in ('temperature_sunlit', 'temperature_shaded')},
-        res_wet={k: v for k, v in results_wet.items() if k in ('temperature_sunlit', 'temperature_shaded')},
-        res_dry={k: v for k, v in results_dry.items() if k in ('temperature_sunlit', 'temperature_shaded')},
-        figure_dir=figs_dir_path,
-        alpha=1,
-        fig_name_suffix='sunlit_shaded')
+    if SimInfos.leaf_category == 'sunlit-shaded':
+        plots.plot_sim_vs_obs(
+            res_all={k: v for k, v in results_all.items() if k in ('temperature_sunlit', 'temperature_shaded')},
+            res_wet={k: v for k, v in results_wet.items() if k in ('temperature_sunlit', 'temperature_shaded')},
+            res_dry={k: v for k, v in results_dry.items() if k in ('temperature_sunlit', 'temperature_shaded')},
+            figure_dir=path_outputs,
+            alpha=1,
+            fig_name_suffix='sunlit_shaded')
 
     plots.plot_delta_temperature(
         temperature_air=results_all['temperature_air'],
         temperature_canopy_sim=results_all['temperature_canopy']['sim'],
         temperature_canopy_obs=results_all['temperature_canopy']['obs'],
         incident_par=results_all['incident_par'],
-        figure_dir=figs_dir_path)
+        figure_dir=path_outputs)
 
     plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict, figure_dir=figs_dir_path)
-    plots.plot_errors(res=results_all, figure_dir=figs_dir_path)
+    plots.plot_errors(res=results_all, leaves_category=SimInfos.leaf_category.value, figure_dir=path_outputs)
     plots.plot_mixed(
         sim_obs_dict=sim_obs_dict,
         res_all=results_all,
         res_wet=results_wet,
         res_dry=results_dry,
-        figure_dir=figs_dir_path)
-    plots.export_results(summary_data=results_all, path_csv=figs_dir_path)
+        figure_dir=path_outputs)
+    plots.export_results(summary_data=results_all, path_csv=path_outputs)
