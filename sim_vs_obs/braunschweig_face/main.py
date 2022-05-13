@@ -8,6 +8,7 @@ from sim_vs_obs.braunschweig_face.config import ExpIdInfos, ExpInfos, SimInfos, 
 
 if __name__ == '__main__':
     is_stability_corrected = True
+    leaf_category = SimInfos.leaf_category.value
 
     repetition_ids = ExpInfos.nb_repetitions.value
 
@@ -53,7 +54,7 @@ if __name__ == '__main__':
                             leaf_layers=leaf_layers,
                             weather_data=weather_ser,
                             soil_humidity=trt_soil_moisture_df.loc[sim_date].values[0])
-                        solver = Solver(leaves_category=SimInfos.leaf_category.value,
+                        solver = Solver(leaves_category=leaf_category,
                                         inputs_dict=eb_inputs,
                                         params_dict=eb_params)
                         solver.run(is_stability_considered=is_stability_corrected)
@@ -65,12 +66,13 @@ if __name__ == '__main__':
                                     datetime_obs=sim_datetime)}
                         })
 
-    figs_dir = 'corrected' if is_stability_corrected else 'neutral'
-    fig_path = PathInfos.source_fmt.value.parent / 'figs' / figs_dir
-    fig_path.mkdir(parents=True, exist_ok=True)
+    outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
+    outputs_sub_dir = '_'.join(('bigleaf' if SimInfos.is_bigleaf.value else 'layered', leaf_category))
+    outputs_path = PathInfos.source_fmt.value.parent / 'outputs' / outputs_dir / outputs_sub_dir
+    outputs_path.mkdir(parents=True, exist_ok=True)
 
-    plots.plot_dynamic_result(sim_obs=sim_obs_dict, path_figs=fig_path)
-    plots.plot_all_1_1(sim_obs=sim_obs_dict, path_figs=fig_path)
+    plots.plot_dynamic_result(sim_obs=sim_obs_dict, path_figs=outputs_path)
+    plots.plot_all_1_1(sim_obs=sim_obs_dict, path_figs=outputs_path)
     summary_data = plots.extract_sim_obs_data(sim_obs=sim_obs_dict)
-    plots.plot_error(summary_data=summary_data, path_figs=fig_path)
-    plots.export_results(summary_data=summary_data, path_csv=fig_path)
+    plots.plot_error(summary_data=summary_data, path_figs=outputs_path)
+    plots.export_results(summary_data=summary_data, path_csv=outputs_path)
