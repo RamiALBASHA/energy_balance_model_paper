@@ -14,8 +14,8 @@ class PathInfos(Enum):
 class SimInfos(Enum):
     leaf_number = 1
     is_bigleaf = leaf_number == 1
-    is_lumped = False
     leaf_category = 'sunlit-shaded'
+    is_lumped = leaf_category == 'lumped'
 
 
 class ExpInfos(Enum):
