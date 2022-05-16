@@ -77,8 +77,9 @@ def plot_sim_vs_obs(path_source: Path, path_outputs: Path, is_corrected: bool = 
 if __name__ == '__main__':
     path_sources = Path(__file__).parents[1] / 'sources'
     path_fig = path_sources / 'figs'
-    plot_sim_vs_obs(
-        path_source=path_sources,
-        path_outputs=path_fig,
-        is_corrected=True,
-        is_lumped=True)
+    for is_lumped in (True, False):
+        plot_sim_vs_obs(
+            path_source=path_sources,
+            path_outputs=path_fig,
+            is_corrected=True,
+            is_lumped=is_lumped)
