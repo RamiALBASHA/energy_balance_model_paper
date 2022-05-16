@@ -107,3 +107,5 @@ if __name__ == '__main__':
         res_dry=results_dry,
         figure_dir=path_outputs)
     plots.export_results(summary_data=results_all, path_csv=path_outputs)
+    plots.export_results_cart(summary_data=results_all, path_csv=path_outputs)
+

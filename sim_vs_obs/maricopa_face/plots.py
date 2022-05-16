@@ -728,3 +728,19 @@ def export_results(summary_data: dict, path_csv: Path):
 
     df.to_csv(path_csv / 'results.csv', index=False)
     pass
+
+
+def export_results_cart(summary_data: dict, path_csv: Path):
+    vars_in_dict = ('temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat_flux', 'latent_heat_flux',
+                    'soil_heat_flux', 'temperature_sunlit', 'temperature_shaded')
+    res = {k: v for k, v in summary_data.items() if k not in vars_in_dict}
+    df = DataFrame(res)
+    for var in vars_in_dict:
+        for s in ('sim', 'obs'):
+            df.loc[:, f'{var}_{s}'] = summary_data[var][s]
+        df.loc[:, f'error_{var}'] = df[f'{var}_sim'] - df[f'{var}_obs']
+
+    df.loc[:, 'incident_par'] = df[['incident_direct_par_irradiance', 'incident_diffuse_par_irradiance']].sum(axis=1)
+    df = df[(df['incident_par'] >= 0) & ~df['error_temperature_canopy'].isna()]
+    df.to_csv(path_csv / 'results_cart.csv', index=False)
+    pass
