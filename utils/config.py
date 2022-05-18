@@ -32,7 +32,7 @@ UNITS_MAP = {
     'temperature_canopy': (r'$\mathregular{T_{can}}$', r'$\mathregular{[^\circ C]}$'),
     'temperature_sunlit': (r'$\mathregular{T_{sunlit}}$', r'$\mathregular{[^\circ C]}$'),
     'temperature_shaded': (r'$\mathregular{T_{shaded}}$', r'$\mathregular{[^\circ C]}$'),
-    'soil_water_potential': (r'$\mathregular{\Psi_{soil}}}$', 'MPa'),
+    'soil_water_potential': (r'$\mathregular{\Psi_{soil}}}$', '[MPa]'),
     'hour': ('hour',),
     'height': (r'$\mathregular{z_h}$', r'$\mathregular{[m]}$'),
     'gai': ('GAI', r'$\mathregular{[m^2_{leaf}\/m^{-2}_{ground}]}$')
