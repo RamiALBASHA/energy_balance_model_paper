@@ -745,7 +745,7 @@ def export_results_cart(summary_data: dict, path_csv: Path):
     df.loc[:, 'incident_par'] = df[['incident_direct_par_irradiance', 'incident_diffuse_par_irradiance']].sum(axis=1)
     df = df[(df['incident_par'] >= 0) & ~df['error_temperature_canopy'].isna()]
     df.to_csv(path_csv / 'results_cart.csv', index=False)
-    pass
+    return df
 
 
 def plot_classification_and_regression_tree(data: DataFrame, path_output_dir: Path, **kwargs):
