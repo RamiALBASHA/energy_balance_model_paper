@@ -2,10 +2,12 @@ from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 
+import graphviz
 import statsmodels.api as sm
 from matplotlib import pyplot, ticker, gridspec, dates
 from numpy import array, linspace
 from pandas import DataFrame, isna, date_range
+from sklearn import tree
 
 from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_apparent_temperature, CMAP,
                                NORM_INCIDENT_PAR, format_binary_colorbar)
@@ -743,4 +745,30 @@ def export_results_cart(summary_data: dict, path_csv: Path):
     df.loc[:, 'incident_par'] = df[['incident_direct_par_irradiance', 'incident_diffuse_par_irradiance']].sum(axis=1)
     df = df[(df['incident_par'] >= 0) & ~df['error_temperature_canopy'].isna()]
     df.to_csv(path_csv / 'results_cart.csv', index=False)
+    pass
+
+
+def plot_classification_and_regression_tree(data: DataFrame, path_output_dir: Path, **kwargs):
+    params = dict(
+        random_state=0,
+        criterion='squared_error',
+        splitter='best',
+        ccp_alpha=0,
+        max_leaf_nodes=20)
+    params.update(**kwargs)
+    target = data['error_temperature_canopy'].values
+    explanatory = data[['wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
+                        'incident_par', 'net_longwave_radiation', 'height', 'gai']]
+
+    model = tree.DecisionTreeRegressor(**params)
+    clf = model.fit(explanatory, target)
+    dot_data = tree.export_graphviz(clf,
+                                    out_file=None,
+                                    feature_names=explanatory.columns,
+                                    class_names=target,
+                                    filled=True, rounded=True,
+                                    special_characters=True)
+    graph = graphviz.Source(dot_data)
+    # graph.view(filename=f'{txt}_{clf.score(explanatory, target):0.3f}')
+    graph.render(directory=path_output_dir, filename=f'cart_{clf.score(explanatory, target):0.3f}', format='png')
     pass
