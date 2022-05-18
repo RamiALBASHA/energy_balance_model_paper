@@ -98,7 +98,7 @@ if __name__ == '__main__':
         incident_par=results_all['incident_par'],
         figure_dir=path_outputs)
 
-    plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict, figure_dir=figs_dir_path)
+    plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict, figure_dir=path_outputs)
     plots.plot_errors(res=results_all, leaves_category=SimInfos.leaf_category.value, figure_dir=path_outputs)
     plots.plot_mixed(
         sim_obs_dict=sim_obs_dict,
