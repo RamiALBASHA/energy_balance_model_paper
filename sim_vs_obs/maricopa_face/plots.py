@@ -1,10 +1,11 @@
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
+from string import ascii_lowercase
 
 import graphviz
 import statsmodels.api as sm
-from matplotlib import pyplot, ticker, gridspec, dates
+from matplotlib import pyplot, ticker, gridspec, dates, collections
 from numpy import array, linspace
 from pandas import DataFrame, isna, date_range
 from sklearn import tree
@@ -550,9 +551,10 @@ def plot_irradiance(shoot_obj: dict, obs_df: DataFrame):
     pass
 
 
-def plot_errors(res: dict, figure_dir: Path, leaves_category: str, is_colormap: bool = True):
-    n_rows = 3
-    n_cols = 4
+def plot_errors(res: dict, figure_dir: Path, leaves_category: str, is_colormap: bool = True, is_day_night: bool = True):
+    n_rows = 2
+    n_cols = 5
+    fmt_axes = dict(fontsize=10)
 
     vars_to_plot = ['temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat_flux', 'latent_heat_flux',
                     'soil_heat_flux']
@@ -562,48 +564,95 @@ def plot_errors(res: dict, figure_dir: Path, leaves_category: str, is_colormap: 
 
     for k in vars_to_plot:
 
-        fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(12, 8), sharey='all')
+        fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(7.48, 5), sharey='all',
+                                   gridspec_kw={'wspace': 0})
 
         idx, sim, obs = zip(*[(i, i_sim, i_obs) for i, (i_sim, i_obs) in enumerate(zip(res[k]['sim'], res[k]['obs']))
                               if not any(isna([i_sim, i_obs]))])
         error = [i_sim - i_obs for i_sim, i_obs in zip(sim, obs)]
         for i_explanatory, explanatory in enumerate(
-                ('wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
-                 'aerodynamic_resistance', 'absorbed_par_soil', 'absorbed_par_veg', 'hour',
-                 'net_longwave_radiation', 'height', 'gai')):
+                ('absorbed_par_veg', 'absorbed_par_soil', 'wind_speed', 'aerodynamic_resistance',
+                 'temperature_air', 'vapor_pressure_deficit', 'height', 'gai',
+                 'soil_water_potential', 'net_longwave_radiation')):
             ax = axs[i_explanatory % n_rows, i_explanatory // n_rows]
             explanatory_ls = [res[explanatory][i] for i in idx]
+            par_inc = [res['incident_par'][i] for i in idx]
             if is_colormap:
-                kwargs = dict(c=[res['incident_par'][i] for i in idx], alpha=0.5, cmap=CMAP, norm=NORM_INCIDENT_PAR)
+                kwargs = dict(c=par_inc, alpha=0.5, cmap=CMAP, norm=NORM_INCIDENT_PAR)
             else:
                 kwargs = dict(alpha=0.2)
 
-            im = ax.scatter(explanatory_ls, error, marker='.', edgecolor='none', **kwargs)
-            ax.set(xlabel=' '.join(config.UNITS_MAP[explanatory]))
+            if is_day_night:
+                for is_day in (True, False):
+                    if is_day:
+                        tempo = list(zip(*[(i, par) for i, par in enumerate(par_inc) if par != 0]))
+                    else:
+                        tempo = list(zip(*[(i, par) for i, par in enumerate(par_inc) if par == 0]))
+                    if len(tempo) > 0:
+                        idx2, c = tempo[0], tempo[1]
+                        kwargs.update({'c': c})
+                        im = plot_day_night(
+                            ax=ax,
+                            explanatory_ls=[explanatory_ls[i] for i in idx2],
+                            error=[error[i] for i in idx2],
+                            is_day=is_day,
+                            **kwargs)
+                    else:
+                        pass
 
-            x = array(explanatory_ls)
-            x = sm.add_constant(x)
-            y = array(error)
-            results = sm.OLS(y, x).fit()
-
-            ax.plot(*zip(*[(i, results.params[0] + results.params[1] * i) for i in
-                           linspace(min(explanatory_ls), max(explanatory_ls), 2)]), 'k--')
-            p_value_slope = results.pvalues[1] / 2.
-            ax.text(0.1, 0.9, '*' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontweight='bold')
+            ax.set_xlabel(' '.join(config.UNITS_MAP[explanatory]), **fmt_axes)
 
         title = ' '.join(config.UNITS_MAP[k])
-        axs[1, 0].set_ylabel(' '.join((r'$\mathregular{\epsilon}$', title)), fontsize=16)
+        for ax in axs[:, 0]:
+            ax.set_ylabel(' '.join((r'$\mathregular{\epsilon}$', title)), **fmt_axes)
+
+        for i, ax in enumerate(axs.flatten()):
+            ax.tick_params(axis='both', labelsize=9.0)
+            ax.text(0.05, 0.9, f'({ascii_lowercase[i]})', transform=ax.transAxes, **fmt_axes)
+
         fig.tight_layout()
 
         if is_colormap:
-            c_bar = fig.colorbar(im, ax=axs.flatten()[-1], orientation='horizontal')
-            c_bar.set_label(' '.join(config.UNITS_MAP['incident_par']))
-            format_binary_colorbar(cbar=c_bar)
+            if is_day_night:
+                axs[0, 0].legend(fontsize=8, loc='lower right')
+            else:
+                fig.subplots_adjust(bottom=0.2)
+                cbar_ax = fig.add_axes([0.37, 0.05, 0.30, 0.03])
+                cbar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
+                format_binary_colorbar(cbar=cbar)
 
         fig.savefig(figure_dir / f'errors_{k}.png')
         pyplot.close()
 
     pass
+
+
+def plot_day_night(ax: pyplot.Subplot, explanatory_ls: list, error: list, is_day: bool,
+                   **kwargs) -> collections.PathCollection:
+    if is_day:
+        line_style = 'r-'
+        label = 'day'
+    else:
+        line_style = 'r--'
+        label = 'night'
+    im = ax.scatter(explanatory_ls, error, marker='.', edgecolor='none', label=label, **kwargs)
+
+    x = array(explanatory_ls)
+    x = sm.add_constant(x)
+    y = array(error)
+    ols = sm.OLS(y, x).fit()
+
+    kwargs2 = {k: v for k, v in kwargs.items()}
+    kwargs2.update({'alpha': 1})
+
+    lim = zip(*[(i, ols.params[0] + ols.params[1] * i) for i in linspace(min(explanatory_ls), max(explanatory_ls), 2)])
+    ax.plot(*lim, line_style, linewidth=1.25, label=label)
+
+    # p_value_slope = results.pvalues[1] / 2.
+    # s = (0.9, 'day') if is_day else (0.8, 'night')
+    # ax.text(0.1, s[0], f'* ({s[1]})' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontsize=8)
+
+    return im
 
 
 def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path):
