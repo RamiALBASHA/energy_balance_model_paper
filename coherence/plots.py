@@ -124,32 +124,56 @@ def plot_irradiance_dynamics(ax: plt.axis,
 def plot_temperature_dynamics(ax: plt.axis,
                               temperature_air: pd.Series,
                               simulation_case: str,
-                              all_cases_data: dict):
+                              all_cases_data: dict,
+                              is_set_title: bool = True,
+                              is_filled: bool = False):
     summary_data = get_summary_data(simulation_case, all_cases_data)
-    _, leaf_class = simulation_case.split('_')
+    canopy_class, leaf_class = simulation_case.split('_')
     component_indexes = summary_data.keys()
 
-    ax.set_title(handle_sim_name(simulation_case))
+    if is_set_title:
+        ax.set_title(handle_sim_name(simulation_case))
 
+    c_map = {'lumped': 'blue', 'sunlit': 'orange', 'shaded': 'DarkGreen'}
     hours = range(24)
-    ax.plot(hours, temperature_air, label='air', color='k', linestyle='--', linewidth=2)
+    ax.plot(hours, temperature_air, label=r"T$_{\rm air}$", color='k', linestyle='--')
+    ax.plot(hours, [v - 273.15 for v in summary_data[-1]], label=r"T$_{\rm soil}$", color='k')
 
-    for component_index in component_indexes:
-        component_temperature = summary_data[component_index]
-        if component_index == -1:
+    component_indexes = [cidx for cidx in component_indexes if cidx != -1]
+    if canopy_class == 'bigleaf':
+        component_temperature = summary_data[component_indexes[0]]
+        if leaf_class == 'lumped':
             ax.plot(hours, [v - 273.15 for v in component_temperature],
-                    label=f'soil', color='k', linewidth=2)
+                    label=r"T$\rm _{{{}}}$".format("s, lumped"), c=c_map['lumped'])
+        else:
+            ax.plot(hours, [v - 273.15 for v in component_temperature['sunlit']],
+                    label=r"T$\rm _{{{}}}$".format("s, sunlit"), c=c_map['sunlit'])
+            ax.plot(hours, [v - 273.15 for v in component_temperature['shaded']],
+                    label=r"T$\rm _{{{}}}$".format("s, shaded"), c=c_map['shaded'])
+    else:
+        if not is_filled:
+            for component_index in component_indexes:
+                component_temperature = summary_data[component_index]
+                if leaf_class == 'lumped':
+                    ax.plot(hours, [v - 273.15 for v in component_temperature],
+                            label=r"T$\rm _{{{}}}$".format(f's, {component_index}'), c=c_map['lumped'])
+                else:
+                    ax.plot(hours,
+                            [v - 273.15 for v in component_temperature['sunlit']],
+                            label=r"T$\rm _{{{}}}$".format(f"s, {component_index}, sunlit"), c=c_map['sunlit'])
+                    ax.plot(hours,
+                            [v - 273.15 for v in component_temperature['shaded']],
+                            label=r"T$\rm _{{{}}}$".format(f"s, {component_index}, shaded"), c=c_map['shaded'])
         else:
             if leaf_class == 'lumped':
-                ax.plot(hours, [v - 273.15 for v in summary_data[component_index]],
-                        label=f'{component_index}')
+                t_max, t_min = zip(*[(max(ls) - 273.15, min(ls) - 273.15) for ls in
+                                     zip(*[summary_data[i] for i in component_indexes])])
+                ax.fill_between(hours, t_min, t_max, color=c_map['lumped'], label='lumped')
             else:
-                ax.plot(hours,
-                        [v - 273.15 for v in summary_data[component_index]['sunlit']],
-                        label=f'sunlit {component_index}')
-                ax.plot(hours,
-                        [v - 273.15 for v in summary_data[component_index]['shaded']],
-                        label=f'shaded {component_index}')
+                for s in ('sunlit', 'shaded'):
+                    t_max, t_min = zip(*[(max(ls) - 273.15, min(ls) - 273.15) for ls in
+                                         zip(*[summary_data[i][s] for i in component_indexes])])
+                    ax.fill_between(hours, t_min, t_max, color=c_map[s], label=s)
 
     pass
 
@@ -846,4 +870,57 @@ def evaluate_execution_time(time_data: dict, figure_path: Path):
     axs[0, 0].legend()
     fig.tight_layout()
     fig.savefig(figure_path / 'execution_time.png')
+    pass
+
+
+def plot_mixed(data: tuple, figs_path: Path):
+    layers, irradiance, irradiance_object, temperature, solver_group, execution_time = data
+    models = irradiance.keys()
+    eb_components = [
+        'net_radiation', 'sensible_heat_flux', 'total_penman_monteith_evaporative_energy', 'soil_heat_flux',
+        'energy_balance']
+    fig, axs = plt.subplots(ncols=len(models), nrows=3, sharex='all', sharey='row', figsize=(7.48, 4.8),
+                            gridspec_kw={'wspace': 0, 'hspace': 0, 'height_ratios': [4, 4, 1.5]})
+    for i_model, model in enumerate(models):
+        for eb_component in eb_components:
+            axs[0, i_model] = plot_energy_balance_components(
+                h_solver=solver_group[model],
+                variable_to_plot=eb_component,
+                ax=axs[0, i_model],
+                figure_path=Path(),
+                return_ax=True)
+        plot_temperature_dynamics(
+            ax=axs[1, i_model],
+            temperature_air=[solver_group[model][h].crop.inputs.air_temperature - 273.15 for h in range(24)],
+            simulation_case=model,
+            all_cases_data=temperature,
+            is_set_title=False,
+            is_filled=True)
+        axs[-1, i_model].plot([solver_group[model][h].iterations_number for h in range(24)], 'k-')
+
+    for i, ax in enumerate(axs[:2, :].flatten()):
+        ax.text(0.05, 0.875, f'({ascii_lowercase[i]})', transform=ax.transAxes)
+    for i, ax in enumerate(axs[-1, :]):
+        ax.text(0.05, 0.7, f'({ascii_lowercase[i + 8]})', transform=ax.transAxes)
+    for model, ax in zip(models, axs[0, :]):
+        ax.set_title('\n'.join(handle_sim_name(model).split(' ')))
+    axs[0, 0].set_ylabel('\n'.join(['Energy balance term', r'$\mathregular{[W\/m^{-2}]}$']), fontsize=10)
+    # axs[0, 0].set_ylim([axs[0, 0].get_ylim()[i] + y for i, y in zip([0, -1], [-150, 0])])
+    axs[1, 0].set_ylabel('\n'.join(['Temperature', r'$\mathregular{[^{\circ}C]}$']), fontsize=10)
+    axs[1, 0].set_ylim([axs[1, 0].get_ylim()[i] + y for i, y in zip([0, -1], [-10, 0])])
+    axs[2, 0].set_ylabel('Number of\niterations', fontsize=10)
+    axs[2, 1].set_xlabel('Hour of the day')
+    axs[2, 1].xaxis.set_label_coords(1, -0.5, transform=axs[2, 1].transAxes)
+    handles, labels = axs[0, 0].get_legend_handles_labels()
+    h0, l0 = zip(*[(h, l) for (h, l) in zip(handles, labels) if l != 'balance'])
+    # h1, l1 = zip(*[(h, l) for (h, l) in zip(handles, labels) if l == 'balance'])
+    axs[0, 0].legend(handles=h0, labels=l0, loc='center left', fontsize=8, handlelength=1.5, ncol=1)
+    # axs[0, 0].legend(handles=h1, labels=l1, loc='upper right', fontsize=8)
+
+    for ax in axs[1, :]:
+        ax.legend(loc='lower right', fontsize=8, handlelength=1.5, ncol=1)
+
+    fig.tight_layout()
+    fig.savefig(figs_path / 'mixed.png')
+    plt.close("all")
     pass

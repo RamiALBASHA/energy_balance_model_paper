@@ -227,6 +227,30 @@ def run_four_canopy_sims():
     pass
 
 
+def run_four_canopy_sims_mixed(is_sunny: True):
+    figs_path = Path(__file__).parents[1] / 'figs/coherence'
+    figs_path.mkdir(exist_ok=True, parents=True)
+    weather_files = {'sunny': 'grignon_high_rad_high_vpd.csv', 'cloudy': 'grignon_low_rad_low_vpd.csv'}
+    if is_sunny:
+        weather_files.pop('cloudy')
+
+    res = {}
+    for weather_name, weather_file in weather_files.items():
+        sim_result = sim_general(
+            canopy_representations=(('bigleaf', 'lumped'),
+                                    ('bigleaf', 'sunlit-shaded'),
+                                    ('layered', 'lumped'),
+                                    ('layered', 'sunlit-shaded')),
+            leaf_layers={4: 1.0, 3: 1.0, 2: 1.0, 1: 1.0},
+            weather_file_name=weather_file,
+            correct_for_stability=False,
+            generate_plots=False,
+            return_results=True,
+            figures_path=figs_path / weather_file.split('.')[0])
+        plots.plot_mixed(data=sim_result, figs_path=figs_path / weather_file.split('.')[0])
+    pass
+
+
 def run_four_canopy_sims_on_ww_and_ws():
     figs_path = Path(__file__).parents[1] / 'figs/coherence'
     figs_path.mkdir(exist_ok=True, parents=True)
@@ -429,6 +453,7 @@ def evaluate_execution_time():
 
 
 if __name__ == '__main__':
+    run_four_canopy_sims_mixed(is_sunny=True)
     run_four_canopy_sims()
     run_four_canopy_sims_on_ww_and_ws()
     examine_diffuse_ratio_effect()
