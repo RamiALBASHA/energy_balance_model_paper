@@ -309,7 +309,8 @@ def plot_mixed(data: dict, path_figs_dir: Path):
         ax_dynamic.xaxis.set_major_locator(dates.HourLocator(interval=3))
         ax_dynamic.xaxis.set_major_formatter(dates.DateFormatter("%H"))
         # ax_dynamic.tick_params(axis='both', which='major', labelsize=8)
-        ax_dynamic.set(xlabel=f'hour of the day (DOY {date_obs.date().timetuple().tm_yday})',
+        date_str = ' '.join([date_obs.strftime('%b %d') + r"$^{\rm th}$", str(date_obs.year)])
+        ax_dynamic.set(xlabel=f'Hour of the day ({date_str})',
                        ylabel='\n'.join(['Surface', f"temperature {config.UNITS_MAP['temperature'][-1]}"]))
 
         h_dynamic, l_dynamic = ax_dynamic.get_legend_handles_labels()
