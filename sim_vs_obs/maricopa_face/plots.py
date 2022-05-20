@@ -429,7 +429,8 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
 
 
 def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path, alpha: float = 0.5,
-                    axs: array = None, fig_name_suffix: str = '', text_kwargs: dict = None, cbar_dims: list = None):
+                    axs: array = None, fig_name_suffix: str = '', text_kwargs: dict = None, cbar_dims: list = None,
+                    is_color_bar: bool = True):
     if text_kwargs is None:
         text_kwargs = {}
 
@@ -457,9 +458,9 @@ def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Pat
     for ax, (k, v) in zip(axs, res_all.items()):
         obs_ls, sim_ls = v['obs'], v['sim']
         obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
-        ax.text(0.1, 0.9, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.1f}', transform=ax.transAxes, **text_kwargs)
-        ax.text(0.1, 0.8, f'R²={stats.calc_r2(obs_ls, sim_ls):.2f}', transform=ax.transAxes, **text_kwargs)
-        ax.text(0.1, 0.7, f'nNSE={stats.calc_normaized_nash_sutcliffe(sim=sim_ls, obs=obs_ls):.2f}',
+        ax.text(0.95, 0.25, f'R²={stats.calc_r2(obs_ls, sim_ls):.2f}', transform=ax.transAxes, **text_kwargs)
+        ax.text(0.95, 0.15, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.1f}', transform=ax.transAxes, **text_kwargs)
+        ax.text(0.95, 0.05, f'nNSE={stats.calc_normaized_nash_sutcliffe(sim=sim_ls, obs=obs_ls):.2f}',
                 transform=ax.transAxes, **text_kwargs)
         ax.set_title(config.UNITS_MAP[k][0])
         add_1_1_line(ax)
@@ -467,7 +468,7 @@ def plot_sim_vs_obs(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Pat
 
     fig.tight_layout()
 
-    if c:
+    if is_color_bar:
         cbar_dims = [0.37, 0.1, 0.30, 0.04] if cbar_dims is None else cbar_dims
         cbar_ax = fig.add_axes(cbar_dims)
         c_bar = fig.colorbar(im, cax=cbar_ax, orientation='horizontal')
@@ -657,7 +658,7 @@ def plot_day_night(ax: pyplot.Subplot, explanatory_ls: list, error: list, is_day
 
 def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path):
     vars_to_plot_summary = ['net_radiation', 'sensible_heat_flux', 'latent_heat_flux', 'soil_heat_flux']
-    vars_to_plot_dynamic = ['gai'] + vars_to_plot_summary + ['temperature_canopy', 'temperature_canopy-temperature_air']
+    vars_to_plot_dynamic = ['gai'] + ['temperature_canopy', 'temperature_canopy-temperature_air'] + vars_to_plot_summary
     nb_vars_to_plot_summary = len(vars_to_plot_summary)
     nb_vars_to_plot_dynamic = len(vars_to_plot_dynamic)
 
@@ -665,13 +666,14 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
         (910, date_range(start=datetime(1996, 1, 31), end=datetime(1996, 2, 4, 23), freq='H')),
         (910, date_range(start=datetime(1996, 2, 28), end=datetime(1996, 3, 3, 23), freq='H'))]
     nb_cols = len(look_into)
+    scaling_factor = 100.
 
-    fig = pyplot.figure(figsize=(7.48, 10))
-    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, hspace=0, height_ratios=[1.75, 1])
+    fig = pyplot.figure(figsize=(7.48, 9.5))
+    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, hspace=0, height_ratios=[2.5, 1])
 
     gs_dynamic = gs[0].subgridspec(nrows=len(vars_to_plot_dynamic), ncols=nb_cols, wspace=0.025, hspace=0.)
     axs_dynamic = array([fig.add_subplot(ss) for ss in gs_dynamic]).reshape(nb_vars_to_plot_dynamic, nb_cols)
-    gs_summary = gs[-1].subgridspec(nrows=1, ncols=nb_vars_to_plot_summary, wspace=0.35)
+    gs_summary = gs[-1].subgridspec(nrows=1, ncols=nb_vars_to_plot_summary, wspace=0.6)
     axs_summary = [fig.add_subplot(ss) for ss in gs_summary]
     axs_summary = plot_sim_vs_obs(
         res_all={k: v for k, v in res_all.items() if k in vars_to_plot_summary + ['incident_par']},
@@ -679,9 +681,10 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
         res_dry={k: v for k, v in res_dry.items() if k in vars_to_plot_summary + ['incident_par']},
         axs=array(axs_summary),
         alpha=0.2,
-        text_kwargs={'fontsize': 8},
+        text_kwargs={'fontsize': 8, 'ha': 'right'},
         cbar_dims=[0.37, 0.05, 0.30, 0.01],
-        figure_dir=Path())
+        figure_dir=Path(),
+        is_color_bar=False)
     axs_summary[-1].get_legend().remove()
 
     for j, (expe_id, dates_ls) in enumerate(look_into):
@@ -690,20 +693,27 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
             look_into={expe_id: dates_ls})
         s = add_delta_temperature(s)
 
-        axs_dynamic[0, j].plot(dates_ls, s['gai'], label='LAI', linewidth=0.75)
-        axs_dynamic[0, 0].set_ylabel('\n'.join(config.UNITS_MAP['gai']), fontsize=8)
+        axs_dynamic[0, j].plot(dates_ls, s['gai'], linewidth=0.75)
+        axs_dynamic[0, 0].set_ylabel('\n'.join(['Green\narea index', config.UNITS_MAP['gai'][1]]), fontsize=8)
         for k, ax in zip(vars_to_plot_dynamic[1:], axs_dynamic[1:, j]):
             ax.scatter(dates_ls, s[k]['obs'], label='obs', marker='.', edgecolor='none')
             ax.plot(dates_ls, s[k]['sim'], label='sim', linewidth=0.75)
             if j == 0:
                 if k == 'temperature_canopy-temperature_air':
-                    var_name = '-'.join([config.UNITS_MAP[ki][0] for ki in k.split('-')])
-                    ax.set_ylabel('\n'.join((var_name, config.UNITS_MAP['temperature'][1])), fontsize=8)
+                    var_name = 'Canopy\ntemperature\ndepression'
+                    var_unit = config.UNITS_MAP['temperature'][1]
+                elif k == 'temperature_canopy':
+                    var_name = 'Canopy\ntemperature'
+                    var_unit = config.UNITS_MAP[k][1]
                 else:
-                    ax.set_ylabel('\n'.join(config.UNITS_MAP[k]), fontsize=8)
+                    var_name = k.capitalize().split('_')
+                    var_name = '\n'.join([var_name[0], ' '.join(var_name[1:])])
+                    var_unit = config.UNITS_MAP[k][1]
+                ax.set_ylabel('\n'.join((var_name, var_unit)), fontsize=8)
+        axs_dynamic[-1, 1].legend(fontsize=8, loc='upper right')
 
+    _format_summary_axs(axs_summary=axs_summary, var_names=vars_to_plot_summary, scaling_factor=scaling_factor)
     _format_dynamic_axs(axs_dynamic=axs_dynamic)
-    _format_summary_axs(axs_summary=axs_summary)
 
     fig.tight_layout()
     fig.savefig(figure_dir / 'mixed.png')
@@ -713,7 +723,8 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
 def _format_dynamic_axs(axs_dynamic: array):
     d_x = .005  # how big to make the diagonal lines in axes coordinates
     d_y = 10 * d_x
-    for ax in axs_dynamic[:, 0]:
+    for s, ax in zip(ascii_lowercase, axs_dynamic[:, 0]):
+        ax.text(0.025, 0.825, f'({s})', transform=ax.transAxes, fontsize=8)
         ax.yaxis.tick_left()
         ax.spines['right'].set_visible(False)
         kwargs = dict(transform=ax.transAxes, color='k', clip_on=False, linewidth=0.5)
@@ -743,13 +754,17 @@ def _format_dynamic_axs(axs_dynamic: array):
     pass
 
 
-def _format_summary_axs(axs_summary: array):
-    energy_balance_unit = config.UNITS_MAP["energy_balance"][1]
-    for ax in axs_summary:
+def _format_summary_axs(axs_summary: array, var_names: list[str], scaling_factor: float = 1.):
+    energy_balance_unit = config.UNITS_MAP["energy_balance"][1].replace('(', f'(x{scaling_factor:.0f}\/\/')
+    for ax, var_name, s in zip(axs_summary, var_names, ascii_lowercase):
+        ax.set_title('')
+        ax.text(0.1, 0.85, f'({s})', transform=ax.transAxes, fontsize=8)
         ax.tick_params(axis='both', which='major', labelsize=8)
-        ax.set_xlabel(f'obs {energy_balance_unit}', fontsize=8)
-    axs_summary[0].set_ylabel(f'sim {energy_balance_unit}', fontsize=8)
-
+        ax.set_ylabel(f"Simulated {var_name.capitalize().replace('_', ' ')}\n{energy_balance_unit}", fontsize=8,
+                      labelpad=0.1)
+        ax.set_xlabel(f"Observed {var_name.capitalize().replace('_', ' ')}\n{energy_balance_unit}", fontsize=8)
+        ax.set_xticklabels([int(v / scaling_factor) for v in ax.get_xticks()])
+        ax.set_yticklabels([int(v / scaling_factor) for v in ax.get_yticks()])
     pass
 
 
