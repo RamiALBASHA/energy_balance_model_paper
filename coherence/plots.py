@@ -314,30 +314,62 @@ def plot_radiation_temperature_profiles(hours: list,
     axes[0, 0].set_ylim((-0.25, max(component_indices) + 2))
     axes[0, 0].yaxis.set_major_locator(MaxNLocator(integer=True))
     axes[0, 0].set_yticks(component_indices + [0])
-    axes[2, 0].set_ylabel('Layer index [-]', rotation=90, ha='center')
+    axes[2, 0].set_ylabel('Canopy layer index [-]', rotation=90, ha='center')
 
     axes[-1, 1].xaxis.set_major_locator(MultipleLocator(0.5))
-    axes[-1, 1].set_xlim(0, 1.05)
+    axes[-1, 1].set_xlim(-0.1, 1.2)
 
     xlim_temperature = [ax.get_xlim() for ax in axes[-1, 2:]]
     xlim_temperature = [item for sublist in xlim_temperature for item in sublist]
     for ax in axes[-1, 2:]:
         ax.set_xlim(min(xlim_temperature), max(xlim_temperature))
 
+    for i, ax in enumerate(axes.transpose().flatten()):
+        ax.text(0.05, 0.875, f'({ascii_lowercase[i]})', transform=ax.transAxes)
+
     for i_hour, ax_row in enumerate(axes):
         for ax in ax_row:
-            ax.text(0.05, 0.875, f'({ascii_lowercase[i_hour]})', transform=ax.transAxes)
-            ax.text(0.20, 0.875, f'{hours[i_hour]:02d}:00', fontsize=9, ha='left', transform=ax.transAxes)
-    for j, col in enumerate(columns):
-        axes[-1, j].set_xlabel('\n'.join([col.replace('_', ' '), UNITS_MAP[col.lower()][-1]]))
+            ax.text(0.7, 0.875, f'{hours[i_hour]:02d}:00', fontsize=9, ha='left', transform=ax.transAxes)
+    for ax, col in zip(axes[-1, :3], columns[:3]):
+        ax.set_xlabel('\n'.join([col.replace('_', ' '), UNITS_MAP[col.lower()][-1]]))
+    axes[-1, 2].xaxis.set_label_coords(1.05, -0.165, transform=axes[-1, 2].transAxes)
 
-    for col_axs, water_status in zip((axes[:, 2], axes[:, 3]), ('Well Watered', 'Water Deficit')):
-        for ax in col_axs:
-            ax.text(0.95, 0.875, water_status, fontsize=6, ha='right', transform=ax.transAxes)
+    for ax, water_status in zip(axes[0, 2:4], ('Well Watered', 'Water Deficit')):
+        ax.set_title(water_status, fontsize=8)
 
+    h_irradiance, l_irradiance = axes[0, 0].get_legend_handles_labels()
+    labels_irradiance = ['incident_par_direct', 'incident_par_diffuse',
+                         'Bigleaf Lumped', 'Bigleaf Sunlit', 'Bigleaf Shaded',
+                         'Layered Lumped', 'Layered Sunlit', 'Layered Shaded',
+                         'soil']
+    h_irradiance = [h_irradiance[l_irradiance.index(l)] for l in labels_irradiance]
+    for i in range(2):
+        labels_irradiance[i] = UNITS_MAP[labels_irradiance[i]][0]
+
+    axes[0, 0].legend(
+        handles=h_irradiance,
+        labels=labels_irradiance,
+        fontsize=7,
+        loc='lower right')
+
+    h_temperature, l_temperature = axes[0, 2].get_legend_handles_labels()
+    labels_temperature = ['temperature_air',
+                          'Bigleaf Lumped', 'Bigleaf Sunlit', 'Bigleaf Shaded',
+                          'Layered Lumped', 'Layered Sunlit', 'Layered Shaded',
+                          'soil']
+    h_temperature = [h_temperature[l_temperature.index(l)] for l in labels_temperature]
+    labels_temperature[0] = UNITS_MAP['temperature_air'][0]
+    for ax in axes[0, [2, 3]]:
+        ax.legend(
+            handles=h_temperature,
+            labels=labels_temperature,
+            fontsize=7,
+            loc='lower right')
+
+    axes[0, 1].legend(loc='lower left', fontsize=7)
     fig.tight_layout()
     fig.subplots_adjust(wspace=0, hspace=0)
-    fig.savefig(str(figure_path / f'temperature_profiles.png'))
+    fig.savefig(str(figure_path / f'temperature_profiles.png'), dpi=600)
     plt.close()
 
 
@@ -406,7 +438,7 @@ def plot_temperature_at_one_hour_bis(ax: plt.axis,
         if forced_component_indices:
             y = forced_component_indices
             x = [x[0]] * len(forced_component_indices)
-        ax.plot([v - 273.15 for v in x], y, label='lumped', color='blue', **kwargs)
+        ax.plot([v - 273.15 for v in x], y, label=f'{canopy_class.capitalize()} Lumped', color='blue', **kwargs)
     else:
         y, x_sun, x_sh = zip(
             *[(i, summary_data[i]['sunlit'][hour], summary_data[i]['shaded'][hour]) for i in component_indexes if
@@ -416,18 +448,18 @@ def plot_temperature_at_one_hour_bis(ax: plt.axis,
             x_sun = [x_sun[0]] * len(forced_component_indices)
             x_sh = [x_sh[0]] * len(forced_component_indices)
 
-        ax.plot([v - 273.15 for v in x_sun], y, color='orange', label='sunlit', **kwargs)
-        ax.plot([v - 273.15 for v in x_sh], y, color='darkgreen', label='shaded', **kwargs)
+        ax.plot([v - 273.15 for v in x_sun], y, color='orange', label=f'{canopy_class.capitalize()} Sunlit', **kwargs)
+        ax.plot([v - 273.15 for v in x_sh], y, color='darkgreen', label=f'{canopy_class.capitalize()} Shaded', **kwargs)
 
     if plot_soil_temperature:
         ax.plot(summary_data[-1][hour] - 273.15, 0, 's', color='brown', label='soil')
 
     if plot_air_temperature:
         y_text = max(y)
-        ax.scatter(temperature_air[hour], y_text + 1, alpha=0)
-        ax.annotate('', xy=(temperature_air[hour], y_text + 0.15),
-                    xytext=(temperature_air[hour], y_text + 1.0),
-                    arrowprops=dict(arrowstyle="->"), ha='center')
+        ax.scatter(temperature_air[hour], y_text + 0.5, marker='$\u2193$', label='temperature_air', color='k')
+        # ax.annotate('', xy=(temperature_air[hour], y_text + 0.15),
+        #             xytext=(temperature_air[hour], y_text + 1.0),
+        #             arrowprops=dict(arrowstyle="->"), ha='center')
 
     return
 
@@ -511,7 +543,7 @@ def plot_irradiance_at_one_hour_bis(ax: plt.axis,
         if forced_component_indices and is_bigleaf:
             y = forced_component_indices
             x = [x[0]] * len(forced_component_indices)
-        ax.plot(x, y, color='blue', label='lumped', **kwargs)
+        ax.plot(x, y, color='blue', label=f'{canopy_class.capitalize()} Lumped', **kwargs)
     else:
         y, x_sun, x_sh = zip(
             *[(i, summary_data[i]['sunlit'][hour], summary_data[i]['shaded'][hour]) for i in component_indexes if
@@ -520,18 +552,18 @@ def plot_irradiance_at_one_hour_bis(ax: plt.axis,
             y = forced_component_indices
             x_sun = [x_sun[0]] * len(forced_component_indices)
             x_sh = [x_sh[0]] * len(forced_component_indices)
-        ax.plot(x_sun, y, color='orange', label='sunlit', **kwargs)
-        ax.plot(x_sh, y, color='darkgreen', label='shaded', **kwargs)
+        ax.plot(x_sun, y, color='orange', label=f'{canopy_class.capitalize()} Sunlit', **kwargs)
+        ax.plot(x_sh, y, color='darkgreen', label=f'{canopy_class.capitalize()} Shaded', **kwargs)
 
     if plot_soil:
         ax.plot(summary_data[-1][hour], 0, 's', color='brown', label='soil')
 
     if plot_incident:
         y_text = max(y)
-        for s, (v, c) in ({'PAR_direct': (incident_direct[hour], 'orange'),
-                           'PAR_diffuse': (incident_diffuse[hour], 'darkgreen')}).items():
-            ax.scatter(v, y_text + 1, alpha=0)
-            ax.annotate('', xy=(v, y_text + 0.15), xytext=(v, y_text + 1.0), arrowprops=dict(arrowstyle="->", color=c))
+        for s, (v, c) in ({'incident_par_direct': (incident_direct[hour], 'orange'),
+                           'incident_par_diffuse': (incident_diffuse[hour], 'darkgreen')}).items():
+            ax.scatter(v, y_text + 0.5, marker='$\u2193$', label=s, color=c)
+            # ax.annotate('', xy=(v, y_text + 0.15), xytext=(v, y_text + 1.0), arrowprops=dict(arrowstyle="->", color=c))
 
     return
 
@@ -542,10 +574,11 @@ def plot_shaded_fraction(hour: int, simulation_case: str, ax: plt.axis, all_case
     if canopy_class == 'bigleaf':
         ax.vlines(all_cases_data[simulation_case][hour][0].shaded_fraction,
                   min(forced_component_indices), max(forced_component_indices),
-                  colors='k', linestyles='--', linewidth=1)
+                  colors='k', linestyles='--', linewidth=1, label='Bigleaf')
     else:
         layers = list(all_cases_data[simulation_case][hour].keys())
-        ax.plot([all_cases_data[simulation_case][hour][i].shaded_fraction for i in layers], layers, 'k.')
+        ax.plot([all_cases_data[simulation_case][hour][i].shaded_fraction for i in layers], layers, 'k.',
+                label='Layered')
     pass
 
 
