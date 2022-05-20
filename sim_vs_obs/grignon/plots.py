@@ -1,13 +1,14 @@
 from copy import deepcopy
 from datetime import datetime, timedelta
 from pathlib import Path
+from string import ascii_lowercase
 
 import statsmodels.api as sm
+from crop_energy_balance.solver import Solver
 from matplotlib import pyplot, ticker, gridspec, dates
 from numpy import array, linspace
 from pandas import isna, date_range, DataFrame, concat
 
-from crop_energy_balance.solver import Solver
 from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
 from sim_vs_obs.grignon.config import CanopyInfo
 from utils import stats, config
@@ -289,25 +290,33 @@ def plot_mixed(data: dict, path_figs_dir: Path):
                 for k, v in obs.items():
                     ax_profile.scatter(v, [k] * len(v), marker='s', c='red', alpha=0.3, label='obs')
                 ax_profile.scatter(*zip(*[(v, k) for (k, v) in sim.items()]), marker='.', c='blue', label='sim')
+        ax_dynamic.text(0.02, 0.825, '(a)', fontsize=9, ha='left', transform=ax_dynamic.transAxes)
 
         t_lims = ax_dynamic.get_ylim()
         layer_indices = range(5, 10)
-        for ax_profile, hour in zip(axs_profile, hours):
-            ax_profile.set(ylim=(4.25, 10.5), xlim=t_lims)
+        for ax_profile, hour, s in zip(axs_profile, hours, ascii_lowercase[1:]):
+            ax_profile.set(ylim=(4.25, 11), xlim=t_lims)
             ax_profile.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
             ax_profile.set_yticks(layer_indices)
-            ax_profile.text(0.86, 0.875, f'{hour:02d}:00', fontsize=9, ha='left', transform=ax_profile.transAxes)
+            ax_profile.text(0.02, 0.85, f'({s})', fontsize=9, ha='left', transform=ax_profile.transAxes)
+            ax_profile.text(0.84, 0.85, f'{hour:02d}:00', fontsize=9, ha='left', transform=ax_profile.transAxes)
             if hour != hours[-1]:
                 ax_profile.xaxis.set_visible(False)
 
-        axs_profile[2].set_ylabel('Layer index [-]', rotation=90, ha='center')
-        axs_profile[-1].set_xlabel(' '.join(config.UNITS_MAP['temperature']))
+        axs_profile[2].set_ylabel('Canopy layer index (-)', rotation=90, ha='center', labelpad=12)
+        axs_profile[-1].set_xlabel(' '.join(['Surface temperature', config.UNITS_MAP['temperature'][-1]]))
 
         ax_dynamic.xaxis.set_major_locator(dates.HourLocator(interval=3))
         ax_dynamic.xaxis.set_major_formatter(dates.DateFormatter("%H"))
         # ax_dynamic.tick_params(axis='both', which='major', labelsize=8)
         ax_dynamic.set(xlabel=f'hour of the day (DOY {date_obs.date().timetuple().tm_yday})',
-                       ylabel=' '.join(config.UNITS_MAP['temperature']))
+                       ylabel='\n'.join(['Surface', f"temperature {config.UNITS_MAP['temperature'][-1]}"]))
+
+        h_dynamic, l_dynamic = ax_dynamic.get_legend_handles_labels()
+        labels_dynamic = ('sim', 'obs')
+        handles_dynamic = [h_dynamic[l_dynamic.index(lbl)] for lbl in labels_dynamic]
+        ax_dynamic.legend(handles=handles_dynamic, labels=labels_dynamic, loc='upper right', fontsize=8)
+        # axs_profile[0].legend(handles=handles_dynamic, labels=labels_dynamic, loc='lower right', fontsize=8)
 
         fig.tight_layout()
         fig.savefig(path_figs_dir / f'mixed_{treatment}.png')
