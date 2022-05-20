@@ -19,6 +19,8 @@ UNITS_MAP = {
     'LAI': (r'$\mathregular{L_t}$', r'$\mathregular{[m^{2}_{leaf}\/m^{-2}_{ground}]}$'),
     'surface_conductance': (r'$\mathregular{g_{s,\/l}}$', r'$\mathregular{[m\/h^{-1}]}$'),
     'incident_par': (r'$\mathregular{R_{inc}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
+    'incident_par_direct': (r'$\mathregular{R_{inc,\/direct}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
+    'incident_par_diffuse': (r'$\mathregular{R_{inc,\/diffuse}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
     'absorbed_par': (r'$\mathregular{R_{abs}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
     'absorbed_par_soil': (r'$\mathregular{R_{abs, soil}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
     'absorbed_par_veg': (r'$\mathregular{R_{abs, veg}}$', r'$\mathregular{[W_{PAR}\/m^{-2}_{ground}]}$'),
