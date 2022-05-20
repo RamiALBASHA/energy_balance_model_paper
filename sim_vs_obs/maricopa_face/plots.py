@@ -712,7 +712,8 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
                 ax.set_ylabel('\n'.join((var_name, var_unit)), fontsize=8)
         axs_dynamic[-1, 1].legend(fontsize=8, loc='upper right')
 
-    _format_summary_axs(axs_summary=axs_summary, var_names=vars_to_plot_summary, scaling_factor=scaling_factor)
+    _format_summary_axs(axs_summary=axs_summary, var_names=vars_to_plot_summary,
+                        nb_vars_dynamic=len(vars_to_plot_dynamic), scaling_factor=scaling_factor)
     _format_dynamic_axs(axs_dynamic=axs_dynamic, year=dates_ls[0].year)
 
     fig.tight_layout()
@@ -720,7 +721,7 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
     pyplot.close('all')
 
 
-def _format_dynamic_axs(axs_dynamic: array, year : int = None):
+def _format_dynamic_axs(axs_dynamic: array, year: int = None):
     d_x = .005  # how big to make the diagonal lines in axes coordinates
     d_y = 10 * d_x
     for s, ax in zip(ascii_lowercase, axs_dynamic[:, 0]):
@@ -758,11 +759,11 @@ def _format_dynamic_axs(axs_dynamic: array, year : int = None):
     pass
 
 
-def _format_summary_axs(axs_summary: array, var_names: list[str], scaling_factor: float = 1.):
+def _format_summary_axs(axs_summary: array, var_names: list[str], nb_vars_dynamic: int, scaling_factor: float = 1.):
     energy_balance_unit = config.UNITS_MAP["energy_balance"][1].replace('(', f'(x{scaling_factor:.0f}\/\/')
-    for ax, var_name, s in zip(axs_summary, var_names, ascii_lowercase):
+    for i, (ax, var_name) in enumerate(zip(axs_summary, var_names)):
         ax.set_title('')
-        ax.text(0.1, 0.85, f'({s})', transform=ax.transAxes, fontsize=8)
+        ax.text(0.1, 0.85, f'({ascii_lowercase[i + nb_vars_dynamic]})', transform=ax.transAxes, fontsize=8)
         ax.tick_params(axis='both', which='major', labelsize=8)
         ax.set_ylabel(f"Simulated {var_name.capitalize().replace('_', ' ')}\n{energy_balance_unit}", fontsize=8,
                       labelpad=0.1)
