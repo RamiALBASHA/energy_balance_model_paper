@@ -669,7 +669,7 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
     scaling_factor = 100.
 
     fig = pyplot.figure(figsize=(7.48, 9.5))
-    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, hspace=0, height_ratios=[2.5, 1])
+    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, hspace=0, height_ratios=[2, 1])
 
     gs_dynamic = gs[0].subgridspec(nrows=len(vars_to_plot_dynamic), ncols=nb_cols, wspace=0.025, hspace=0.)
     axs_dynamic = array([fig.add_subplot(ss) for ss in gs_dynamic]).reshape(nb_vars_to_plot_dynamic, nb_cols)
@@ -713,14 +713,14 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
         axs_dynamic[-1, 1].legend(fontsize=8, loc='upper right')
 
     _format_summary_axs(axs_summary=axs_summary, var_names=vars_to_plot_summary, scaling_factor=scaling_factor)
-    _format_dynamic_axs(axs_dynamic=axs_dynamic)
+    _format_dynamic_axs(axs_dynamic=axs_dynamic, year=dates_ls[0].year)
 
     fig.tight_layout()
     fig.savefig(figure_dir / 'mixed.png')
     pyplot.close('all')
 
 
-def _format_dynamic_axs(axs_dynamic: array):
+def _format_dynamic_axs(axs_dynamic: array, year : int = None):
     d_x = .005  # how big to make the diagonal lines in axes coordinates
     d_y = 10 * d_x
     for s, ax in zip(ascii_lowercase, axs_dynamic[:, 0]):
@@ -750,6 +750,10 @@ def _format_dynamic_axs(axs_dynamic: array):
 
     for ax in axs_dynamic[:-1].flatten():
         ax.xaxis.set_visible(False)
+
+    if year is not None:
+        axs_dynamic[-1, 0].set_xlabel(f'Year {year}')
+        axs_dynamic[-1, 0].xaxis.set_label_coords(1.05, -0.6, transform=axs_dynamic[-1, 0].transAxes)
 
     pass
 
