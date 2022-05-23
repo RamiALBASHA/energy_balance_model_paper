@@ -830,9 +830,12 @@ def plot_surface_conductance_profile(surface_conductance: dict, figure_path: Pat
     x_shaded, _ = zip(*surface_conductance['sunlit'])
     x_sunlit, y = zip(*surface_conductance['shaded'])
     ax.plot([xsun + xshade for xsun, xshade in zip(x_sunlit, x_shaded)], y, label='sunlit+shaded')
-    ax.set(xlabel=' '.join(UNITS_MAP['surface_conductance']),
+    ax.set(xlabel=f"Surface conductance {UNITS_MAP['surface_conductance'][1]}",
            ylabel=f'Cumulative leaf area index {UNITS_MAP["LAI"][1]}')
-    ax.legend()
+    handles, labels = ax.get_legend_handles_labels()
+    labels_sorted = sorted(labels)
+    handles = [handles[labels.index(s)] for s in labels_sorted]
+    ax.legend(handles=handles, labels=labels_sorted)
     fig.savefig(figure_path / 'effect_surface_conductance.png')
 
 
