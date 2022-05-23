@@ -5,6 +5,7 @@ from string import ascii_lowercase
 import pandas as pd
 from crop_energy_balance import crop as eb_canopy
 from crop_irradiance.uniform_crops import shoot as irradiance_canopy
+from matplotlib import cm, colors
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator, MultipleLocator
 from numpy import median, mean
@@ -277,7 +278,8 @@ def plot_radiation_temperature_profiles(hours: list,
     component_indices = [comp_index for comp_index in component_indices if comp_index != -1]
     columns = ['Absorbed_PAR', 'Shaded_fraction', 'Temperature', 'Temperature']
 
-    fig, axes = plt.subplots(ncols=len(columns), nrows=len(hours), sharex='col', sharey='all', figsize=(7.48, 10))
+    fig, axes = plt.subplots(ncols=len(columns), nrows=len(hours), sharex='col', sharey='all',
+                             figsize=(7.48, 24/2.54))
     for i_hour, hour in enumerate(hours):
         for i_case, case in enumerate(cases):
             plot_incident = i_case == 0
@@ -314,7 +316,7 @@ def plot_radiation_temperature_profiles(hours: list,
     axes[0, 0].set_ylim((-0.25, max(component_indices) + 2))
     axes[0, 0].yaxis.set_major_locator(MaxNLocator(integer=True))
     axes[0, 0].set_yticks(component_indices + [0])
-    axes[2, 0].set_ylabel('Canopy layer index [-]', rotation=90, ha='center')
+    axes[2, 0].set_ylabel('Canopy layer index (-)', rotation=90, ha='center')
 
     axes[-1, 1].xaxis.set_major_locator(MultipleLocator(0.5))
     axes[-1, 1].set_xlim(-0.1, 1.2)
@@ -860,15 +862,23 @@ def examine_soil_saturation_effect(temperature: list, latent_heat: list, figure_
 
 
 def examine_shift_effect(lumped_temperature_ls: list, figure_path: Path):
+    cm1 = colors.LinearSegmentedColormap.from_list("RedToBlue", ["r", "b"])
+    cnorm = colors.Normalize(vmin=0, vmax=1)
+    cpick = cm.ScalarMappable(norm=cnorm, cmap=cm1)
+    cpick.set_array([])
+
     component_indices = list(reversed(lumped_temperature_ls[0][1].keys()))
     fig, ax = plt.subplots()
     for saturation_rate, temp_profile in lumped_temperature_ls:
         ax.plot([temp_profile[k]['lumped'] - 273.15 for k in component_indices], component_indices, 'o-',
-                label='='.join([r'$\mathregular{\frac{\Theta}{Theta_{sat}}}$', f'{saturation_rate}']))
+                color=cpick.to_rgba(saturation_rate), label=f'{saturation_rate:.2f}')
 
+    ax.set_yticks(component_indices)
+    ax.set_yticklabels([v+1 for v in component_indices])
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-    ax.set(xlabel=' '.join(UNITS_MAP['temperature']), ylabel='Component index [-]')
-    ax.legend()
+    ax.set(xlabel=f"Surface temperature {UNITS_MAP['temperature'][1]}",
+           ylabel='Canopy layer index (-)')
+    ax.legend(title="Saturation ratio (-)")
     fig.tight_layout()
     fig.savefig(figure_path / 'effect_shift.png')
     plt.close('all')
@@ -940,9 +950,8 @@ def plot_mixed(data: tuple, figs_path: Path):
         ax.text(0.05, 0.7, f'({ascii_lowercase[i + 8]})', transform=ax.transAxes)
     for model, ax in zip(models, axs[0, :]):
         ax.set_title('\n'.join(handle_sim_name(model).split(' ')))
-    axs[0, 0].set_ylabel('\n'.join(['Energy balance term', r'$\mathregular{[W\/m^{-2}]}$']), fontsize=10)
-    # axs[0, 0].set_ylim([axs[0, 0].get_ylim()[i] + y for i, y in zip([0, -1], [-150, 0])])
-    axs[1, 0].set_ylabel('\n'.join(['Temperature', r'$\mathregular{[^{\circ}C]}$']), fontsize=10)
+    axs[0, 0].set_ylabel('\n'.join(['Energy balance term', UNITS_MAP['energy_balance'][1]]), fontsize=10)
+    axs[1, 0].set_ylabel('\n'.join(['Temperature', UNITS_MAP['temperature'][1]]), fontsize=10)
     axs[1, 0].set_ylim([axs[1, 0].get_ylim()[i] + y for i, y in zip([0, -1], [-10, 0])])
     axs[2, 0].set_ylabel('Number of\niterations', fontsize=10)
     axs[2, 1].set_xlabel('Hour of the day')
