@@ -119,7 +119,62 @@ def plot_correction_effect(path_source: Path, path_outputs: Path):
         ax.text(0.01, 0.9, f'({s})', transform=ax.transAxes)
 
     fig.tight_layout()
-    fig.savefig(path_outputs / f'correction_effect.png')
+    fig.savefig(path_outputs / 'correction_effect.png')
+    pyplot.close('all')
+    pass
+
+
+def plot_correction_effect2(path_source: Path, leaf_class: str, path_outputs: Path):
+    fig, axs = pyplot.subplots(nrows=2, figsize=(19 / 2.54, 10 / 2.54), gridspec_kw=dict(hspace=0), sharex='col')
+    width = 0.3
+    d_width = width / 1.5
+    kwargs = dict(width=width, edgecolor='grey', linewidth=0.5)
+    x = range(len(EXPERIMENTS))
+
+    x_ticks = []
+    x_tick_labels = []
+    for i, experiment in enumerate(EXPERIMENTS.keys()):
+        for sub_dir in ('neutral', 'corrected'):
+            dx = - d_width if sub_dir == 'neutral' else + d_width
+            df = read_csv(path_source / ('/'.join(
+                [experiment, 'outputs', sub_dir, f'{EXPERIMENTS[experiment][1]}_{leaf_class}', 'results.csv'])))
+            squared_bias, nonunity_slope, lack_of_correlation = stats.calc_mean_squared_deviation_components(
+                sim=df['delta_temperature_canopy_sim'],
+                obs=df['delta_temperature_canopy_obs'])
+
+            x_pos = x[i] + dx
+            x_ticks.append(x_pos)
+            x_tick_labels.append(sub_dir)
+            axs[-1].bar(x_pos, squared_bias, label='Squared bias', color='red', **kwargs)
+            axs[-1].bar(x_pos, nonunity_slope, label='Nonunity slope', bottom=squared_bias, color='white', **kwargs)
+            axs[-1].bar(x_pos, lack_of_correlation, label='Lack of correlation', bottom=squared_bias + nonunity_slope,
+                        color='blue', **kwargs)
+            axs[0].boxplot(df['delta_temperature_canopy_obs'], positions=[i], showfliers=False)
+
+    handles, labels_ = axs[-1].get_legend_handles_labels()
+    labels = sorted(set(labels_))
+    handles = [handles[labels_.index(s)] for s in labels]
+    axs[-1].legend(handles=handles, labels=labels, framealpha=0.5, fancybox=True)
+
+    axs[0].set_ylabel('\n'.join(['Observed canopy\ntempreature depression', r'($\rm ^\circ\/C$)']))
+    # axs[0].yaxis.set_label_coords(-0.065, 0, transform=axs[0].transAxes)
+    axs[-1].set_ylim(0, 14)
+    axs[-1].set_yticks(range(0, int(max(axs[0].get_ylim())), 2))
+
+    axs[-1].set_xticks(x_ticks, minor=True)
+    axs[-1].set_xticklabels(x_tick_labels, minor=True, fontsize=8)
+    axs[-1].set_xticks(x)
+    axs[-1].set_xticklabels([v[0] for v in EXPERIMENTS.values()])
+    axs[-1].tick_params(axis='x', which='major', pad=20, length=0)
+    axs[-1].tick_params(axis='x', which='minor', pad=5, length=0)
+    axs[-1].set_xlim(-0.55, 3.5)
+    axs[-1].set_ylabel('\n'.join(['Mean squared\ndeviation', r'($\rm {^\circ\/C}^2$)']))
+
+    for ax, s in zip(axs, ascii_lowercase):
+        ax.text(0.01, 0.9, f'({s})', transform=ax.transAxes)
+
+    fig.tight_layout()
+    fig.savefig(path_outputs / f'correction_effect_{leaf_class}.png')
     pyplot.close('all')
     pass
 
@@ -135,3 +190,7 @@ if __name__ == '__main__':
             path_outputs=path_fig,
             is_corrected=True,
             is_lumped_leaves=is_lumped)
+        plot_correction_effect2(
+            path_source=path_sources,
+            leaf_class='lumped' if is_lumped else 'sunlit-shaded',
+            path_outputs=path_fig)
