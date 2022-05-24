@@ -17,9 +17,10 @@ from sim_vs_obs.maricopa_face.config import SensorInfos, PathInfos
 from utils import stats, config
 
 
-def add_1_1_line(ax):
+def add_1_1_line(ax, linewidth: float = None):
+    kwargs = dict(linewidth=linewidth) if linewidth is not None else {}
     lims = [sorted(list(ax.get_xlim()) + list(ax.get_ylim()))[idx] for idx in (0, -1)]
-    ax.plot(lims, lims, 'k--', label='1:1')
+    ax.plot(lims, lims, 'k--', **kwargs)
     return ax
 
 
@@ -425,6 +426,37 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
 
     fig.savefig(figure_dir / f'{counter}.png')
     pyplot.close('all')
+    pass
+
+
+def plot_sim_obs_sunlit_shaded(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path):
+    pyplot.close()
+    fig, axs = pyplot.subplots(ncols=2, figsize=(14/2.54, 9/2.54), sharex='all', sharey='all',
+                               gridspec_kw=dict(wspace=0))
+    for res, label, c in (res_wet, 'Well watered', 'b'), (res_dry, 'Water deficit', 'r'):
+        for ax, (k, v) in zip(axs, res.items()):
+            ax.scatter(v['obs'], v['sim'], label=label, alpha=0.5)
+
+    text_kwargs = dict(fontsize=8, ha='right')
+    for ax, (k, v), s in zip(axs, res_all.items(), ascii_lowercase):
+        ax.text(0.05, 0.875, f'({s})', transform=ax.transAxes)
+        obs_ls, sim_ls = v['obs'], v['sim']
+        obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
+        ax.text(0.95, 0.25, f'R²={stats.calc_r2(obs_ls, sim_ls):.2f}', transform=ax.transAxes, **text_kwargs)
+        ax.text(0.95, 0.15, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.1f}', transform=ax.transAxes, **text_kwargs)
+        ax.text(0.95, 0.05, f'nNSE={stats.calc_normaized_nash_sutcliffe(sim=sim_ls, obs=obs_ls):.2f}',
+                transform=ax.transAxes, **text_kwargs)
+        add_1_1_line(ax, linewidth=0.5)
+        ax.set_aspect(aspect='equal', anchor='C')
+    axs[0].legend(fontsize=8, loc='lower left')
+    axs[0].set_ylabel('Simulated leaf temperature (°C)')
+    axs[0].set_xlabel('Observed leaf temperature (°C)')
+    axs[0].xaxis.set_label_coords(1.05, -0.15, transform=axs[0].transAxes)
+    axs[0].yaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
+    fig.tight_layout()
+    fig.savefig(figure_dir / 'sunlit_shaded.png')
+    pyplot.close("all")
+
     pass
 
 

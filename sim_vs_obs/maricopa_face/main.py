@@ -82,14 +82,12 @@ if __name__ == '__main__':
         res_dry={k: v for k, v in results_dry.items() if k in vars_to_plot},
         figure_dir=path_outputs, fig_name_suffix='wet')
 
-    if SimInfos.leaf_category == 'sunlit-shaded':
-        plots.plot_sim_vs_obs(
+    if SimInfos.leaf_category.value == 'sunlit-shaded':
+        plots.plot_sim_obs_sunlit_shaded(
             res_all={k: v for k, v in results_all.items() if k in ('temperature_sunlit', 'temperature_shaded')},
             res_wet={k: v for k, v in results_wet.items() if k in ('temperature_sunlit', 'temperature_shaded')},
             res_dry={k: v for k, v in results_dry.items() if k in ('temperature_sunlit', 'temperature_shaded')},
-            figure_dir=path_outputs,
-            alpha=1,
-            fig_name_suffix='sunlit_shaded')
+            figure_dir=path_outputs)
 
     plots.plot_delta_temperature(
         temperature_air=results_all['temperature_air'],
