@@ -1,6 +1,7 @@
 import re
 from json import load
 from pathlib import Path
+from string import ascii_lowercase
 
 import matplotlib.pyplot as plt
 from SALib.analyze import fast
@@ -148,19 +149,30 @@ def plot_single(ax, bar_height, k, sa, range_by_col=None, parameter_groups=None,
     pass
 
 
-def handle_var_name(k):
+def handle_var_name(k, model: str = None, is_symbol: bool = True):
+    is_layered = 'layered' in model if model is not None else None
+
     if 'state_variables' in k:
-        try:
-            ax_title = UNITS_MAP[k.split('.')[-1]][0]
-        except KeyError:
-            ax_title = MAP_PARAMS[k.split('.')[-1]]
+        if is_symbol:
+            try:
+                ax_title = UNITS_MAP[k.split('.')[-1]][0]
+            except KeyError:
+                ax_title = MAP_PARAMS[k.split('.')[-1]]
+        else:
+            ax_title = 'Latent heat flux'
+
     else:
         leaf_layer = re.search('\[(.+?)\]', k).group(1)
         try:
             leaf_category = re.search("'(.+?)'", k).group(1)
         except AttributeError:
             leaf_category = 'lumped'
-        ax_title = r'$\mathregular{T_{s,\/%s,\/%s}}$' % (leaf_category, 'l' if leaf_layer == 0 else 'u')
+        if is_symbol:
+            ax_title = r'$\mathregular{T_{s,\/%s,\/%s}}$' % (leaf_category, 'l' if leaf_layer == 0 else 'u')
+        else:
+            ax_title = f'{leaf_category.capitalize()} leaf temperature'
+            if is_layered:
+                ax_title = '\n'.join([ax_title, '(lower layer)' if int(leaf_layer) == 0 else '(upper layer)'])
     return ax_title
 
 
@@ -177,7 +189,10 @@ def plot_heatmap(sa_dict: dict, model: str, fig_path: Path, parameter_groups: di
     pass
 
 
-def heatmap(data: array, infos: dict, parameter_groups: dict, path_fig: Path):
+def heatmap(data: array, infos: dict, parameter_groups: dict, model: str = None, water_status: str = None,
+            ax: plt.Subplot = None, path_fig: Path = None, is_symbol: bool = True,
+            is_colorbar: bool = False, is_text_header: bool = True, is_text_groups: bool = True,
+            is_return_ax: bool = False, is_return_mappable: bool = False):
     names_output_vars = infos['names_output_vars']
 
     number_environments = len(infos['names_environment'])
@@ -186,33 +201,50 @@ def heatmap(data: array, infos: dict, parameter_groups: dict, path_fig: Path):
     col_labels = infos['names_environment'] * number_output_variables
     row_labels = infos['names_params']
 
-    fig, ax = plt.subplots(figsize=(8, 4.8))
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 4.8))
+    else:
+        fig = ax.get_figure()
 
     norm = colors.Normalize(0, vmax=1)
-    im = ax.imshow(data, norm=norm, cmap='Oranges')
+    im = ax.imshow(data, norm=norm, cmap='Oranges', aspect='auto')
 
-    ax.figure.colorbar(im, ax=ax, orientation="horizontal")
-    #    cbar.ax.set_ylabel('', rotation=-90, va="bottom")
+    if is_colorbar:
+        ax.figure.colorbar(im, ax=ax, orientation="horizontal")
+        #    cbar.ax.set_ylabel('', rotation=-90, va="bottom")
 
-    ax.set(xticks=arange(data.shape[1]), xticklabels=col_labels,
-           yticks=arange(data.shape[0]), yticklabels=[MAP_PARAMS[s.split('-')[-1]] for s in row_labels])
+    if is_text_header:
+        ax.set(xticks=arange(data.shape[1]), xticklabels=col_labels)
+    if is_text_groups:
+        ax.set(yticks=arange(data.shape[0]), yticklabels=[MAP_PARAMS[s.split('-')[-1]] for s in row_labels])
 
-    ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False)
+    ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False, labelsize=8)
     for j_out, output_var in enumerate(names_output_vars):
         ax.vlines(j_out * number_environments - 0.5, *ax.get_ylim(), color='k', linewidth=1)
-        ax.text(j_out * number_environments + number_environments / 2 - 0.5, -2.25, handle_var_name(output_var),
-                fontdict={'size': 11, 'ha': 'center'})
+        if is_text_header:
+            ax.text(j_out * number_environments + number_environments / 2 - 0.5, -5,
+                    handle_var_name(output_var, model=model, is_symbol=is_symbol),
+                    fontdict=dict(size=8, ha='center' if is_symbol else 'left', rotation=90))
     if parameter_groups is not None:
         group_row_index = -0.5
         for group_name, params in parameter_groups.items():
             group_row_index += len(params) / 2
             ax.hlines(row_labels.index(params[-1]) + 0.5, *ax.get_xlim(), color='k', linewidth=1)
-            ax.text(-5, group_row_index, group_name.replace(' resistance', '\nresistance'),
-                    fontdict={'size': 11, 'ha': 'right', 'va': 'center'})
+            if is_text_groups:
+                ax.text(-7, group_row_index, group_name.replace(' resistance', '\nresistance'),
+                        fontdict={'size': 8, 'ha': 'right', 'va': 'center'})
+                ax.text(-2.75, 0.5, water_status, transform=ax.transAxes,
+                        fontdict={'size': 8, 'ha': 'center', 'va': 'center', 'rotation': 90})
             group_row_index += len(params) / 2
 
-    fig.savefig(path_fig)
+    if path_fig is not None:
+        fig.savefig(path_fig)
 
+    if is_return_ax:
+        if is_return_mappable:
+            return ax, im
+        else:
+            return ax
     pass
 
 
@@ -260,7 +292,8 @@ def set_output_variables(is_bigleaf: bool, is_lumped: bool, layers: dict) -> lis
 
 
 def run_sensitivity_analysis(veg_layers: dict, canopy_type: str, leaf_type: str, base_sa_inputs: dict,
-                             base_sa_params: dict, sa_problem: dict, param_scenarios: array, parameter_groups: dict):
+                             base_sa_params: dict, sa_problem: dict, param_scenarios: array, parameter_groups: dict,
+                             saturation_ratio: float, is_plot_heatmap: bool = True, is_return: bool = True):
     soil_class = 'Silt'
     _, theta_sat, *_ = getattr(VanGenuchtenParams, soil_class).value
 
@@ -271,49 +304,95 @@ def run_sensitivity_analysis(veg_layers: dict, canopy_type: str, leaf_type: str,
                          ('grignon_low_rad_high_vpd.csv', 14),
                          ('grignon_high_rad_low_vpd.csv', 11),
                          ('grignon_low_rad_low_vpd.csv', 14))
-    saturation_ratio = {'ww': 1, 'mwd': 0.3, 'wd': 0.1}
 
-    for soil_water_status, soil_saturation_ratio in saturation_ratio.items():
-        sa_dict = {}
-        for weather_scenario, hour in weather_scenarios:
-            weather_data = get_grignon_weather_data(weather_scenario).loc[hour, :]
-            absorbed_irradiance, _ = calc_absorbed_irradiance(
-                leaf_layers=veg_layers,
+    sa_dict = {}
+    for weather_scenario, hour in weather_scenarios:
+        weather_data = get_grignon_weather_data(weather_scenario).loc[hour, :]
+        absorbed_irradiance, _ = calc_absorbed_irradiance(
+            leaf_layers=veg_layers,
+            is_bigleaf=canopy_type == 'bigleaf',
+            is_lumped=leaf_type == 'lumped',
+            incident_direct_par_irradiance=weather_data['incident_direct_irradiance'],
+            incident_diffuse_par_irradiance=weather_data['incident_diffuse_irradiance'],
+            solar_inclination_angle=weather_data['solar_declination'])
+
+        base_sa_inputs, _ = get_energy_balance_inputs_and_params(
+            vegetative_layers=veg_layers,
+            absorbed_par_irradiance=absorbed_irradiance,
+            actual_weather_data=weather_data,
+            raw_inputs=base_sa_inputs,
+            json_params=base_sa_params)
+
+        base_sa_inputs.update({
+            "soil_saturation_ratio": saturation_ratio,
+            "soil_water_potential": calc_soil_water_potential(
+                theta=saturation_ratio * theta_sat, soil_class=soil_class) * 1.e-4})
+
+        outputs = evaluate(
+            leaves_category=leaf_type,
+            inputs=base_sa_inputs,
+            params=base_sa_params,
+            names=sa_problem['names'],
+            scenarios=param_scenarios,
+            output_variables=set_output_variables(
                 is_bigleaf=canopy_type == 'bigleaf',
                 is_lumped=leaf_type == 'lumped',
-                incident_direct_par_irradiance=weather_data['incident_direct_irradiance'],
-                incident_diffuse_par_irradiance=weather_data['incident_diffuse_irradiance'],
-                solar_inclination_angle=weather_data['solar_declination'])
+                layers=veg_layers))
+        sa_result = analyze(sa_problem=sa_problem, outputs=outputs)
+        sa_dict.update({MAP_PARAMS[weather_scenario]: sa_result})
 
-            base_sa_inputs, _ = get_energy_balance_inputs_and_params(
-                vegetative_layers=veg_layers,
-                absorbed_par_irradiance=absorbed_irradiance,
-                actual_weather_data=weather_data,
-                raw_inputs=base_sa_inputs,
-                json_params=base_sa_params)
-
-            base_sa_inputs.update({
-                "soil_saturation_ratio": soil_saturation_ratio,
-                "soil_water_potential": calc_soil_water_potential(
-                    theta=soil_saturation_ratio * theta_sat, soil_class=soil_class) * 1.e-4})
-
-            outputs = evaluate(
-                leaves_category=leaf_type,
-                inputs=base_sa_inputs,
-                params=base_sa_params,
-                names=sa_problem['names'],
-                scenarios=param_scenarios,
-                output_variables=set_output_variables(
-                    is_bigleaf=canopy_type == 'bigleaf',
-                    is_lumped=leaf_type == 'lumped',
-                    layers=veg_layers))
-            sa_result = analyze(sa_problem=sa_problem, outputs=outputs)
-            sa_dict.update({MAP_PARAMS[weather_scenario]: sa_result})
-
-            # plot_barh(sa_dict=sa_result, shift_bars=False, model=f'{canopy_type}_{leaf_type}',
-            #           parameter_groups=parameter_groups, suptitle=weather_scenario.split('.')[0], path_fig=path_figs)
+        # plot_barh(sa_dict=sa_result, shift_bars=False, model=f'{canopy_type}_{leaf_type}',
+        #           parameter_groups=parameter_groups, suptitle=weather_scenario.split('.')[0], path_fig=path_figs)
+    if is_plot_heatmap:
         plot_heatmap(sa_dict=sa_dict, fig_path=path_figs, model=f'{canopy_type}_{leaf_type}',
-                     parameter_groups=parameter_groups, name_info=soil_water_status)
+                     parameter_groups=parameter_groups, name_info=f'soil_sat_ratio_{saturation_ratio}')
+    if is_return:
+        return sa_dict
+
+
+def plot_grouped_heatmap(sa_data: dict, path_fig: Path, parameter_groups: dict = None):
+    params_order = [item for sublist in parameter_groups.values() for item in sublist] if parameter_groups else None
+    models = list(sa_data.keys())
+    water_conditions = sa_data[models[0]].keys()
+    for is_first_order in (True, False):
+        im = None
+        plt.close('all')
+        fig, axs = plt.subplots(nrows=len(water_conditions), ncols=len(models), figsize=(19 / 2.54, 19 / 2.54),
+                                gridspec_kw=dict(hspace=0.05, wspace=0.05, width_ratios=[2, 3, 3, 5]))
+        for i_model, model in enumerate(models):
+            for i_soil_status, soil_status in enumerate(water_conditions):
+                ax = axs[i_soil_status, i_model]
+                sa_dict = sa_data[model][soil_status]
+                s1, st, infos = build_heatmap_arrays(sa_dict=sa_dict, params_order=params_order)
+                ax, im = heatmap(data=s1 if is_first_order else st,
+                                 infos=infos,
+                                 parameter_groups=parameter_groups,
+                                 ax=ax,
+                                 model=model,
+                                 water_status=soil_status,
+                                 is_symbol=False,
+                                 is_text_header=i_soil_status == 0,
+                                 is_text_groups=i_model == 0,
+                                 is_return_ax=True,
+                                 is_return_mappable=True)
+        for ax in axs[:, 1:].flatten():
+            ax.yaxis.set_visible(False)
+        for ax in axs[1:, :].flatten():
+            ax.xaxis.set_visible(False)
+        for ax in axs[0, :]:
+            ax.tick_params(axis='x', rotation=90)
+        for ax, s in zip(axs[:, 0], ascii_lowercase):
+            ax.text(-2.25, 0.9, f'({s})', transform=ax.transAxes,
+                    fontdict={'size': 10, 'ha': 'center', 'va': 'center', 'weight': 'bold'})
+        cbar_ax = fig.add_axes([0.05, 0.9, 0.15, 0.01])
+        cbar = fig.colorbar(im, cax=cbar_ax, label='First order effect (S1)' if is_first_order else 'Total effect (ST)',
+                            orientation='horizontal')
+
+        fig.subplots_adjust(left=0.3, right=0.99, bottom=0.01, top=0.70)
+        fig.savefig(path_fig / f'sensitivity_analysis_{"s1" if is_first_order else "st"}.png')
+        plt.close("all")
+
+    pass
 
 
 if __name__ == '__main__':
@@ -350,17 +429,29 @@ if __name__ == '__main__':
     problem, param_values = sample(config_path=path_sources / 'param_fields.json')
 
     leaf_layers = {str(d): 1 for d in range(4)}
+    saturation_ratios = {'Well-watered': 1, 'Mild water deficit': 0.3, 'Severe water deficit': 0.1}
 
+    sa_result_all = {}
     for category_canopy, category_leaf in ((('bigleaf', 'lumped'),
                                             ('bigleaf', 'sunlit-shaded'),
                                             ('layered', 'lumped'),
                                             ('layered', 'sunlit-shaded'))):
-        run_sensitivity_analysis(
-            veg_layers=leaf_layers,
-            canopy_type=category_canopy,
-            leaf_type=category_leaf,
-            base_sa_inputs=base_inputs,
-            base_sa_params=base_params,
-            sa_problem=problem,
-            param_scenarios=param_values,
-            parameter_groups=param_groups)
+        model_representation = f'{category_canopy}_{category_leaf}'
+        sa_result_all.update({model_representation: {}})
+        for soil_water_status, soil_saturation_ratio in saturation_ratios.items():
+            run_result = run_sensitivity_analysis(
+                veg_layers=leaf_layers,
+                canopy_type=category_canopy,
+                leaf_type=category_leaf,
+                base_sa_inputs=base_inputs,
+                base_sa_params=base_params,
+                sa_problem=problem,
+                param_scenarios=param_values,
+                parameter_groups=param_groups,
+                saturation_ratio=soil_saturation_ratio,
+                is_plot_heatmap=False,
+                is_return=True)
+
+            sa_result_all[model_representation].update({soil_water_status: run_result})
+
+    plot_grouped_heatmap(sa_data=sa_result_all, path_fig=path_figs, parameter_groups=param_groups)
