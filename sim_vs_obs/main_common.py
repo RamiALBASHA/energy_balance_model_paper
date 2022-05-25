@@ -2,6 +2,7 @@ from pathlib import Path
 from string import ascii_lowercase
 
 from matplotlib import pyplot
+from numpy import full, arange
 from pandas import read_csv
 
 from sim_vs_obs.common import CMAP, NORM_INCIDENT_PAR
@@ -179,10 +180,50 @@ def plot_correction_effect2(path_source: Path, leaf_class: str, path_outputs: Pa
     pass
 
 
+def plot_stability_vs_leaf_category_heatmp(path_source: Path, path_outputs: Path):
+    stability_correction_cases = ('neutral', 'corrected')
+    leaf_classes = ('lumped', 'sunlit-shaded')
+    experiments = list(EXPERIMENTS.keys())
+    data = full(shape=(len(experiments) * len(leaf_classes), len(stability_correction_cases)),
+                fill_value=None).astype(float)
+    for i_experiment, experiment in enumerate(experiments):
+        dy = i_experiment * len(leaf_classes)
+        for i_leaf_class, leaf_category in enumerate(leaf_classes):
+            i = i_leaf_class + dy
+            for j, stability_correction in enumerate(stability_correction_cases):
+                subdir = f"{experiment}/outputs/{stability_correction}/{EXPERIMENTS[experiment][1]}_{leaf_category}"
+                df = read_csv(path_source / subdir / 'results.csv')
+                data[i, j] = stats.calc_mean_squared_deviation(
+                    sim=df['delta_temperature_canopy_sim'],
+                    obs=df['delta_temperature_canopy_obs'])
+
+    fig, ax = pyplot.subplots(figsize=(9 / 2.54, 9 / 2.54))
+    im = ax.imshow(data, cmap='Oranges', aspect='auto')
+    ax.set(xticks=arange(data.shape[1]), xticklabels=stability_correction_cases,
+           yticks=arange(data.shape[0]), yticklabels=leaf_classes * len(experiments))
+    ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False, labelsize=8)
+    ax.tick_params(axis='x', rotation=90)
+
+    for i_experiment, experiment in enumerate(experiments):
+        if experiment != experiments[-1]:
+            ax.hlines(i_experiment * len(leaf_classes) + 1.5, *ax.get_xlim(), color='k', linewidth=1)
+        ax.text(-7.75, i_experiment * len(leaf_classes) + 0.5,
+                f'({ascii_lowercase[i_experiment]}) {EXPERIMENTS[experiment][0]}')
+
+    cbar = ax.figure.colorbar(im, ax=ax, orientation="horizontal")
+    cbar.ax.set_ylabel(r'Mean squared deviation ($\rm {^\circ\/C}^2$)', ha="right", va='center', rotation=0)
+
+    fig.subplots_adjust(left=0.75, right=0.95, bottom=0.05, top=0.8)
+    fig.savefig(path_outputs / 'correction_and_leaf_class_effects.png')
+    pyplot.close('all')
+    pass
+
+
 if __name__ == '__main__':
     path_sources = Path(__file__).parents[1] / 'sources'
     path_fig = path_sources / 'figs'
     plot_correction_effect(path_source=path_sources, path_outputs=path_fig)
+    plot_stability_vs_leaf_category_heatmp(path_source=path_sources, path_outputs=path_fig)
 
     for is_lumped in (True, False):
         plot_sim_vs_obs(
