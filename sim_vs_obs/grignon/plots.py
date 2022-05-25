@@ -9,7 +9,8 @@ from matplotlib import pyplot, ticker, gridspec, dates
 from numpy import array, linspace
 from pandas import isna, date_range, DataFrame, concat
 
-from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
+from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_neutral_aerodynamic_resistance,
+                               CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
 from sim_vs_obs.grignon.config import CanopyInfo
 from utils import stats, config
 
@@ -162,6 +163,8 @@ def extract_sim_obs_data(data: dict):
         richardson=[],
         monin_obukhov=[],
         aerodynamic_resistance=[],
+        neutral_aerodynamic_resistance=[],
+        friction_velocity=[],
         absorbed_par_soil=[],
         absorbed_par_veg=[],
         psi_u=[],
@@ -194,6 +197,8 @@ def extract_sim_obs_data(data: dict):
                 res[trt]['richardson'].append(solver.crop.state_variables.richardson_number)
                 res[trt]['monin_obukhov'].append(solver.crop.state_variables.monin_obukhov_length)
                 res[trt]['aerodynamic_resistance'].append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
+                res[trt]['neutral_aerodynamic_resistance'].append(calc_neutral_aerodynamic_resistance(solver=solver))
+                res[trt]['friction_velocity'].append(solver.crop.state_variables.friction_velocity)
                 res[trt]['absorbed_par_soil'].append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
                 res[trt]['absorbed_par_veg'].append(get_canopy_abs_irradiance_from_solver(solver=solver))
                 res[trt]['psi_u'].append(solver.crop.state_variables.stability_correction_for_momentum)
