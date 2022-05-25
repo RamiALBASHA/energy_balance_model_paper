@@ -10,8 +10,7 @@ from numpy import array, linspace
 from pandas import DataFrame, isna
 
 from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_apparent_temperature,
-                               CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
-from sim_vs_obs.common import calc_neutral_aerodynamic_resistance
+                               calc_neutral_aerodynamic_resistance, CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
 from utils import stats, config
 
 MAP_UNITS = {
@@ -59,6 +58,7 @@ def extract_results(all_solvers: dict) -> dict:
     all_monin_obukhov = []
     all_aerodynamic_resistance = []
     all_neutral_aerodynamic_resistance = []
+    all_friction_velocity = []
     all_soil_abs_par = []
     all_veg_abs_par = []
     all_psi_u = []
@@ -84,6 +84,7 @@ def extract_results(all_solvers: dict) -> dict:
             monin_obukhov = []
             aerodynamic_resistance = []
             neutral_aerodynamic_resistance = []
+            friction_velocity = []
             soil_abs_par = []
             veg_abs_par = []
             psi_u = []
@@ -107,6 +108,7 @@ def extract_results(all_solvers: dict) -> dict:
                 monin_obukhov.append(solver.crop.state_variables.monin_obukhov_length)
                 aerodynamic_resistance.append(solver.crop.state_variables.aerodynamic_resistance * 3600.)
                 neutral_aerodynamic_resistance.append(calc_neutral_aerodynamic_resistance(solver=solver))
+                friction_velocity.append(solver.crop.state_variables.friction_velocity)
                 soil_abs_par.append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
                 veg_abs_par.append(get_canopy_abs_irradiance_from_solver(solver=solver))
                 psi_u.append(solver.crop.state_variables.stability_correction_for_momentum)
@@ -130,6 +132,7 @@ def extract_results(all_solvers: dict) -> dict:
             all_monin_obukhov += monin_obukhov
             all_aerodynamic_resistance += aerodynamic_resistance
             all_neutral_aerodynamic_resistance += neutral_aerodynamic_resistance
+            all_friction_velocity += friction_velocity
             all_soil_abs_par += soil_abs_par
             all_veg_abs_par += veg_abs_par
             all_psi_u += psi_u
@@ -153,6 +156,7 @@ def extract_results(all_solvers: dict) -> dict:
         'monin_obukhov': all_monin_obukhov,
         'aerodynamic_resistance': all_aerodynamic_resistance,
         'neutral_aerodynamic_resistance': all_neutral_aerodynamic_resistance,
+        'friction_velocity': all_friction_velocity,
         'absorbed_par_soil': all_soil_abs_par,
         'absorbed_par_veg': all_veg_abs_par,
         'psi_u': all_psi_u,
