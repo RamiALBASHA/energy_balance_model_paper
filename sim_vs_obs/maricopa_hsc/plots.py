@@ -11,7 +11,7 @@ from pandas import DataFrame, isna
 
 from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_apparent_temperature,
                                CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
-from sim_vs_obs.maricopa_hsc.base_functions import calc_neutral_aerodynamic_resistance
+from sim_vs_obs.common import calc_neutral_aerodynamic_resistance
 from utils import stats, config
 
 MAP_UNITS = {
