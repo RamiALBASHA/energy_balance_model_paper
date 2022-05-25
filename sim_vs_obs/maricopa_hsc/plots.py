@@ -50,17 +50,35 @@ def extract_results(all_solvers: dict) -> dict:
     all_obs_t = []
     all_air_t = []
     all_incident_par = []
+    all_incident_direct_par = []
+    all_incident_diffuse_par = []
+    all_wind_speed = []
+    all_vapor_pressure_deficit = []
+    all_soil_water_potential = []
+    all_richardson = []
+    all_monin_obukhov = []
+    all_aerodynamic_resistance = []
+    all_neutral_aerodynamic_resistance = []
+    all_soil_abs_par = []
+    all_veg_abs_par = []
+    all_psi_u = []
+    all_psi_h = []
+    all_net_longwave_radiation = []
+    all_height = []
+    all_gai = []
+    all_hours = []
 
     for d1, v1 in all_solvers.items():
         for plot_id, plot_res in v1.items():
 
             temp_obs = plot_res['temp_obs']
+            temp_sim = []
+            air_temperature = []
             incident_par = []
             incident_diffuse_par_irradiance = []
             incident_direct_par_irradiance = []
             wind_speed = []
             vapor_pressure_deficit = []
-            air_temperature = []
             soil_water_potential = []
             richardson = []
             monin_obukhov = []
@@ -70,13 +88,14 @@ def extract_results(all_solvers: dict) -> dict:
             veg_abs_par = []
             psi_u = []
             psi_h = []
-            emissivity_sky = []
-            is_forced_aerodynamic_resistance = []
-            temp_sim = []
+            net_longwave_radiation = []
+            height = []
+            gai = []
+            hours = []
 
             sensor_angle_below_horizon = radians(45 if d1 < datetime(2008, 1, 2) else 30)
 
-            for solver in plot_res['solvers']:
+            for hour, solver in enumerate(plot_res['solvers']):
                 incident_par.append(sum(solver.crop.inputs.incident_irradiance.values()))
                 incident_diffuse_par_irradiance.append(solver.crop.inputs.incident_irradiance['diffuse'])
                 incident_direct_par_irradiance.append(solver.crop.inputs.incident_irradiance['direct'])
@@ -92,20 +111,57 @@ def extract_results(all_solvers: dict) -> dict:
                 veg_abs_par.append(get_canopy_abs_irradiance_from_solver(solver=solver))
                 psi_u.append(solver.crop.state_variables.stability_correction_for_momentum)
                 psi_h.append(solver.crop.state_variables.stability_correction_for_heat)
-                emissivity_sky.append(solver.crop.params.simulation.atmospheric_emissivity)
-                is_forced_aerodynamic_resistance.append(solver.is_forced_aerodynamic_resistance)
                 temp_sim.append(calc_apparent_temperature(eb_solver=solver, sensor_angle=sensor_angle_below_horizon))
+                net_longwave_radiation.append(solver.crop.state_variables.net_longwave_radiation)
+                height.append(solver.crop.inputs.canopy_height)
+                gai.append(sum(solver.crop.inputs.leaf_layers.values()))
+                hours.append(hour)
 
             all_sim_t += temp_sim
             all_obs_t += temp_obs
             all_air_t += air_temperature
             all_incident_par += incident_par
+            all_incident_direct_par += incident_direct_par_irradiance
+            all_incident_diffuse_par += incident_diffuse_par_irradiance
+            all_wind_speed += wind_speed
+            all_vapor_pressure_deficit += vapor_pressure_deficit
+            all_soil_water_potential += soil_water_potential
+            all_richardson += richardson
+            all_monin_obukhov += monin_obukhov
+            all_aerodynamic_resistance += aerodynamic_resistance
+            all_neutral_aerodynamic_resistance += neutral_aerodynamic_resistance
+            all_soil_abs_par += soil_abs_par
+            all_veg_abs_par += veg_abs_par
+            all_psi_u += psi_u
+            all_psi_h += psi_h
+            all_net_longwave_radiation += net_longwave_radiation
+            all_height += height
+            all_gai += gai
+            all_hours += hours
 
     return {
         'sim_t': all_sim_t,
         'obs_t': all_obs_t,
         'air_t': all_air_t,
-        'par_inc': all_incident_par}
+        'par_inc': all_incident_par,
+        'incident_direct_par_irradiance': all_incident_direct_par,
+        'incident_diffuse_par_irradiance': all_incident_diffuse_par,
+        'wind_speed': all_wind_speed,
+        'vapor_pressure_deficit': all_vapor_pressure_deficit,
+        'soil_water_potential': all_soil_water_potential,
+        'richardson': all_richardson,
+        'monin_obukhov': all_monin_obukhov,
+        'aerodynamic_resistance': all_aerodynamic_resistance,
+        'neutral_aerodynamic_resistance': all_neutral_aerodynamic_resistance,
+        'absorbed_par_soil': all_soil_abs_par,
+        'absorbed_par_veg': all_veg_abs_par,
+        'psi_u': all_psi_u,
+        'psi_h': all_psi_h,
+        'net_longwave_radiation': all_net_longwave_radiation,
+        'height': all_height,
+        'gai': all_gai,
+        'hour': all_hours
+    }
 
 
 def plot_dynamic(all_solvers: dict, path_figs: Path):
@@ -255,7 +311,6 @@ def plot_dynamic(all_solvers: dict, path_figs: Path):
 
 
 def plot_summary(results: dict, path_figs: Path, is_colormap: bool = True):
-
     fig_summary, axs_summary = plt.subplots(ncols=2)
     df = DataFrame(data=results)
     df.loc[:, 'sim_delta_t'] = df['sim_t'] - df['air_t']
@@ -403,3 +458,18 @@ def export_results(results: dict, path_csv: Path):
 
     df.to_csv(path_csv / 'results.csv', index=False)
     pass
+
+
+def export_results_cart(summary_data: dict, path_csv: Path):
+    df = DataFrame(summary_data)
+    df.rename({'sim_t': 'temperature_canopy_sim',
+               'obs_t': 'temperature_canopy_obs',
+               'air_t': 'temperature_air',
+               'par_inc': 'incident_par'},
+              axis=1, inplace=True)
+
+    df.loc[:, f'error_temperature_canopy'] = df[f'temperature_canopy_sim'] - df[f'temperature_canopy_obs']
+
+    df = df[(df['incident_par'] >= 0) & ~df['error_temperature_canopy'].isna()]
+    df.to_csv(path_csv / 'results_cart.csv', index=False)
+    return

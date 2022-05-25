@@ -97,3 +97,4 @@ if __name__ == '__main__':
     plots.plot_summary(results=results, path_figs=path_outputs)
     plots.plot_errors(all_solvers=all_solvers, path_figs=path_outputs)
     plots.export_results(results=results, path_csv=path_outputs)
+    plots.export_results_cart(summary_data=results, path_csv=path_outputs)
