@@ -235,3 +235,16 @@ def export_results(summary_data: dict, path_csv: Path):
     df.to_csv(path_csv / 'results.csv', index=False)
 
     pass
+
+
+def export_results_cart(summary_data: dict, path_csv: Path):
+    res = {k: v for k, v in summary_data.items() if k != 'temperature_canopy'}
+    df = DataFrame(res)
+    for s in ('sim', 'obs'):
+        df.loc[:, f'temperature_canopy_{s}'] = summary_data['temperature_canopy'][s]
+    df.loc[:, f'error_temperature_canopy'] = df[f'temperature_canopy_sim'] - df[f'temperature_canopy_obs']
+
+    df.loc[:, 'incident_par'] = df[['incident_direct_par_irradiance', 'incident_diffuse_par_irradiance']].sum(axis=1)
+    df = df[(df['incident_par'] >= 0) & ~df['error_temperature_canopy'].isna()]
+    df.to_csv(path_csv / 'results_cart.csv', index=False)
+    return df

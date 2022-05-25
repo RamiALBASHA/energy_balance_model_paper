@@ -76,3 +76,4 @@ if __name__ == '__main__':
     summary_data = plots.extract_sim_obs_data(sim_obs=sim_obs_dict)
     plots.plot_error(summary_data=summary_data, path_figs=outputs_path)
     plots.export_results(summary_data=summary_data, path_csv=outputs_path)
+    plots.export_results_cart(summary_data=summary_data, path_csv=outputs_path)
