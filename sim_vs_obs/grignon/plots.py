@@ -162,7 +162,6 @@ def extract_sim_obs_data(data: dict):
         richardson=[],
         monin_obukhov=[],
         aerodynamic_resistance=[],
-        neutral_aerodynamic_resistance=[],
         absorbed_par_soil=[],
         absorbed_par_veg=[],
         psi_u=[],
@@ -346,3 +345,26 @@ def export_results(summary_data: dict, path_csv: Path):
 
     concat(df_ls).to_csv(path_csv / 'results.csv', index=False)
     pass
+
+
+def export_results_cart(summary_data: dict, path_csv: Path):
+    df_ls = []
+    for treatment, trt_data in summary_data.items():
+        data = {
+            'temperature_canopy_sim': trt_data['temperature_sim'],
+            'temperature_canopy_obs': trt_data['temperature_obs'],
+            'incident_par': [par_dir + par_diff for par_dir, par_diff in
+                             zip(trt_data['incident_diffuse_par_irradiance'],
+                                 trt_data['incident_direct_par_irradiance'])]}
+        data.update({k: v for k, v in trt_data.items() if k not in ('temperature_obs', 'temperature_sim')})
+        df = DataFrame(data=data)
+        df.loc[:, f'error_temperature_canopy'] = df[f'temperature_canopy_sim'] - df[f'temperature_canopy_obs']
+
+        df = df[(df['incident_par'] >= 0) & ~df['error_temperature_canopy'].isna()]
+        df.to_csv(path_csv / f'results_cart_{treatment}.csv', index=False)
+
+        df_ls.append(df)
+
+    concat(df_ls).to_csv(path_csv / 'results_cart.csv', index=False)
+
+    return
