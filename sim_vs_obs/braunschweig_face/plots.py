@@ -6,8 +6,8 @@ from numpy import array, linspace
 from pandas import isna, DataFrame
 
 from sim_vs_obs.braunschweig_face.config import ExpInfos
-from sim_vs_obs.common import (calc_apparent_temperature, get_canopy_abs_irradiance_from_solver, NORM_INCIDENT_PAR,
-                               CMAP, format_binary_colorbar)
+from sim_vs_obs.common import (calc_apparent_temperature, calc_neutral_aerodynamic_resistance,
+                               get_canopy_abs_irradiance_from_solver, NORM_INCIDENT_PAR, CMAP, format_binary_colorbar)
 from utils import config
 from utils.stats import calc_rmse, calc_r2
 
@@ -115,6 +115,8 @@ def extract_sim_obs_data(sim_obs: dict):
     all_richardson = []
     all_monin_obukhov = []
     all_aerodynamic_resistance = []
+    all_neutral_aerodynamic_resistance = []
+    all_friction_velocity = []
     all_veg_abs_par = []
     all_soil_abs_par = []
     all_psi_u = []
@@ -142,6 +144,8 @@ def extract_sim_obs_data(sim_obs: dict):
                 all_richardson.append(solver.crop.state_variables.richardson_number)
                 all_monin_obukhov.append(solver.crop.state_variables.monin_obukhov_length)
                 all_aerodynamic_resistance.append(solver.crop.state_variables.aerodynamic_resistance)
+                all_neutral_aerodynamic_resistance.append(calc_neutral_aerodynamic_resistance(solver=solver))
+                all_friction_velocity.append(solver.crop.state_variables.friction_velocity)
                 all_veg_abs_par.append(get_canopy_abs_irradiance_from_solver(solver))
                 all_soil_abs_par.append(solver.crop.inputs.absorbed_irradiance[-1]['lumped'])
                 all_psi_u.append(solver.crop.state_variables.stability_correction_for_momentum)
@@ -163,6 +167,8 @@ def extract_sim_obs_data(sim_obs: dict):
         richardson=all_richardson,
         monin_obukhov=all_monin_obukhov,
         aerodynamic_resistance=all_aerodynamic_resistance,
+        neutral_aerodynamic_resistance=all_neutral_aerodynamic_resistance,
+        friction_velocity=all_friction_velocity,
         absorbed_par_veg=all_veg_abs_par,
         absorbed_par_soil=all_soil_abs_par,
         psi_u=all_psi_u,
