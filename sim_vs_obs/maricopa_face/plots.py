@@ -10,8 +10,8 @@ from numpy import array, linspace
 from pandas import DataFrame, isna, date_range
 from sklearn import tree
 
-from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_apparent_temperature, CMAP,
-                               NORM_INCIDENT_PAR, format_binary_colorbar)
+from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_apparent_temperature,
+                               calc_neutral_aerodynamic_resistance, CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
 from sim_vs_obs.maricopa_face import base_functions
 from sim_vs_obs.maricopa_face.config import SensorInfos, PathInfos
 from utils import stats, config
@@ -144,6 +144,8 @@ def extract_sim_obs_data(sim_obs: dict, look_into: dict[int: date_range] = None)
     all_richardson = []
     all_monin_obukhov = []
     all_aerodynamic_resistance = []
+    all_neutral_aerodynamic_resistance = []
+    all_friction_veloctiy = []
     all_veg_abs_par = []
     all_soil_abs_par = []
     all_psi_u = []
@@ -175,6 +177,8 @@ def extract_sim_obs_data(sim_obs: dict, look_into: dict[int: date_range] = None)
             vpd = pattern_list.copy()
             wind = pattern_list.copy()
             ra = pattern_list.copy()
+            ra_neutral = pattern_list.copy()
+            friction_velocity = pattern_list.copy()
             psi_soil = pattern_list.copy()
             t_air = pattern_list.copy()
             richardson = pattern_list.copy()
@@ -206,6 +210,8 @@ def extract_sim_obs_data(sim_obs: dict, look_into: dict[int: date_range] = None)
                 vpd[i] = solver.crop.inputs.vapor_pressure_deficit
                 wind[i] = solver.crop.inputs.wind_speed / 3600.
                 ra[i] = solver.crop.state_variables.aerodynamic_resistance * 3600.
+                ra_neutral[i] = calc_neutral_aerodynamic_resistance(solver=solver)
+                friction_velocity[i] = solver.crop.state_variables.friction_velocity
                 psi_soil[i] = solver.crop.inputs.soil_water_potential
                 t_air[i] = solver.crop.inputs.air_temperature - 273.15
                 richardson[i] = solver.crop.state_variables.richardson_number
@@ -251,6 +257,8 @@ def extract_sim_obs_data(sim_obs: dict, look_into: dict[int: date_range] = None)
             all_richardson += richardson
             all_monin_obukhov += monin_obukhov
             all_aerodynamic_resistance += ra
+            all_neutral_aerodynamic_resistance += ra_neutral
+            all_friction_veloctiy += friction_velocity
             all_veg_abs_par += par_abs_veg
             all_soil_abs_par += par_abs_sol
             all_psi_u += psi_u
@@ -299,6 +307,8 @@ def extract_sim_obs_data(sim_obs: dict, look_into: dict[int: date_range] = None)
         richardson=all_richardson,
         monin_obukhov=all_monin_obukhov,
         aerodynamic_resistance=all_aerodynamic_resistance,
+        neutral_aerodynamic_resistance=all_neutral_aerodynamic_resistance,
+        friction_veloctiy=all_friction_veloctiy,
         absorbed_par_veg=all_veg_abs_par,
         absorbed_par_soil=all_soil_abs_par,
         psi_u=all_psi_u,
