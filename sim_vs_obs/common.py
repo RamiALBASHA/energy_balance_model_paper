@@ -170,3 +170,13 @@ def calc_neutral_aerodynamic_resistance(solver: Solver):
     phi_u = 0
     phi_v = 0
     return 1. / (k ** 2 * u) * (log((zr - d) / z0u) - phi_u) * (log((zr - d) / z0v) - phi_v) * 3600.
+
+
+def calc_monin_obukhov_obs(friction_velocity: float,
+                           temperature_canopy: float,
+                           temperature_air: float,
+                           aerodynamic_resistance: float) -> float:
+    g = Constants().gravitational_acceleration
+    k = Constants().von_karman
+    return - friction_velocity ** 3 / (k * g / (temperature_air + 273.14) * (
+            temperature_canopy - temperature_air) / aerodynamic_resistance)
