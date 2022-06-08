@@ -234,7 +234,6 @@ def run_four_canopy_sims_mixed(is_sunny: True):
     if is_sunny:
         weather_files.pop('cloudy')
 
-    res = {}
     for weather_name, weather_file in weather_files.items():
         sim_result = sim_general(
             canopy_representations=(('bigleaf', 'lumped'),
