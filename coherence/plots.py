@@ -169,12 +169,12 @@ def plot_temperature_dynamics(ax: plt.axis,
             if leaf_class == 'lumped':
                 t_max, t_min = zip(*[(max(ls) - 273.15, min(ls) - 273.15) for ls in
                                      zip(*[summary_data[i] for i in component_indexes])])
-                ax.fill_between(hours, t_min, t_max, color=c_map['lumped'], label='lumped')
+                ax.fill_between(hours, t_min, t_max, color=c_map['lumped'], label=r"T$\rm _{s,\/lumped}$")
             else:
                 for s in ('sunlit', 'shaded'):
                     t_max, t_min = zip(*[(max(ls) - 273.15, min(ls) - 273.15) for ls in
                                          zip(*[summary_data[i][s] for i in component_indexes])])
-                    ax.fill_between(hours, t_min, t_max, color=c_map[s], label=s)
+                    ax.fill_between(hours, t_min, t_max, color=c_map[s], label=r"T$\rm _{{{}}}$".format(f"s, {s}"))
 
     pass
 
@@ -957,13 +957,15 @@ def plot_mixed(data: tuple, figs_path: Path):
     axs[2, 1].set_xlabel('Hour of the day')
     axs[2, 1].xaxis.set_label_coords(1, -0.5, transform=axs[2, 1].transAxes)
     handles, labels = axs[0, 0].get_legend_handles_labels()
+    l0 = ['balance'] + [l for l in labels if l != 'balance']
+    h0 = [handles[labels.index(s)] for s in l0]
     h0, l0 = zip(*[(h, l) for (h, l) in zip(handles, labels) if l != 'balance'])
     # h1, l1 = zip(*[(h, l) for (h, l) in zip(handles, labels) if l == 'balance'])
-    axs[0, 0].legend(handles=h0, labels=l0, loc='center left', fontsize=8, handlelength=1.5, ncol=1)
+    axs[0, 0].legend(handles=h0, labels=l0, loc='center left', fontsize=8, handlelength=1.5, ncol=1, framealpha=0)
     # axs[0, 0].legend(handles=h1, labels=l1, loc='upper right', fontsize=8)
 
     for ax in axs[1, :]:
-        ax.legend(loc='lower right', fontsize=8, handlelength=1.5, ncol=1)
+        ax.legend(loc='lower right', fontsize=8, handlelength=1.5, ncol=1, framealpha=0)
 
     fig.tight_layout()
     fig.savefig(figs_path / 'mixed.png')
