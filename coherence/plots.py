@@ -959,7 +959,7 @@ def plot_mixed(data: tuple, figs_path: Path):
     handles, labels = axs[0, 0].get_legend_handles_labels()
     l0 = ['balance'] + [l for l in labels if l != 'balance']
     h0 = [handles[labels.index(s)] for s in l0]
-    h0, l0 = zip(*[(h, l) for (h, l) in zip(handles, labels) if l != 'balance'])
+    # h0, l0 = zip(*[(h, l) for (h, l) in zip(handles, labels) if l != 'balance'])
     # h1, l1 = zip(*[(h, l) for (h, l) in zip(handles, labels) if l == 'balance'])
     axs[0, 0].legend(handles=h0, labels=l0, loc='center left', fontsize=8, handlelength=1.5, ncol=1, framealpha=0)
     # axs[0, 0].legend(handles=h1, labels=l1, loc='upper right', fontsize=8)
