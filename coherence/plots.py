@@ -279,7 +279,7 @@ def plot_radiation_temperature_profiles(hours: list,
     columns = ['Absorbed_PAR', 'Shaded_fraction', 'Temperature', 'Temperature']
 
     fig, axes = plt.subplots(ncols=len(columns), nrows=len(hours), sharex='col', sharey='all',
-                             figsize=(7.48, 24/2.54))
+                             figsize=(19 / 2.54, 24 / 2.54))
     for i_hour, hour in enumerate(hours):
         for i_case, case in enumerate(cases):
             plot_incident = i_case == 0
@@ -326,7 +326,7 @@ def plot_radiation_temperature_profiles(hours: list,
     for ax in axes[-1, 2:]:
         ax.set_xlim(min(xlim_temperature), max(xlim_temperature))
 
-    for i, ax in enumerate(axes.transpose().flatten()):
+    for i, ax in enumerate(axes.flatten()):
         ax.text(0.05, 0.875, f'({ascii_lowercase[i]})', transform=ax.transAxes)
 
     for i_hour, ax_row in enumerate(axes):
@@ -339,38 +339,28 @@ def plot_radiation_temperature_profiles(hours: list,
     for ax, water_status in zip(axes[0, 2:4], ('Well Watered', 'Water Deficit')):
         ax.set_title(water_status, fontsize=8)
 
+    axes[0, 1].legend(loc='lower left', fontsize=7)
+
     h_irradiance, l_irradiance = axes[0, 0].get_legend_handles_labels()
     labels_irradiance = ['incident_par_direct', 'incident_par_diffuse',
                          'Bigleaf Lumped', 'Bigleaf Sunlit', 'Bigleaf Shaded',
                          'Layered Lumped', 'Layered Sunlit', 'Layered Shaded',
                          'soil']
     h_irradiance = [h_irradiance[l_irradiance.index(l)] for l in labels_irradiance]
-    for i in range(2):
-        labels_irradiance[i] = UNITS_MAP[labels_irradiance[i]][0]
-
-    axes[0, 0].legend(
-        handles=h_irradiance,
-        labels=labels_irradiance,
-        fontsize=7,
-        loc='lower right')
-
     h_temperature, l_temperature = axes[0, 2].get_legend_handles_labels()
-    labels_temperature = ['temperature_air',
-                          'Bigleaf Lumped', 'Bigleaf Sunlit', 'Bigleaf Shaded',
-                          'Layered Lumped', 'Layered Sunlit', 'Layered Shaded',
-                          'soil']
-    h_temperature = [h_temperature[l_temperature.index(l)] for l in labels_temperature]
-    labels_temperature[0] = UNITS_MAP['temperature_air'][0]
-    for ax in axes[0, [2, 3]]:
-        ax.legend(
-            handles=h_temperature,
-            labels=labels_temperature,
-            fontsize=7,
-            loc='lower right')
 
-    axes[0, 1].legend(loc='lower left', fontsize=7)
     fig.tight_layout()
-    fig.subplots_adjust(wspace=0, hspace=0)
+    fig.subplots_adjust(bottom=0.15, wspace=0, hspace=0)
+
+    axes[-1, 0].legend(
+        handles=[h_temperature[l_temperature.index('temperature_air')]] + h_irradiance + (
+            [plt.Line2D([0], [0], color="w")]),
+        labels=['Air temperature', 'Incident direct PAR', 'Incident diffuse PAR',
+                'Bigleaf Lumped', 'Bigleaf Sunlit', 'Bigleaf Shaded',
+                'Layered Lumped', 'Layered Sunlit', 'Layered Shaded',
+                'soil', ''],
+        bbox_to_anchor=(2.65, -0.6, 1, .102), ncol=4, prop={'size': 8})
+
     fig.savefig(str(figure_path / f'temperature_profiles.png'), dpi=600)
     plt.close()
 
@@ -458,7 +448,7 @@ def plot_temperature_at_one_hour_bis(ax: plt.axis,
 
     if plot_air_temperature:
         y_text = max(y)
-        ax.scatter(temperature_air[hour], y_text + 0.5, marker='$\u2193$', label='temperature_air', color='k')
+        ax.scatter(temperature_air[hour], y_text + 0.5, marker='$\u2193$', label='temperature_air', color='r')
         # ax.annotate('', xy=(temperature_air[hour], y_text + 0.15),
         #             xytext=(temperature_air[hour], y_text + 1.0),
         #             arrowprops=dict(arrowstyle="->"), ha='center')
@@ -874,7 +864,7 @@ def examine_shift_effect(lumped_temperature_ls: list, figure_path: Path):
                 color=cpick.to_rgba(saturation_rate), label=f'{saturation_rate:.2f}')
 
     ax.set_yticks(component_indices)
-    ax.set_yticklabels([v+1 for v in component_indices])
+    ax.set_yticklabels([v + 1 for v in component_indices])
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set(xlabel=f"Surface temperature {UNITS_MAP['temperature'][1]}",
            ylabel='Canopy layer index (-)')
