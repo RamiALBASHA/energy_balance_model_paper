@@ -858,7 +858,7 @@ def examine_shift_effect(lumped_temperature_ls: list, figure_path: Path):
     cpick.set_array([])
 
     component_indices = list(reversed(lumped_temperature_ls[0][1].keys()))
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(9 / 2.54, 9/2.54))
     for saturation_rate, temp_profile in lumped_temperature_ls:
         ax.plot([temp_profile[k]['lumped'] - 273.15 for k in component_indices], component_indices, 'o-',
                 color=cpick.to_rgba(saturation_rate), label=f'{saturation_rate:.2f}')
@@ -868,8 +868,10 @@ def examine_shift_effect(lumped_temperature_ls: list, figure_path: Path):
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set(xlabel=f"Surface temperature {UNITS_MAP['temperature'][1]}",
            ylabel='Canopy layer index (-)')
-    ax.legend(title="Saturation ratio (-)")
+    ax.legend(title="Actual to saturated\nsoil water content (-)",
+              framealpha=0, title_fontsize=8, fontsize=8)
     fig.tight_layout()
+    fig.subplots_adjust(right=0.98)
     fig.savefig(figure_path / 'effect_shift.png')
     plt.close('all')
     pass
