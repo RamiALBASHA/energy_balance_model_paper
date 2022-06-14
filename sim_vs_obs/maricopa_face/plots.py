@@ -441,7 +441,7 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
 
 def plot_sim_obs_sunlit_shaded(res_all: dict, res_wet: dict, res_dry: dict, figure_dir: Path):
     pyplot.close()
-    fig, axs = pyplot.subplots(ncols=2, figsize=(14/2.54, 9/2.54), sharex='all', sharey='all',
+    fig, axs = pyplot.subplots(ncols=2, figsize=(14 / 2.54, 9 / 2.54), sharex='all', sharey='all',
                                gridspec_kw=dict(wspace=0))
     for res, label, c in (res_wet, 'Well watered', 'b'), (res_dry, 'Water deficit', 'r'):
         for ax, (k, v) in zip(axs, res.items()):
@@ -735,8 +735,14 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
             look_into={expe_id: dates_ls})
         s = add_delta_temperature(s)
 
-        axs_dynamic[0, j].plot(dates_ls, s['gai'], linewidth=0.75)
-        axs_dynamic[0, 0].set_ylabel('\n'.join(['Green\narea index', config.UNITS_MAP['gai'][1]]), fontsize=8)
+        axs_dynamic[0, j].plot(dates_ls, s['gai'], linewidth=0.75, label='Simulated')
+        try:
+            axs_dynamic[0, j].scatter(
+                *zip(*[(d, v) for d, v in zip(dates_ls, s['gai']) if d == datetime(1996, 2, 29, 0)]),
+                marker='.', edgecolor='none', label='Measured')
+        except TypeError:
+            pass
+        axs_dynamic[0, 0].set_ylabel('\n'.join(['Leaf\narea index', config.UNITS_MAP['gai'][1]]), fontsize=8)
         for k, ax in zip(vars_to_plot_dynamic[1:], axs_dynamic[1:, j]):
             ax.scatter(dates_ls, s[k]['obs'], label='obs', marker='.', edgecolor='none')
             ax.plot(dates_ls, s[k]['sim'], label='sim', linewidth=0.75)
@@ -752,18 +758,19 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
                     var_name = '\n'.join([var_name[0], ' '.join(var_name[1:])])
                     var_unit = config.UNITS_MAP[k][1]
                 ax.set_ylabel('\n'.join((var_name, var_unit)), fontsize=8)
-        axs_dynamic[-1, 1].legend(fontsize=8, loc='upper right')
+        axs_dynamic[0, 1].legend(fontsize=8, loc='lower right')
 
     _format_summary_axs(axs_summary=axs_summary, var_names=vars_to_plot_summary,
                         nb_vars_dynamic=len(vars_to_plot_dynamic), scaling_factor=scaling_factor)
-    _format_dynamic_axs(axs_dynamic=axs_dynamic, year=dates_ls[0].year)
+    _format_dynamic_axs(axs_dynamic=axs_dynamic)
 
     fig.tight_layout()
+    fig.subplots_adjust(bottom=-.04)
     fig.savefig(figure_dir / 'mixed.png')
     pyplot.close('all')
 
 
-def _format_dynamic_axs(axs_dynamic: array, year: int = None):
+def _format_dynamic_axs(axs_dynamic: array):
     d_x = .005  # how big to make the diagonal lines in axes coordinates
     d_y = 10 * d_x
     for s, ax in zip(ascii_lowercase, axs_dynamic[:, 0]):
@@ -794,9 +801,8 @@ def _format_dynamic_axs(axs_dynamic: array, year: int = None):
     for ax in axs_dynamic[:-1].flatten():
         ax.xaxis.set_visible(False)
 
-    if year is not None:
-        axs_dynamic[-1, 0].set_xlabel(f'Year {year}')
-        axs_dynamic[-1, 0].xaxis.set_label_coords(1.05, -0.6, transform=axs_dynamic[-1, 0].transAxes)
+    axs_dynamic[-1, 0].set_xlabel('Date')
+    axs_dynamic[-1, 0].xaxis.set_label_coords(1.0, -0.6, transform=axs_dynamic[-1, 0].transAxes)
 
     pass
 
@@ -807,9 +813,10 @@ def _format_summary_axs(axs_summary: array, var_names: list[str], nb_vars_dynami
         ax.set_title('')
         ax.text(0.1, 0.85, f'({ascii_lowercase[i + nb_vars_dynamic]})', transform=ax.transAxes, fontsize=8)
         ax.tick_params(axis='both', which='major', labelsize=8)
-        ax.set_ylabel(f"Simulated {var_name.capitalize().replace('_', ' ')}\n{energy_balance_unit}", fontsize=8,
+        ax.set_ylabel(f"Simulated {var_name.lower().replace('_', ' ')}\n{energy_balance_unit}", fontsize=8,
                       labelpad=0.1)
-        ax.set_xlabel(f"Observed {var_name.capitalize().replace('_', ' ')}\n{energy_balance_unit}", fontsize=8)
+        ax.set_xlabel(f"Measured {var_name.lower().replace('_', ' ')}\n{energy_balance_unit}", fontsize=8)
+        ax.xaxis.set_ticklabels(ax.get_xticks(), rotation=0)
         ax.set_xticklabels([int(v / scaling_factor) for v in ax.get_xticks()])
         ax.set_yticklabels([int(v / scaling_factor) for v in ax.get_yticks()])
     pass
