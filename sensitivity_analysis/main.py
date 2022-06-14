@@ -222,18 +222,22 @@ def heatmap(data: array, infos: dict, parameter_groups: dict, model: str = None,
     for j_out, output_var in enumerate(names_output_vars):
         ax.vlines(j_out * number_environments - 0.5, *ax.get_ylim(), color='k', linewidth=1)
         if is_text_header:
-            ax.text(j_out * number_environments + number_environments / 2 - 0.5, -5,
+            ax.text(j_out * number_environments + number_environments / 2 - 1.0, -5,
                     handle_var_name(output_var, model=model, is_symbol=is_symbol),
                     fontdict=dict(size=8, ha='center' if is_symbol else 'left', rotation=90))
     if parameter_groups is not None:
+        len_label_max = max([len(MAP_PARAMS[s.split('-')[-1]]) for s in row_labels])
         group_row_index = -0.5
         for group_name, params in parameter_groups.items():
             group_row_index += len(params) / 2
             ax.hlines(row_labels.index(params[-1]) + 0.5, *ax.get_xlim(), color='k', linewidth=1)
             if is_text_groups:
-                ax.text(-7, group_row_index, group_name.replace(' resistance', '\nresistance'),
-                        fontdict={'size': 8, 'ha': 'right', 'va': 'center'})
-                ax.text(-2.75, 0.5, water_status, transform=ax.transAxes,
+                x_pos = max([len(MAP_PARAMS[s.split('-')[-1]]) for s in params]) / len_label_max * -6 -0.5
+                ax.annotate(group_name, xytext=(-7.9, group_row_index), xy=(x_pos, group_row_index),
+                            arrowprops=dict(arrowstyle=f'-[, widthB={len(params) / 2 - 0.5}', lw=0.5),
+                            annotation_clip=False,
+                            fontsize=8, ha='right', va='center')
+                ax.text(-3.45, 0.5, water_status, transform=ax.transAxes,
                         fontdict={'size': 8, 'ha': 'center', 'va': 'center', 'rotation': 90})
             group_row_index += len(params) / 2
 
@@ -357,8 +361,8 @@ def plot_grouped_heatmap(sa_data: dict, path_fig: Path, parameter_groups: dict =
     for is_first_order in (True, False):
         im = None
         plt.close('all')
-        fig, axs = plt.subplots(nrows=len(water_conditions), ncols=len(models), figsize=(19 / 2.54, 19 / 2.54),
-                                gridspec_kw=dict(hspace=0.05, wspace=0.05, width_ratios=[2, 3, 3, 5]))
+        fig, axs = plt.subplots(nrows=len(water_conditions), ncols=len(models), figsize=(19 / 2.54, 22 / 2.54),
+                                gridspec_kw=dict(hspace=0.025, wspace=0.025, width_ratios=[2, 3, 3, 5]))
         for i_model, model in enumerate(models):
             for i_soil_status, soil_status in enumerate(water_conditions):
                 ax = axs[i_soil_status, i_model]
@@ -381,14 +385,22 @@ def plot_grouped_heatmap(sa_data: dict, path_fig: Path, parameter_groups: dict =
             ax.xaxis.set_visible(False)
         for ax in axs[0, :]:
             ax.tick_params(axis='x', rotation=90)
+        for ax, model in zip(axs[0, :], models):
+            ax.annotate(text='\n'.join([s.capitalize().replace('-s', '-S') for s in model.split('_')]),
+                        xytext=(0.5, 2.15), xy=(0.5, 2.),
+                        xycoords=ax.transAxes,
+                        arrowprops=dict(arrowstyle=f'-[, widthB={len(ax.get_xticklabels()) / 2 - 2}', lw=0.5),
+                        annotation_clip=False,
+                        fontsize=8, ha='center', va='top', fontweight='bold')
+
         for ax, s in zip(axs[:, 0], ascii_lowercase):
-            ax.text(-2.25, 0.9, f'({s})', transform=ax.transAxes,
+            ax.text(-3.25, 0.9, f'({s})', transform=ax.transAxes,
                     fontdict={'size': 10, 'ha': 'center', 'va': 'center', 'weight': 'bold'})
         cbar_ax = fig.add_axes([0.05, 0.9, 0.15, 0.01])
         cbar = fig.colorbar(im, cax=cbar_ax, label='First order effect (S1)' if is_first_order else 'Total effect (ST)',
                             orientation='horizontal')
 
-        fig.subplots_adjust(left=0.3, right=0.99, bottom=0.01, top=0.70)
+        fig.subplots_adjust(left=0.35, right=0.99, bottom=0.01, top=0.70)
         fig.savefig(path_fig / f'sensitivity_analysis_{"s1" if is_first_order else "st"}.png')
         plt.close("all")
 
