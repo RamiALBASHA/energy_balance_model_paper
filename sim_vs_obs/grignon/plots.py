@@ -330,6 +330,105 @@ def plot_mixed(data: dict, path_figs_dir: Path):
     pass
 
 
+def plot_mixed2(data: dict, path_figs_dir: Path):
+    hours = (6, 9, 12, 15, 18)
+    nb_hours = len(hours)
+    look_into = (
+        ('intensive', datetime(2012, 2, 17)),
+        ('intensive', datetime(2012, 4, 30)))
+
+    pyplot.close('all')
+    fig = pyplot.figure(figsize=(12 / 2.54, 18 / 2.54))
+    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, height_ratios=[1, 5])
+    gs_dynamic = gs[0].subgridspec(nrows=1, ncols=2)
+    axs_dynamic = [fig.add_subplot(s) for s in gs_dynamic]
+    gs_profiles = gs[1].subgridspec(nrows=nb_hours, ncols=2, hspace=0.)
+    axs_profile = array([fig.add_subplot(s) for s in gs_profiles]).reshape(nb_hours, 2)
+
+    layer_idx = [None] * len(look_into)
+    lai = [None] * len(look_into)
+    for j, (treatment, date_obs) in enumerate(look_into):
+        datetime_range = date_range(start=date_obs, end=date_obs + timedelta(hours=23), freq='H')
+        for dt_obs in datetime_range:
+            solver, obs_data = [data[dt_obs][treatment][k] for k in ('solver', 'obs')]
+            layer_idx[j] = [i for i in solver.crop.components_keys.copy() if i != -1]
+            lai[j] = sum(solver.crop.inputs.leaf_layers.values())
+            sim = {layer: calc_layer_temperature(solver=solver, layer_index=layer) for layer in layer_idx[j]}
+            obs = {layer: obs_data[obs_data['leaf_level'] == layer]['temperature'].to_list() for layer in layer_idx[j]}
+
+            for v in obs.values():
+                axs_dynamic[j].scatter([dt_obs] * len(v), v, marker='s', c='red', alpha=0.3, label='Measured')
+            axs_dynamic[j].scatter([dt_obs] * len(sim.values()), sim.values(), marker='.', c='blue', label='Simulated')
+
+            if dt_obs.hour in hours:
+                ax_profile = axs_profile[hours.index(dt_obs.hour), j]
+                for k, v in obs.items():
+                    ax_profile.scatter(v, [k] * len(v), marker='s', c='red', alpha=0.3, label='Measured')
+                ax_profile.scatter(*zip(*[(v, k) for (k, v) in sim.items()]), marker='.', c='blue', label='Simulated')
+
+    t_lims = [sorted(v for ax in axs_dynamic for v in ax.get_ylim())[i] for i in (0, -1)]
+
+    _format_dynamic_axs(axs_dynamic=axs_dynamic, y_lim=t_lims, lai_ls=lai)
+    _format_profile_axs(axs_profile=axs_profile, layer_indices=layer_idx, t_lims=t_lims, hours=hours)
+
+    fig.tight_layout()
+    fig.subplots_adjust(wspace=0.05, hspace=0.3, right=0.975)
+    fig.savefig(path_figs_dir / f'mixed.png')
+    pyplot.close('all')
+
+    pass
+
+
+def _format_dynamic_axs(axs_dynamic: array, y_lim: list, lai_ls: list):
+    for ax, s, lai in zip(axs_dynamic, ascii_lowercase, lai_ls):
+        ax.set_title(f'Green Area Index = {lai:0.2f}', fontsize=9)
+        ax.text(0.025, 0.825, f'({s})', fontsize=9, ha='left', transform=ax.transAxes)
+        ax.set_ylim(y_lim)
+        ax.xaxis.set_major_locator(dates.HourLocator(interval=3))
+        ax.xaxis.set_major_formatter(dates.DateFormatter("%H"))
+        ax.tick_params(axis='both', which='major', labelsize=8)
+    axs_dynamic[1].set_yticklabels([])
+
+    ax = axs_dynamic[0]
+    ax.set_xlabel('Hour of the day')
+    ax.xaxis.set_label_coords(1.05, -0.35, transform=ax.transAxes)
+    ax.set_ylabel('\n'.join(['Surface', f"temperature {config.UNITS_MAP['temperature'][-1]}"]))
+    _handles, _labels = ax.get_legend_handles_labels()
+    labels = ('Simulated', 'Measured')
+    handles = [_handles[_labels.index(lbl)] for lbl in labels]
+    ax.legend(handles=handles, labels=labels, loc='upper right', fontsize=8, framealpha=0, handlelength=1)
+    pass
+
+
+def _format_profile_axs(axs_profile: array, layer_indices: list, t_lims: list, hours: tuple):
+    layers = sorted(set([v for layer_idx in layer_indices for v in layer_idx]))
+    y_lim = [layers[0] - 0.5, layers[-1] + 3]
+
+    for j, axs in enumerate(axs_profile.transpose()):
+        for ax, hour in zip(axs, hours):
+            ax.tick_params(axis='both', which='major', labelsize=8)
+            ax.set(ylim=y_lim, xlim=t_lims)
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(integer=True))
+            if len(layers) > 6:
+                ax.yaxis.set_major_locator(ticker.MultipleLocator(2))
+                ax.set_yticks(layers[1::2])
+            else:
+                ax.set_yticks(layers)
+            ax.text(0.8, 0.85, f'{hour:02d}:00', fontsize=8, ha='left', transform=ax.transAxes)
+            if hour != hours[-1]:
+                ax.xaxis.set_visible(False)
+            if j > 0:
+                ax.set_yticklabels([])
+
+        axs_profile[2, 0].set_ylabel('Canopy layer index (-)', rotation=90, ha='center', labelpad=12)
+        axs_profile[-1, 0].set_xlabel(' '.join(['Surface temperature', config.UNITS_MAP['temperature'][-1]]))
+        axs_profile[-1, 0].xaxis.set_label_coords(1.05, -0.35, transform=axs_profile[-1, 0].transAxes)
+
+    for ax, s in zip(axs_profile.flatten(), ascii_lowercase[2:]):
+        ax.text(0.025, 0.85, f'({s})', fontsize=9, ha='left', transform=ax.transAxes)
+    pass
+
+
 def export_results(summary_data: dict, path_csv: Path):
     df_ls = []
     for treatment, trt_data in summary_data.items():
