@@ -286,14 +286,14 @@ def plot_mixed(data: dict, path_figs_dir: Path):
             obs = {layer: obs_data[obs_data['leaf_level'] == layer]['temperature'].to_list() for layer in layer_indices}
 
             for v in obs.values():
-                ax_dynamic.scatter([dt_obs] * len(v), v, marker='s', c='red', alpha=0.3, label='obs')
-            ax_dynamic.scatter([dt_obs] * len(sim.values()), sim.values(), marker='.', c='blue', label='sim')
+                ax_dynamic.scatter([dt_obs] * len(v), v, marker='s', c='red', alpha=0.3, label='Measured')
+            ax_dynamic.scatter([dt_obs] * len(sim.values()), sim.values(), marker='.', c='blue', label='Simulated')
 
             if dt_obs.hour in hours:
                 ax_profile = axs_profile[hours.index(dt_obs.hour)]
                 for k, v in obs.items():
-                    ax_profile.scatter(v, [k] * len(v), marker='s', c='red', alpha=0.3, label='obs')
-                ax_profile.scatter(*zip(*[(v, k) for (k, v) in sim.items()]), marker='.', c='blue', label='sim')
+                    ax_profile.scatter(v, [k] * len(v), marker='s', c='red', alpha=0.3, label='Measured')
+                ax_profile.scatter(*zip(*[(v, k) for (k, v) in sim.items()]), marker='.', c='blue', label='Simulated')
         ax_dynamic.text(0.02, 0.825, '(a)', fontsize=9, ha='left', transform=ax_dynamic.transAxes)
 
         t_lims = ax_dynamic.get_ylim()
@@ -313,14 +313,14 @@ def plot_mixed(data: dict, path_figs_dir: Path):
         ax_dynamic.xaxis.set_major_locator(dates.HourLocator(interval=3))
         ax_dynamic.xaxis.set_major_formatter(dates.DateFormatter("%H"))
         # ax_dynamic.tick_params(axis='both', which='major', labelsize=8)
-        date_str = ' '.join([date_obs.strftime('%b %d') + r"$^{\rm th}$", str(date_obs.year)])
-        ax_dynamic.set(xlabel=f'Hour of the day ({date_str})',
+        ax_dynamic.set(xlabel=f'Hour of the day',
                        ylabel='\n'.join(['Surface', f"temperature {config.UNITS_MAP['temperature'][-1]}"]))
 
         h_dynamic, l_dynamic = ax_dynamic.get_legend_handles_labels()
-        labels_dynamic = ('sim', 'obs')
+        labels_dynamic = ('Simulated', 'Measured')
         handles_dynamic = [h_dynamic[l_dynamic.index(lbl)] for lbl in labels_dynamic]
-        ax_dynamic.legend(handles=handles_dynamic, labels=labels_dynamic, loc='upper right', fontsize=8)
+        axs_profile[-1].legend(handles=handles_dynamic, labels=labels_dynamic, loc='lower right', fontsize=8,
+                               framealpha=0)
         # axs_profile[0].legend(handles=handles_dynamic, labels=labels_dynamic, loc='lower right', fontsize=8)
 
         fig.tight_layout()
