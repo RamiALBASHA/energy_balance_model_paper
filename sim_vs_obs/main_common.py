@@ -1,15 +1,29 @@
 from pathlib import Path
 from string import ascii_lowercase
 
-from matplotlib import pyplot, ticker, rcParams
-from numpy import full, arange
-from pandas import read_csv
+import statsmodels.api as sm
+from matplotlib import pyplot, ticker, collections
+from numpy import full, arange, array, linspace
+from pandas import read_csv, concat
 
 from sim_vs_obs.common import CMAP, NORM_INCIDENT_PAR
 from utils import stats
 from utils.config import UNITS_MAP
 
-rcParams['text.usetex'] = True
+MAP_NAMES = {
+    'absorbed_par_veg': 'Absorbed PAR by leaves',
+    'absorbed_par_soil': 'Absorbed PAR by soil',
+    'wind_speed': 'Wind speed',
+    'aerodynamic_resistance': 'Aerodynamic resistance',
+    'temperature_air': 'Air temperature',
+    'vapor_pressure_deficit': 'Vapor pressure deficit',
+    'height': 'Canopy height',
+    'gai': 'Leaf area index',
+    'soil_water_potential': 'Soil water potential',
+    'net_longwave_radiation': 'Net longwave radiation'
+}
+
+# rcParams['text.usetex'] = True
 
 EXPERIMENTS = {
     'maricopa_face': ('Maricopa FACE', 'bigleaf'),
@@ -413,6 +427,90 @@ def plot_per_richardson_zone(path_source: Path, leaf_class: str, path_outputs: P
     fig.savefig(path_outputs / 'result_per_richardson_zone.png')
 
 
+def plot_error(path_source: Path, path_outputs: Path, is_corrected: bool = True, is_lumped_leaves: bool = True):
+    s_corrected = 'corrected' if is_corrected else 'neutral'
+    s_lumped = 'lumped' if is_lumped_leaves else 'sunlit-shaded'
+
+    n_rows = 2
+    n_cols = 5
+
+    dependent_var = 'error_temperature_canopy'
+    explanatory_vars = ['absorbed_par_veg', 'absorbed_par_soil', 'wind_speed', 'aerodynamic_resistance',
+                        'temperature_air', 'vapor_pressure_deficit', 'height', 'gai', 'soil_water_potential',
+                        'net_longwave_radiation']
+
+    dfs = []
+    for j, experiment in enumerate(EXPERIMENTS.keys()):
+        dir_name = '_'.join((EXPERIMENTS[experiment][1], s_lumped))
+        df = read_csv(path_source / experiment / 'outputs' / s_corrected / dir_name / 'results_cart.csv')
+        df = df.loc[:, explanatory_vars + [dependent_var, 'incident_par']]
+        df.loc[:, 'experiment'] = experiment
+        dfs.append(df)
+
+    df_tot = concat(dfs, axis=0, ignore_index=True)
+    df_tot.dropna(subset=[dependent_var], axis=0, inplace=True)
+
+    pyplot.close("all")
+    fig, axs = pyplot.subplots(nrows=n_rows, ncols=n_cols, figsize=(19 / 2.54, 10 / 2.54), sharey='row',
+                               gridspec_kw={'wspace': 0})
+    kwargs = dict(alpha=0.5, cmap=CMAP, norm=NORM_INCIDENT_PAR)
+    for is_day in (True, False):
+        df_tot_ = df_tot[df_tot['incident_par'] != 0] if is_day else df_tot[df_tot['incident_par'] == 0]
+
+        for i_explanatory, explanatory in enumerate(explanatory_vars):
+            ax = axs[i_explanatory % n_rows, i_explanatory // n_rows]
+            if len(df_tot_) > 0:
+                kwargs.update({'c': df_tot_.loc[:, 'incident_par'].values})
+                im = plot_day_night(
+                    ax=ax,
+                    explanatory_ls=df_tot_[explanatory],
+                    error=df_tot_[dependent_var],
+                    is_day=is_day,
+                    **kwargs)
+            else:
+                pass
+
+            ax.set_xlabel('\n'.join([MAP_NAMES[explanatory], UNITS_MAP[explanatory][1]]), fontsize=8)
+
+    for ax in axs[:, 0]:
+        ax.set_ylabel(f"Temperature error {UNITS_MAP['temperature'][1]}", fontsize=8)
+
+    for i, ax in enumerate(axs.flatten()):
+        ax.tick_params(axis='both', labelsize=8)
+        ax.text(0.05, 0.9, f'({ascii_lowercase[i]})', transform=ax.transAxes, fontsize=8)
+
+    axs[-1, 0].legend(loc='lower right', framealpha=0, handlelength=1, fontsize=8)
+
+    fig.tight_layout()
+    fig.savefig(path_outputs / f'error_all_experiments_{s_corrected}_{s_lumped}.png')
+    pyplot.close('all')
+    pass
+
+
+def plot_day_night(ax: pyplot.Subplot, explanatory_ls: list, error: list, is_day: bool,
+                   **kwargs) -> collections.PathCollection:
+    if is_day:
+        line_style = 'r-'
+        label = 'day'
+    else:
+        line_style = 'r--'
+        label = 'night'
+    im = ax.scatter(explanatory_ls, error, marker='.', edgecolor='none', label=label, **kwargs)
+
+    x = array(explanatory_ls)
+    x = sm.add_constant(x)
+    y = array(error)
+    ols = sm.OLS(y, x).fit()
+
+    kwargs2 = {k: v for k, v in kwargs.items()}
+    kwargs2.update({'alpha': 1})
+
+    lim = zip(*[(i, ols.params[0] + ols.params[1] * i) for i in linspace(min(explanatory_ls), max(explanatory_ls), 2)])
+    ax.plot(*lim, line_style, linewidth=1.25, label=label)
+
+    return im
+
+
 if __name__ == '__main__':
     path_sources = Path(__file__).parents[1] / 'sources'
     path_fig = path_sources / 'figs'
@@ -420,6 +518,11 @@ if __name__ == '__main__':
     plot_stability_vs_leaf_category_heatmap(path_source=path_sources, path_outputs=path_fig)
 
     for is_lumped in (True, False):
+        plot_error(
+            path_source=path_sources,
+            path_outputs=path_fig,
+            is_corrected=True,
+            is_lumped_leaves=is_lumped)
         plot_sim_vs_obs(
             path_source=path_sources,
             path_outputs=path_fig,
