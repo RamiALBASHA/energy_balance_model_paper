@@ -477,7 +477,7 @@ def plot_sim_obs_sunlit_shaded(res_wet: dict, res_dry: dict, figure_dir: Path, i
         add_1_1_line(ax, linewidth=0.5)
         ax.set_aspect(aspect='equal', anchor='C')
 
-    axs[0].legend(fontsize=8, loc='lower left')
+    axs[0].legend(fontsize=8, loc='lower left', framealpha=0)
     axs[0].set_ylabel('Simulated leaf temperature (°C)')
     axs[0].set_xlabel('Observed leaf temperature (°C)')
     axs[0].xaxis.set_label_coords(1.05, -0.15, transform=axs[0].transAxes)
