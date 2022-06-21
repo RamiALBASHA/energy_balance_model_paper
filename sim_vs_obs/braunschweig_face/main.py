@@ -77,3 +77,4 @@ if __name__ == '__main__':
     plots.plot_error(summary_data=summary_data, path_figs=outputs_path)
     plots.export_results(summary_data=summary_data, path_csv=outputs_path)
     plots.export_results_cart(summary_data=summary_data, path_csv=outputs_path)
+    plots.export_weather_summary(path_csv=outputs_path)
