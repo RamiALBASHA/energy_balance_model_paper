@@ -815,20 +815,24 @@ def compare_sunlit_shaded_temperatures(temperature_data: list, figure_path: Path
 
 
 def plot_surface_conductance_profile(surface_conductance: dict, figure_path: Path):
-    fig, ax = plt.subplots()
+    c = {'lumped': 'blue', 'sunlit': 'orange', 'shaded': 'DarkGreen', 'sunlit+shaded': 'red'}
+    fig, ax = plt.subplots(figsize=(9 / 2.54, 9 / 2.54))
     ax.invert_yaxis()
+    ax.clear()
     for k, v in surface_conductance.items():
-        ax.plot(*zip(*v), label=k)
+        ax.plot(*zip(*v), label=k, c=c[k])
     x_shaded, _ = zip(*surface_conductance['sunlit'])
     x_sunlit, y = zip(*surface_conductance['shaded'])
     ax.plot([xsun + xshade for xsun, xshade in zip(x_sunlit, x_shaded)], y, label='sunlit+shaded')
     ax.set(xlabel=f"Surface conductance {UNITS_MAP['surface_conductance'][1]}",
            ylabel=f'Cumulative leaf area index {UNITS_MAP["LAI"][1]}')
-    handles, labels = ax.get_legend_handles_labels()
-    labels_sorted = sorted(labels)
-    handles = [handles[labels.index(s)] for s in labels_sorted]
-    ax.legend(handles=handles, labels=labels_sorted)
+    handles, labels_ = ax.get_legend_handles_labels()
+    labels = ('lumped', 'sunlit', 'shaded', 'sunlit+shaded')
+    handles = [handles[labels_.index(s)] for s in labels]
+    ax.legend(handles=handles, labels=labels, framealpha=0, handlelength=1)
+    fig.tight_layout()
     fig.savefig(figure_path / 'effect_surface_conductance.png')
+    plt.close('all')
 
 
 def examine_soil_saturation_effect(temperature: list, latent_heat: list, figure_path: Path):
