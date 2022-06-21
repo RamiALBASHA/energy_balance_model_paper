@@ -353,3 +353,22 @@ def get_obs_sunlit_shaded_temperature(obs_df: DataFrame, treatment_id: Union[str
         res = None
 
     return res
+
+
+def get_dates_growing_seasons(treatment_ids: list[int]) -> dict[int, datetime]:
+    path_data = PathInfos.source_raw.value / r'Biomass Yield Area Phenology Management Weather Soil Moisture.ods'
+    pheno_dict = read_excel(path_data, engine='odf', sheet_name=['Plantings', 'Obs_summary_Avg_over_Reps'])
+
+    years = set([int(member.value[-1]) for name, member in ExpIdInfos.__members__.items() if
+                 int(name.split('_')[-1]) in treatment_ids])
+    res = {year: [] for year in years}
+    planting_df = pheno_dict['Plantings']
+    pheno_df = pheno_dict['Obs_summary_Avg_over_Reps']
+
+    for year in years:
+        res[year].append(planting_df[(planting_df['TRNO'].isin(treatment_ids)) &
+                                     (planting_df['PDATE'].dt.year == year - 1)]['PDATE'].median())
+        res[year].append(pheno_df[(pheno_df['TRNO'].isin(treatment_ids)) &
+                                  (pheno_df['MDAT'].dt.year == year)]['MDAT'].median())
+
+    return res
