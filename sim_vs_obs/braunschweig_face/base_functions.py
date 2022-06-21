@@ -1,10 +1,11 @@
 from datetime import datetime, time
 from math import pi
+from typing import Union
 
 from alinea.caribu.sky_tools import Gensun
 from alinea.caribu.sky_tools.spitters_horaire import RdRsH
 from crop_energy_balance.formalisms.weather import calc_saturated_air_vapor_pressure, calc_vapor_pressure_deficit
-from pandas import read_excel, DataFrame, Series, date_range
+from pandas import read_excel, DataFrame, Series, date_range, to_datetime
 
 from sim_vs_obs.braunschweig_face.config import PathInfos, SiteInfos, SoilInfos, ExpInfos, SimInfos
 from sim_vs_obs.common import calc_absorbed_irradiance, ParamsEnergyBalanceBase
@@ -15,8 +16,24 @@ from utils.water_retention import calc_soil_water_potential
 PATH_RAW = PathInfos.source_raw_file.value
 
 
+def read_phenology(years: Union[int, list[int]]) -> dict[int: DataFrame]:
+    df = read_excel(PATH_RAW, sheet_name='phenology')
+    df.dropna(inplace=True)
+    df['date'] = to_datetime(df['date'])
+    years = list(years)
+
+    res = {}
+    for year in years:
+        date_beg = df[(df['date'].dt.year == year - 1) & (df['growth stage'] == 'sowing')].index[0]
+        date_end = df[(df['date'].dt.year == year) & (df['growth stage'] == 'grain maturity')].index[0]
+        res.update({year: df.loc[date_beg: date_end].set_index('date')})
+
+    return res
+
+
 def read_weather(year: int) -> DataFrame:
     df = read_excel(PATH_RAW, sheet_name=f'weather{year}')
+    df.dropna(inplace=True)
     df.loc[:, 'flag'] = df.apply(lambda x: x['time'].minute == 0, axis=1)
     df = df[df['flag']]
     df.set_index(df.apply(lambda x: datetime.combine(x['date'], x['time']), axis=1), inplace=True)
