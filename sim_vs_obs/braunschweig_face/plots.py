@@ -1,10 +1,12 @@
 from pathlib import Path
 
 import statsmodels.api as sm
+from crop_energy_balance.formalisms.weather import calc_vapor_pressure_deficit
 from matplotlib import pyplot
 from numpy import array, linspace
 from pandas import isna, DataFrame
 
+from sim_vs_obs.braunschweig_face.base_functions import read_weather
 from sim_vs_obs.braunschweig_face.config import ExpInfos
 from sim_vs_obs.common import (calc_apparent_temperature, calc_neutral_aerodynamic_resistance,
                                get_canopy_abs_irradiance_from_solver, NORM_INCIDENT_PAR, CMAP, format_binary_colorbar)
@@ -254,3 +256,30 @@ def export_results_cart(summary_data: dict, path_csv: Path):
     df = df[(df['incident_par'] >= 0) & ~df['error_temperature_canopy'].isna()]
     df.to_csv(path_csv / 'results_cart.csv', index=False)
     return df
+
+
+def export_weather_summary(path_csv: Path):
+    df = DataFrame(
+        {s: [None] for s in
+         ('year', 'air_temperature_avg', 'global_radiation_cum', 'vapor_pressure_deficit_avg', 'rainfall_cum')})
+    df.set_index('year', inplace=True)
+    for year in ExpInfos.years.value:
+        weather_df = read_weather(year=year)
+        weather_df.loc[:, 'vapor_pressure_deficit'] = weather_df.apply(
+            lambda x: calc_vapor_pressure_deficit(
+                temperature_air=x['TEMP'],
+                temperature_leaf=x['TEMP'],
+                relative_humidity=x['RH']),
+            axis=1)
+        weather_df.loc[:, 'SRAD'] = weather_df.apply(lambda x: max(0, x['SRAD']), axis=1)
+        df.loc[int(year), ['air_temperature_avg', 'vapor_pressure_deficit_avg']] = \
+            weather_df.groupby(weather_df.index.date).mean().mean()[
+                ['TEMP', 'vapor_pressure_deficit']].to_list()
+        df.loc[int(year), ['global_radiation_cum', 'rainfall_cum']] = \
+            weather_df.groupby(weather_df.index.date).sum().mean()[
+                ['SRAD', 'RAIN']].to_list()
+
+    df.dropna(inplace=True)
+    df.loc['avg', :] = df.mean()
+    df.to_csv(path_csv / 'weather_summary.csv', sep=';', decimal='.')
+    pass
