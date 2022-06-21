@@ -15,9 +15,10 @@ if __name__ == '__main__':
 
     area_df = area_df[~area_df['LNUM'].isna()]
 
-    sim_obs_dict = {k: {} for k in area_df['TRNO'].unique()}
+    treatments = area_df['TRNO'].unique()
+    sim_obs_dict = {k: {} for k in treatments}
 
-    for treatment in area_df['TRNO'].unique():
+    for treatment in treatments:
         trt_area_df = base_functions.interpolate_area_df(df=area_df[area_df['TRNO'] == treatment])
 
         for date_obs, row in trt_area_df.iterrows():
@@ -101,4 +102,4 @@ if __name__ == '__main__':
     plots.export_results(summary_data=results_all, path_csv=path_outputs)
     df_cart = plots.export_results_cart(summary_data=results_all, path_csv=path_outputs)
     plots.plot_classification_and_regression_tree(data=df_cart, path_output_dir=path_outputs)
-
+    plots.export_weather_summary(treatment_ids=treatments, weather_data=weather_df, path_csv=path_outputs)
