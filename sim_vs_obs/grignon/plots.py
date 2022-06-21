@@ -11,6 +11,7 @@ from pandas import isna, date_range, DataFrame, concat
 
 from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_neutral_aerodynamic_resistance,
                                CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
+from sim_vs_obs.grignon.base_functions import read_phenology
 from sim_vs_obs.grignon.config import CanopyInfo
 from utils import stats, config
 
@@ -472,3 +473,25 @@ def export_results_cart(summary_data: dict, path_csv: Path):
     concat(df_ls).to_csv(path_csv / 'results_cart.csv', index=False)
 
     return
+
+
+def export_weather_summary(weather_data: DataFrame, path_csv: Path):
+    pheno_data = read_phenology()
+
+    df = DataFrame(
+        {s: [None] for s in
+         ('year', 'air_temperature_avg', 'global_radiation_cum', 'vapor_pressure_deficit_avg', 'rainfall_cum')})
+    df.set_index('year', inplace=True)
+
+    dates = date_range(*[pheno_data.index[i] for i in (0, -1)], freq='H')
+    w_df = weather_data[weather_data.index.isin(dates)]
+    df.loc[2012, ['air_temperature_avg', 'vapor_pressure_deficit_avg']] = (
+        w_df.groupby(w_df.index.date).mean().mean()[['air_temperature', 'vapor_pressure_deficit']].to_list())
+
+    df.loc[2012, 'global_radiation_cum'] = w_df['RG'].groupby(w_df.index.date).sum().mean()
+    df.loc[2012, 'rainfall_cum'] = w_df['RR'].sum()
+
+    df.dropna(inplace=True)
+    df.loc['avg', :] = df.mean()
+    df.to_csv(path_csv / 'weather_summary.csv', sep=';', decimal='.')
+    pass

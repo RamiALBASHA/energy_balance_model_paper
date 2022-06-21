@@ -16,7 +16,7 @@ if __name__ == '__main__':
     weather_meso_all = get_grignon_weather_data(
         file_path=path_source / 'temperatures_mesoclimate.csv',
         latitude=WeatherInfo.latitude.value,
-        build_date=True).set_index('date')
+        build_date=True, keep_vars=['RG', 'RR']).set_index('date')
 
     temp_obs_all = read_phylloclimate(path_obs=path_source / 'temperatures_phylloclimate.csv')
     temp_obs_all = temp_obs_all[temp_obs_all['leaf_level'] != UncertainData.leaf_level.value]
@@ -93,3 +93,4 @@ if __name__ == '__main__':
     plots.plot_errors(summary_data=summary_data, path_figs_dir=path_outputs)
     plots.export_results(summary_data=summary_data, path_csv=path_outputs)
     plots.export_results_cart(summary_data=summary_data, path_csv=path_outputs)
+    plots.export_weather_summary(weather_data=weather_meso_all, path_csv=path_outputs)

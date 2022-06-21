@@ -71,7 +71,8 @@ def get_sq2_weather_data(filename: str, adapt_irradiance: bool = True) -> pd.Dat
 
 
 def get_grignon_weather_data(filename: str = None, file_path: Path = None, latitude: float = None,
-                             adapt_irradiance: bool = True, build_date: bool = False) -> pd.DataFrame:
+                             adapt_irradiance: bool = True, build_date: bool = False,
+                             keep_vars: list[str] = None) -> pd.DataFrame:
     assert not (filename is None and file_path is None), ValueError("One of 'filename' or 'file_path' must be provided")
 
     radiation_conversion = convert_unit(1, 'J/h/cm2', 'W/m2')
@@ -121,7 +122,7 @@ def get_grignon_weather_data(filename: str = None, file_path: Path = None, latit
         lambda x: x['vapor_pressure_deficit'] * x['U'] / 100., axis=1)
 
     raw_data.rename(columns={'T': 'air_temperature'}, inplace=True)
-    raw_data.drop(['VT', 'RR', 'RG', 'U', 'PAR_H', 'VX'], axis=1, inplace=True)
+    raw_data.drop([s for s in ['VT', 'RR', 'RG', 'U', 'PAR_H', 'VX'] if s not in keep_vars], axis=1, inplace=True)
 
     return raw_data
 
