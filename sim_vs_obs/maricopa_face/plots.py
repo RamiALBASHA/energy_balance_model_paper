@@ -5,6 +5,8 @@ from string import ascii_lowercase
 
 import graphviz
 import statsmodels.api as sm
+from convert_units.converter import convert_unit
+from crop_energy_balance.formalisms.weather import calc_saturated_air_vapor_pressure
 from matplotlib import pyplot, ticker, gridspec, dates, collections
 from numpy import array, linspace
 from pandas import DataFrame, isna, date_range
@@ -908,4 +910,31 @@ def plot_classification_and_regression_tree(data: DataFrame, path_output_dir: Pa
     graph = graphviz.Source(dot_data)
     # graph.view(filename=f'{txt}_{clf.score(explanatory, target):0.3f}')
     graph.render(directory=path_output_dir, filename=f'cart_{clf.score(explanatory, target):0.3f}', format='png')
+    pass
+
+
+def export_weather_summary(treatment_ids: list[int], weather_data: DataFrame, path_csv: Path):
+    pheno_dict = base_functions.get_dates_growing_seasons(treatment_ids=treatment_ids)
+    weather_data.loc[:, 'RG'] = weather_data['SRAD'] * convert_unit(1, 'MJ/h/m2', 'W/m2')
+    weather_data.loc[:, 'vapor_pressure_deficit'] = weather_data.apply(
+        lambda x: max(
+            0., calc_saturated_air_vapor_pressure(x['TDRY']) - calc_saturated_air_vapor_pressure(x['TDEW'])), axis=1)
+    weather_data.set_index('DATE', inplace=True)
+
+    df = DataFrame(
+        {s: [None] for s in
+         ('year', 'air_temperature_avg', 'global_radiation_cum', 'vapor_pressure_deficit_avg', 'rainfall_cum')})
+    df.set_index('year', inplace=True)
+
+    for year, (date_beg, date_end) in pheno_dict.items():
+        w_df = weather_data[weather_data.index.isin(date_range(date_beg, date_end, freq='H'))]
+        df.loc[year, ['air_temperature_avg', 'vapor_pressure_deficit_avg']] = (
+            w_df.groupby(w_df.index.date).mean().mean()[['TDRY', 'vapor_pressure_deficit']].to_list())
+
+        df.loc[year, 'global_radiation_cum'] = w_df['RG'].groupby(w_df.index.date).sum().mean()
+        df.loc[year, 'rainfall_cum'] = w_df['RAIN'].sum()
+
+    df.dropna(inplace=True)
+    df.loc['avg', :] = df.mean()
+    df.to_csv(path_csv / 'weather_summary.csv', sep=';', decimal='.')
     pass
