@@ -3,10 +3,10 @@ from math import log
 from pathlib import Path
 
 from matplotlib import pyplot
-from pandas import DataFrame, read_csv, Series, concat
+from pandas import DataFrame, read_csv, Series, concat, to_datetime
 
 from sim_vs_obs.common import calc_absorbed_irradiance, ParamsEnergyBalanceBase
-from sim_vs_obs.grignon.config import (ParamsGapFract2Gai, WeatherInfo, SoilInfo, CanopyInfo)
+from sim_vs_obs.grignon.config import (ParamsGapFract2Gai, WeatherInfo, SoilInfo, CanopyInfo, PathInfos)
 from utils.water_retention import calc_soil_water_potential
 
 
@@ -198,3 +198,20 @@ def calc_grignon_soil_water_status(plant_available_water_fraction: float) -> tup
     saturation_ratio = theta / soil_props[1]
 
     return saturation_ratio, calc_soil_water_potential(theta=theta, soil_properties=soil_props) * 1.e-4
+
+
+def read_phenology(treatment: str = 'Intensif') -> DataFrame:
+    path_sq2_output = PathInfos.sq2_output.value / f'{treatment}.sqsro'
+
+    idx_beg = None
+    idx_end = None
+    with open(path_sq2_output, mode="r") as f:
+        for i, line in enumerate(f.readlines()):
+            if 'Growth stage' in line:
+                idx_beg = i
+            elif 'ZC_92_Maturity' in line:
+                idx_end = i
+                break
+    pheno_df = read_csv(path_sq2_output, skiprows=idx_beg, nrows=idx_end - idx_beg, sep='\t')
+    pheno_df['Date'] = to_datetime(pheno_df['Date'])
+    return pheno_df.set_index('Date')
