@@ -98,3 +98,4 @@ if __name__ == '__main__':
     plots.plot_errors(all_solvers=all_solvers, path_figs=path_outputs)
     plots.export_results(results=results, path_csv=path_outputs)
     plots.export_results_cart(summary_data=results, path_csv=path_outputs)
+    plots.export_weather_summary(weather_hourly=weather_df, path_csv=path_outputs)

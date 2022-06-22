@@ -1,16 +1,19 @@
 from datetime import datetime
+from io import StringIO
 from math import radians
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
+from convert_units.converter import convert_unit
 from matplotlib import cm, colors
 from matplotlib.ticker import MultipleLocator
 from numpy import array, linspace
-from pandas import DataFrame, isna
+from pandas import DataFrame, isna, date_range, read_csv, to_datetime
 
 from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_apparent_temperature,
                                calc_neutral_aerodynamic_resistance, CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
+from sim_vs_obs.maricopa_hsc.config import PathInfos
 from utils import stats, config
 
 MAP_UNITS = {
@@ -477,3 +480,41 @@ def export_results_cart(summary_data: dict, path_csv: Path):
     df = df[(df['incident_par'] >= 0) & ~df['error_temperature_canopy'].isna()]
     df.to_csv(path_csv / 'results_cart.csv', index=False)
     return
+
+
+def export_weather_summary(weather_hourly: DataFrame, path_csv: Path):
+    weather_data_hourly = weather_hourly.copy()
+    weather_data_hourly.set_index('Date', inplace=True)
+    weather_data_hourly.loc[:, 'RG'] = weather_data_hourly['Rg.AZMET'] * convert_unit(1, 'MJ/m2/h', 'W/m2')
+
+    s = ''
+    with open(PathInfos.source_raw.value / r'2. Weather heater microclimatic data\AZ000604.TXT', mode='r') as f:
+        for l in f.readlines():
+            if l.startswith('@YEAR') or l.startswith('20'):
+                s += '\t'.join(l.replace('\t', ' ').split(*'')) + '\n'
+
+    weather_data_daily = read_csv(StringIO(s), sep='\t')
+    weather_data_daily.set_index('DATE', inplace=True)
+    weather_data_daily.index = to_datetime(weather_data_daily.index)
+
+    date_sowing = (12, 15)
+    date_maturity = (5, 9)
+
+    df = DataFrame(
+        {s: [None] for s in
+         ('year', 'air_temperature_avg', 'global_radiation_cum', 'vapor_pressure_deficit_avg', 'rainfall_cum')})
+    df.set_index('year', inplace=True)
+
+    for year in (2007, 2008):
+        dates = date_range(start=datetime(year - 1, *date_sowing), end=datetime(year, *date_maturity), freq='H')
+        wh_df = weather_data_hourly[weather_data_hourly.index.isin(dates)]
+        df.loc[year, ['air_temperature_avg', 'vapor_pressure_deficit_avg']] = (
+            wh_df.groupby(wh_df.index.date).mean().mean()[['AdjTemp', 'VPD.AZMET']].to_list())
+
+        df.loc[year, 'global_radiation_cum'] = wh_df['RG'].groupby(wh_df.index.date).sum().mean()
+        df.loc[year, 'rainfall_cum'] = weather_data_daily[weather_data_daily.index.isin(dates)]['RAIN'].sum()
+
+    df.dropna(inplace=True)
+    df.loc['avg', :] = df.mean()
+    df.to_csv(path_csv / 'weather_summary.csv', sep=';', decimal='.')
+    pass
