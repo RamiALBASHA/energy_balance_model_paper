@@ -18,6 +18,26 @@ from sim_vs_obs.maricopa_face import base_functions
 from sim_vs_obs.maricopa_face.config import SensorInfos, PathInfos
 from utils import stats, config
 
+MAP_NAMES = {
+    'absorbed_par_veg': 'Absorbed PAR by leaves',
+    'absorbed_par_soil': 'Absorbed PAR by soil',
+    'wind_speed': 'Wind speed',
+    'aerodynamic_resistance': 'Aerodynamic resistance',
+    'temperature_air': 'Air temperature',
+    'temperature_canopy': 'Canopy temperature',
+    'temperature_soil': 'Soil temperature',
+    'temperature_sunlit': 'Sunlit leaves temperature',
+    'temperature_shaded': 'Shaded leaves temperature',
+    'vapor_pressure_deficit': 'Vapor pressure deficit',
+    'height': 'Canopy height',
+    'gai': 'Leaf area index',
+    'soil_water_potential': 'Soil water potential',
+    'net_longwave_radiation': 'Net longwave radiation',
+    'net_radiation': 'Net radiation',
+    'sensible_heat_flux': 'Sensible Heat flux',
+    'latent_heat_flux': 'Latent heat flux',
+    'soil_heat_flux': 'Soil heat flux'}
+
 
 def add_1_1_line(ax, linewidth: float = None):
     kwargs = dict(linewidth=linewidth) if linewidth is not None else {}

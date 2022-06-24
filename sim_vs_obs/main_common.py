@@ -483,7 +483,7 @@ def plot_per_richardson_zone(path_source: Path, leaf_class: str, path_outputs: P
 
 
 def plot_error(error_data: DataFrame, path_outputs: Path, stability_option: str, leaf_category: str,
-               dependent_var: str, explanatory_vars: list[str]):
+               dependent_var: str, explanatory_vars: list[str], supp_fig_name_info: str = None):
     n_rows = 2
     n_cols = 5
 
@@ -519,14 +519,23 @@ def plot_error(error_data: DataFrame, path_outputs: Path, stability_option: str,
     axs[-1, 0].legend(loc='lower right', framealpha=0, handlelength=1, fontsize=8)
 
     fig.tight_layout()
-    fig.savefig(path_outputs / f'error_all_experiments_{stability_option}_{leaf_category}.png')
+    if supp_fig_name_info is None:
+        fig_name = f'error_all_experiments_{stability_option}_{leaf_category}.png'
+    else:
+        fig_name = f'error_{supp_fig_name_info}_{stability_option}_{leaf_category}.png'
+
+    fig.savefig(path_outputs / fig_name)
     pyplot.close('all')
     pass
 
 
-def extract_error_data_(error_var_name, explanatory_vars, path_source, stability_option, leaf_category):
+def extract_error_data_(error_var_name, explanatory_vars, path_source, stability_option, leaf_category,
+                        experiments: list = None):
+    if experiments is None:
+        experiments = EXPERIMENTS.keys()
+
     dfs = []
-    for j, experiment in enumerate(EXPERIMENTS.keys()):
+    for j, experiment in enumerate(experiments):
         dir_name = '_'.join((EXPERIMENTS[experiment][1], leaf_category))
         df = read_csv(path_source / experiment / 'outputs' / stability_option / dir_name / 'results_cart.csv')
         df = df.loc[:, explanatory_vars + [error_var_name, 'incident_par']]
@@ -555,8 +564,11 @@ def plot_day_night(ax: pyplot.Subplot, explanatory_ls: list, error: list, is_day
     kwargs2 = {k: v for k, v in kwargs.items()}
     kwargs2.update({'alpha': 1})
 
-    lim = zip(*[(i, ols.params[0] + ols.params[1] * i) for i in linspace(min(explanatory_ls), max(explanatory_ls), 2)])
-    ax.plot(*lim, line_style, linewidth=1.25, label=label)
+    try:
+        lim = zip(*[(i, ols.params[0] + ols.params[1] * i) for i in linspace(min(explanatory_ls), max(explanatory_ls), 2)])
+        ax.plot(*lim, line_style, linewidth=1.25, label=label)
+    except IndexError:
+        pass
 
     return im
 
@@ -736,6 +748,36 @@ if __name__ == '__main__':
             leaf_category=leaf_type,
             dependent_var=dependent_variable,
             explanatory_vars=explanatory_variables)
+        plot_error(
+            error_data=extract_error_data_(
+                experiments=['maricopa_face', 'maricopa_hsc'],
+                error_var_name=dependent_variable,
+                explanatory_vars=explanatory_variables,
+                path_source=path_sources,
+                stability_option=stability_dir,
+                leaf_category=leaf_type),
+            path_outputs=path_fig,
+            stability_option=stability_dir,
+            leaf_category=leaf_type,
+            dependent_var=dependent_variable,
+            explanatory_vars=explanatory_variables,
+            supp_fig_name_info='maricopa')
+
+        for experiment_id in EXPERIMENTS.keys():
+            plot_error(
+                error_data=extract_error_data_(
+                    experiments=[experiment_id],
+                    error_var_name=dependent_variable,
+                    explanatory_vars=explanatory_variables,
+                    path_source=path_sources,
+                    stability_option=stability_dir,
+                    leaf_category=leaf_type),
+                path_outputs=path_fig,
+                stability_option=stability_dir,
+                leaf_category=leaf_type,
+                dependent_var=dependent_variable,
+                explanatory_vars=explanatory_variables,
+                supp_fig_name_info=experiment_id)
         plot_sim_vs_obs(
             path_source=path_sources,
             path_outputs=path_fig,
