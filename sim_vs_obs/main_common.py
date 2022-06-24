@@ -1,10 +1,12 @@
 from pathlib import Path
 from string import ascii_lowercase
 
+import graphviz
 import statsmodels.api as sm
-from matplotlib import pyplot, ticker, collections
+from matplotlib import pyplot, ticker, collections, gridspec
 from numpy import full, arange, array, linspace
 from pandas import read_csv, concat, DataFrame
+from sklearn import tree
 
 from sim_vs_obs.common import CMAP, NORM_INCIDENT_PAR
 from utils import stats
@@ -134,7 +136,7 @@ def plot_correction_effect(path_source: Path, path_outputs: Path):
     labels = sorted(set(labels_))
     handles = [handles[labels_.index(s)] for s in labels]
     axs[0].legend(handles=handles, labels=labels, framealpha=0.5, fancybox=True)
-    axs[0].set_ylabel(r'Mean squared deviation ($\rm {^\circ\/C}^2$)')
+    axs[0].set_ylabel(r'Mean squared error ($\rm {^\circ C}^2$)')
     axs[0].yaxis.set_label_coords(-0.065, 0, transform=axs[0].transAxes)
     axs[0].set_ylim(0, 14)
     axs[0].set_yticks(range(0, int(max(axs[0].get_ylim())), 2))
@@ -196,7 +198,7 @@ def plot_correction_effect2(path_source: Path, leaf_class: str, path_outputs: Pa
     axs[-1].legend(handles=handles, labels=labels, framealpha=0.5, fancybox=True, fontsize=8)
 
     axs[0].set_ylabel('\n'.join(['Observed\nwind speed', r'($\rm m\/s^{-1}$)']))
-    axs[1].set_ylabel('\n'.join(['Observed canopy\ntempreature depression', r'($\rm ^\circ\/C$)']))
+    axs[1].set_ylabel('\n'.join(['Observed canopy\ntempreature depression', '(°C)']))
     # axs[0].yaxis.set_label_coords(-0.065, 0, transform=axs[0].transAxes)
     axs[-1].set_ylim(0, 14)
     # axs[-1].set_yticks(range(0, int(max(axs[-1].get_ylim())), 2))
@@ -208,7 +210,7 @@ def plot_correction_effect2(path_source: Path, leaf_class: str, path_outputs: Pa
     axs[-1].tick_params(axis='x', which='major', pad=55, length=0)
     axs[-1].tick_params(axis='x', which='minor', pad=5, length=0)
     axs[-1].set_xlim(-0.55, 3.5)
-    axs[-1].set_ylabel('\n'.join(['Mean squared\ndeviation', r'($\rm {^\circ\/C}^2$)']))
+    axs[-1].set_ylabel('\n'.join(['Mean squared\nerror', r'($\rm {^\circ C}^2$)']))
 
     for ax, s in zip(axs, ascii_lowercase):
         ax.text(0.01, 0.875, f'({s})', transform=ax.transAxes)
@@ -220,10 +222,13 @@ def plot_correction_effect2(path_source: Path, leaf_class: str, path_outputs: Pa
     pass
 
 
-def plot_correction_effect3(path_source: Path, leaf_class: str, path_outputs: Path):
-    pyplot.close()
-    fig, axs = pyplot.subplots(ncols=4, figsize=(19 / 2.54, 8 / 2.54),
-                               gridspec_kw=dict(wspace=0, width_ratios=[5, 2, 2, 2]), sharey='row')
+def plot_correction_effect3(path_source: Path, leaf_class: str, path_outputs: Path, axs: pyplot.Subplot = None,
+                            is_return_axs: bool = False):
+    if axs is None:
+        fig, axs = pyplot.subplots(ncols=4, figsize=(19 / 2.54, 8 / 2.54),
+                                   gridspec_kw=dict(wspace=0, width_ratios=[5, 2, 2, 2]), sharey='row')
+    else:
+        fig = axs.flatten()[0].get_figure()
 
     [ax.clear() for ax in axs]
     height = 0.2
@@ -244,7 +249,7 @@ def plot_correction_effect3(path_source: Path, leaf_class: str, path_outputs: Pa
             dy = - d_height if sub_dir == 'neutral' else + d_height
             y_pos = y[i] + dy
             y_ticks.append(y_pos)
-            y_tick_labels.append(sub_dir)
+            y_tick_labels.append(sub_dir.capitalize())
             axs[0].barh(y_pos, squared_bias, label='Squared bias', color='blue', **kwargs)
             axs[0].barh(y_pos, nonunity_slope, label='Nonunity slope', left=squared_bias, color='white', **kwargs)
             axs[0].barh(y_pos, lack_of_correlation, label='Lack of correlation', left=squared_bias + nonunity_slope,
@@ -262,7 +267,7 @@ def plot_correction_effect3(path_source: Path, leaf_class: str, path_outputs: Pa
     labels = sorted(set(labels_))
     handles = [handles[labels_.index(s)] for s in labels]
     labels = [s if not 'Lack' in s else 'Lack of\ncorrelation' for s in labels]
-    axs[0].legend(handles=handles, labels=labels, framealpha=0.5, fancybox=True, fontsize=8, loc='lower right',
+    axs[0].legend(handles=handles, labels=labels, framealpha=0, fancybox=True, fontsize=8, loc='lower right',
                   handlelength=1)
 
     axs[0].set(xlim=(0, 14), ylim=(-0.75, 3.5))
@@ -270,15 +275,15 @@ def plot_correction_effect3(path_source: Path, leaf_class: str, path_outputs: Pa
     axs[0].set_yticklabels(y_tick_labels, minor=True, fontsize=9)
     axs[0].set_yticks(y)
     axs[0].set_yticklabels([v[0] for v in EXPERIMENTS.values()], ha='left')
-    axs[0].tick_params(axis='y', which='major', pad=150, length=0)
+    axs[0].tick_params(axis='y', which='major', pad=160, length=0)
     axs[0].tick_params(axis='y', which='minor', pad=5, length=0)
-    axs[0].set_xlabel('\n'.join(['Mean squared\ndeviation', r'($\rm {^\circ\/C}^2$)']))
+    axs[0].set_xlabel('\n'.join(['Mean squared\nerror', '(°C²)']))
 
-    axs[1].set_xlabel('\n'.join(['Air\ntempreature', r'($\rm ^\circ\/C$)']))
+    axs[1].set_xlabel('\n'.join(['Air\ntemeprature', r'(°C)']))
     axs[1].yaxis.set_visible(False)
 
     axs[2].vlines(0, *axs[1].get_ylim(), color='grey', linestyles='--', linewidth=0.5, zorder=0)
-    axs[2].set_xlabel('\n'.join(['Canopy\ntempreature\ndepression', r'($\rm ^\circ\/C$)']))
+    axs[2].set_xlabel('\n'.join(['Canopy\ntempreature\ndepression', '(°C)']))
     axs[2].set_xlim(-13, 13)
     axs[2].yaxis.set_visible(False)
 
@@ -288,13 +293,18 @@ def plot_correction_effect3(path_source: Path, leaf_class: str, path_outputs: Pa
 
     for ax, s in zip(axs, ascii_lowercase):
         ax.tick_params(axis='x', labelsize=9)
-        ax.text(0.05, 0.925, f'({s})', transform=ax.transAxes)
+        if not is_return_axs:
+            ax.text(0.05, 0.925, f'({s})', transform=ax.transAxes)
 
     axs[0].invert_yaxis()
 
     fig.tight_layout()
-    fig.savefig(path_outputs / f'correction_effect_{leaf_class}_2.png')
-    pyplot.close('all')
+
+    if is_return_axs:
+        return axs
+    else:
+        fig.savefig(path_outputs / f'correction_effect_{leaf_class}_2.png')
+        pyplot.close('all')
     pass
 
 
@@ -317,8 +327,8 @@ def plot_stability_vs_leaf_category_heatmap(path_source: Path, path_outputs: Pat
 
     fig, ax = pyplot.subplots(figsize=(9 / 2.54, 9 / 2.54))
     im = ax.imshow(data, cmap='Oranges', aspect='auto')
-    ax.set(xticks=arange(data.shape[1]), xticklabels=stability_correction_cases,
-           yticks=arange(data.shape[0]), yticklabels=leaf_classes * len(experiments))
+    ax.set(xticks=arange(data.shape[1]), xticklabels=[s.capitalize() for s in stability_correction_cases],
+           yticks=arange(data.shape[0]), yticklabels=[s.capitalize() for s in leaf_classes] * len(experiments))
     ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False, labelsize=8)
     ax.tick_params(axis='x', rotation=90)
 
@@ -329,7 +339,7 @@ def plot_stability_vs_leaf_category_heatmap(path_source: Path, path_outputs: Pat
                 f'({ascii_lowercase[i_experiment]}) {EXPERIMENTS[experiment][0]}')
 
     cbar = ax.figure.colorbar(im, ax=ax, orientation="horizontal")
-    cbar.ax.set_ylabel(r'Mean squared deviation ($\rm {^\circ\/C}^2$)', ha="right", va='center', rotation=0)
+    cbar.ax.set_ylabel(r'Mean squared error (°C²)', ha="right", va='center', rotation=0)
 
     fig.subplots_adjust(left=0.75, right=0.95, bottom=0.05, top=0.8)
     fig.savefig(path_outputs / 'correction_and_leaf_class_effects.png')
@@ -337,7 +347,39 @@ def plot_stability_vs_leaf_category_heatmap(path_source: Path, path_outputs: Pat
     pass
 
 
-def plot_per_richardson_zone(path_source: Path, leaf_class: str, path_outputs: Path):
+def plot_stability_vs_leaf_category_heatmap2(path_source: Path, ax: pyplot.Subplot = None):
+    stability_correction_cases = ('neutral', 'corrected')
+    leaf_classes = ('lumped', 'sunlit-shaded')
+    experiments = list(EXPERIMENTS.keys())
+    data = full(shape=(len(experiments) * len(stability_correction_cases), len(leaf_classes)),
+                fill_value=None).astype(float)
+    for i_experiment, experiment in enumerate(experiments):
+        dy = i_experiment * len(stability_correction_cases)
+        for i_stability_correction, stability_correction in enumerate(stability_correction_cases):
+            i = i_stability_correction + dy
+            for j, leaf_class in enumerate(leaf_classes):
+                subdir = f"{experiment}/outputs/{stability_correction}/{EXPERIMENTS[experiment][1]}_{leaf_class}"
+                df = read_csv(path_source / subdir / 'results.csv')
+                data[i, j] = stats.calc_mean_squared_deviation(
+                    sim=df['delta_temperature_canopy_sim'],
+                    obs=df['delta_temperature_canopy_obs'])
+
+    im = ax.imshow(data, cmap='Oranges', aspect='auto')
+    ax.set(xticks=arange(data.shape[1]), xticklabels=[s.capitalize() for s in leaf_classes],
+           yticks=arange(data.shape[0]),
+           yticklabels=[s.capitalize() for s in stability_correction_cases] * len(experiments))
+    ax.tick_params(top=True, bottom=False, labeltop=True, labelbottom=False, labelsize=8)
+    ax.tick_params(axis='x', rotation=90)
+
+    for i_experiment, experiment in enumerate(experiments):
+        if experiment != experiments[-1]:
+            ax.hlines(i_experiment * len(leaf_classes) + 1.5, *ax.get_xlim(), color='k', linewidth=0.75)
+
+    return ax, im
+
+
+def plot_per_richardson_zone(path_source: Path, leaf_class: str, path_outputs: Path, axs: array = None,
+                             is_return_axs: bool = False):
     ri_up_thresholds = {
         'unstable': -0.01,
         'neutral': 0.01,
@@ -350,6 +392,7 @@ def plot_per_richardson_zone(path_source: Path, leaf_class: str, path_outputs: P
     count_dict = {k1: {k2: None} for k2 in EXPERIMENTS.keys() for k1 in stability_zones}
     error_dict = {k1: {k2: None} for k2 in EXPERIMENTS.keys() for k1 in stability_zones}
 
+    richardson_threshold_labels = None
     for k, v in EXPERIMENTS.items():
         df_corrected = read_csv(path_source / f"{k}/outputs/corrected/{v[1]}_{leaf_class}/results_cart.csv")
         # df_neutral = read_csv(path_source / f"{k}/outputs/neutral/{v[1]}_sunlit-shaded/results_cart.csv")
@@ -388,43 +431,55 @@ def plot_per_richardson_zone(path_source: Path, leaf_class: str, path_outputs: P
             error_abs_corrected = (t_sim_corrected[v_ri] - t_obs[v_ri]).apply(lambda x: abs(x)).mean()
             error_dict[k_ri][k] = error_abs_neutral - error_abs_corrected
 
-    pyplot.close()
-    fig, (ax_count, ax_error) = pyplot.subplots(ncols=2, sharey='all', gridspec_kw=dict(wspace=0))
+    if axs is None:
+        fig, (ax_count, ax_error) = pyplot.subplots(ncols=2, sharey='all', gridspec_kw=dict(wspace=0))
+    else:
+        ax_count, ax_error = axs
+        fig = ax_count.get_figure()
+
+    ax_error.tick_params(axis='y', which='major', left=False)
 
     y_ticks = []
     y_tick_labels = []
-    color_seq = pyplot.rcParams['axes.prop_cycle'].by_key()['color']
     for i_stability, stability_zone in enumerate(stability_zones):
         y_shift = i_stability * (len(experiment_names) + 1)
         for i_experiment, experiment_name in enumerate(experiment_names):
             y_position = i_experiment + y_shift
-            ax_count.barh(y_position, count_dict[stability_zone][experiment_name], facecolor=color_seq[i_experiment])
-            ax_error.barh(y_position, error_dict[stability_zone][experiment_name], facecolor=color_seq[i_experiment])
+            ax_count.barh(y_position, count_dict[stability_zone][experiment_name], facecolor='grey')
+            ax_error.barh(y_position, error_dict[stability_zone][experiment_name], facecolor='grey')
             y_ticks.append(y_position)
             y_tick_labels.append(EXPERIMENTS[experiment_name][0])
         pass
     pass
 
-    ax_count.set(xlabel="Percentage of\nsimulated time steps",
-                 ylim=(-1.5, 14))
+    ax_count.set(xlabel="Percentage of\nsimulated time steps", ylim=(-1.5, 14))
     ax_count.set_yticks(
         [i * (len(experiment_names) + 1) + len(experiment_names) / 2.5 for i in range(len(stability_zones))])
-    ax_count.set_yticklabels([s.capitalize() for s in stability_zones], ha='left')
+    ax_count.set_yticklabels(
+        [f"{s.capitalize()}\n{richardson_threshold_labels[s].replace('Ri', 'Richardson number')}" for s in
+         stability_zones], ha='left')
 
     ax_count.set_yticks(y_ticks, minor=True)
     ax_count.set_yticklabels(y_tick_labels, minor=True, fontsize=8)
 
     ax_count.tick_params(axis='y', which='major', pad=125, length=0)
-    ax_count.tick_params(axis='y', which='minor', pad=5, length=0, rotation=0)
+    ax_count.tick_params(axis='y', which='minor', pad=5, rotation=0)
 
-    ax_error.set_xlabel('\n'.join(['Reduction in mean', 'absolute temperature error', r'($\rm ^\circ\/C$)']))
+    ax_error.set_xlabel('\n'.join(['Reduction in mean', 'absolute temperature error', '(°C)']))
 
-    for ax, s in zip((ax_count, ax_error), ascii_lowercase):
-        ax.text(0.025, 0.95, f'({s})', transform=ax.transAxes)
+    if not is_return_axs:
+        for ax, s in zip((ax_count, ax_error), ascii_lowercase):
+            ax.text(0.025, 0.95, f'({s})', transform=ax.transAxes)
 
     ax_count.invert_yaxis()
-    fig.tight_layout()
-    fig.savefig(path_outputs / 'result_per_richardson_zone.png')
+
+    if is_return_axs:
+        return ax_count, ax_error
+    else:
+        fig.tight_layout()
+        fig.savefig(path_outputs / 'result_per_richardson_zone.png')
+        pyplot.close('all')
+    pass
 
 
 def plot_error(error_data: DataFrame, path_outputs: Path, stability_option: str, leaf_category: str,
@@ -506,13 +561,145 @@ def plot_day_night(ax: pyplot.Subplot, explanatory_ls: list, error: list, is_day
     return im
 
 
-def extract_error_data() -> DataFrame:
+def plot_error_tree(data: DataFrame, dependent_var: str, explanatory_vars: list[str],
+                    path_output_dir: Path, is_classify: bool = False, **kwargs):
+    params = dict(
+        random_state=0,
+        splitter='best',
+        ccp_alpha=0,
+        max_leaf_nodes=20)
+    params.update(**kwargs)
+    explanatory = data[explanatory_vars]
+
+    if is_classify:
+        # target = ['high' if abs(v) >= 3 else 'medium' if abs(v) >= 1 else 'low' for v in data[dependent_var].values]
+        target = [3 if abs(v) >= 3 else 2 if abs(v) >= 1 else 1 for v in data[dependent_var].values]
+        model = tree.DecisionTreeClassifier(**params)
+        params.update({'criterion': 'squared_error'})
+    else:
+        target = data[dependent_var].values
+        model = tree.DecisionTreeRegressor(**params)
+        params.update({'criterion': 'gini'})
+
+    clf = model.fit(explanatory, target)
+    dot_data = tree.export_graphviz(clf,
+                                    out_file=None,
+                                    feature_names=explanatory.columns,
+                                    class_names=target,
+                                    filled=True, rounded=True,
+                                    special_characters=True)
+    graph = graphviz.Source(dot_data)
+    # graph.view(filename=f'{txt}_{clf.score(explanatory, target):0.3f}')
+    graph.render(
+        directory=path_output_dir,
+        filename=f"{'classification_tree' if is_classify else 'regression_tree'}_{clf.score(explanatory, target):0.3f}",
+        format='png')
+    pass
+
+
+def plot_correction_effect_mixed(path_source: Path, path_outputs: Path):
+    pyplot.close('all')
+    fig = pyplot.figure(figsize=(19 / 2.54, 19 / 2.54))
+    gs = gridspec.GridSpec(ncols=2, nrows=2, figure=fig, height_ratios=[1, 1], width_ratios=[1, 7])
+
+    ax_heatmap = fig.add_subplot(gs[0, 0])
+
+    axs_errors = array([fig.add_subplot(ss) for ss in gs[0, 1].subgridspec(nrows=1, ncols=4, wspace=0,
+                                                                           width_ratios=[5, 2, 2, 2])])
+    (ax0_richardons, ax1_richardons) = [fig.add_subplot(ss) for ss in gs[1, :].subgridspec(nrows=1, ncols=2, wspace=0)]
+
+    ax_heatmap, im = plot_stability_vs_leaf_category_heatmap2(
+        path_source=path_source,
+        ax=ax_heatmap)
+
+    plot_correction_effect3(
+        path_source=path_source,
+        leaf_class='sunlit-shaded',
+        path_outputs=path_outputs,
+        axs=axs_errors,
+        is_return_axs=True)
+
+    plot_per_richardson_zone(
+        path_source=path_source,
+        leaf_class='sunlit-shaded',
+        path_outputs=path_outputs,
+        axs=array([ax0_richardons, ax1_richardons]),
+        is_return_axs=True)
+
+    axs_errors[0].set_yticklabels([])
+    axs_errors[0].set_yticklabels([], minor=True)
+    fig.tight_layout()
+
+    for i_experiment, experiment in enumerate(EXPERIMENTS.keys()):
+        ax_heatmap.text(-3.25, 1 - 1 / 8 * 2 * i_experiment - 1 / 8, EXPERIMENTS[experiment][0].replace(' ', '\n '),
+                        transform=ax_heatmap.transAxes, fontsize=9, va='center')
+
+    ax_heatmap.tick_params(axis='both', labelsize=8)
+    box_heatmap = ax_heatmap.get_position()
+    box_heatmap.x0 = 0.27
+    ax_heatmap.set_position(box_heatmap)
+    ax_heatmap.text(-0.5, 1.05, '(a)', transform=ax_heatmap.transAxes)
+
+    cbar_ax = fig.add_axes([box_heatmap.x0, box_heatmap.y0 * 0.925, box_heatmap.x1 - box_heatmap.x0, 0.01])
+    cbar = fig.colorbar(im, cax=cbar_ax, orientation="horizontal")
+    cbar.ax.set_ylabel(r'Mean squared error (°C²)', ha="right", va='center', rotation=0, fontsize=8)
+
+    for ax_errors, s in zip(axs_errors, ascii_lowercase[1:]):
+        ax_errors.set_ylim([3.5, -0.5])
+        ax_errors.set_xlabel(ax_errors.get_xlabel(), fontsize=8)
+        ax_errors.tick_params(axis='both', labelsize=8)
+        if ax_errors == axs_errors[0]:
+            ax_errors.text(0.885, 0.925, f'({s})', transform=ax_errors.transAxes)
+        else:
+            ax_errors.text(0.75, 0.925, f'({s})', transform=ax_errors.transAxes)
+
+    axs_errors[0].set_title('(Sunlit-Shaded canopy representation)', fontsize=10, x=1.15)
+    axs_errors[0].set_xlim([0, 15.5])
+
+    box_errors = axs_errors[0].get_position()
+    box_errors.x0 = box_heatmap.x1 * 1.025
+    axs_errors[0].set_position(box_errors)
+
+    box0 = ax0_richardons.get_position()
+    box0.x0 = 0.55
+    box0.x1 = box0.x0 + 0.2
+    ax0_richardons.set_position(box0)
+    box1 = ax1_richardons.get_position()
+    box1.x0 = box0.x1
+    box1.x1 = box0.x1 + 0.2
+    ax1_richardons.set_position(box1)
+
+    ax0_richardons.set_yticklabels(ax0_richardons.get_yticklabels(), fontsize=9)
+    ax1_richardons.set_ylim(ax0_richardons.get_ylim())
+    ax1_richardons.minorticks_on()
+    ax1_richardons.set_yticks(ax0_richardons.get_yticks(minor=False))
+    ax1_richardons.set_yticks(ax0_richardons.get_yticks(minor=True), minor=True)
+    ax1_richardons.set_yticklabels(labels=[])
+    ax1_richardons.tick_params(axis='x', which='minor', bottom=False)
+
+    for y_tick_label in ax0_richardons.get_yticklabels():
+        y_pos = y_tick_label._y
+        x_pos = - (130 - len(y_tick_label._text))
+        ax0_richardons.annotate('', xytext=(x_pos, y_pos), xy=(-70, y_pos),
+                                arrowprops=dict(arrowstyle=f'-[, widthB=2', lw=0.5),
+                                annotation_clip=False,
+                                fontsize=8, ha='right', va='center')
+
+    for ax_richardsons, s in zip((ax0_richardons, ax1_richardons), ascii_lowercase[5:]):
+        ax_richardsons.set_xlabel(ax_richardsons.get_xlabel(), fontsize=8)
+        ax_richardsons.tick_params(axis='y', which='major', pad=275, length=0)
+        ax_richardsons.text(0.85, 0.925, f'({s})', transform=ax_richardsons.transAxes)
+
+    fig.savefig(path_outputs / 'correction_effect_mixed.png')
+    pyplot.close('all')
     pass
 
 
 if __name__ == '__main__':
     path_sources = Path(__file__).parents[1] / 'sources'
     path_fig = path_sources / 'figs'
+
+    plot_correction_effect_mixed(path_source=path_sources, path_outputs=path_fig)
     plot_correction_effect(path_source=path_sources, path_outputs=path_fig)
     plot_stability_vs_leaf_category_heatmap(path_source=path_sources, path_outputs=path_fig)
 
@@ -524,6 +711,10 @@ if __name__ == '__main__':
     for is_lumped in (True, False):
         stability_dir = 'corrected'
         leaf_type = 'lumped' if is_lumped else 'sunlit-shaded'
+        plot_per_richardson_zone(
+            path_source=path_sources,
+            leaf_class=leaf_type,
+            path_outputs=path_fig)
 
         error_df = extract_error_data_(
             error_var_name=dependent_variable,
@@ -531,6 +722,13 @@ if __name__ == '__main__':
             path_source=path_sources,
             stability_option=stability_dir,
             leaf_category=leaf_type)
+        plot_error_tree(
+            data=error_df,
+            dependent_var=dependent_variable,
+            explanatory_vars=explanatory_variables,
+            path_output_dir=path_fig,
+            is_classify=False,
+            max_leaf_nodes=10)
         plot_error(
             error_data=error_df,
             path_outputs=path_fig,
@@ -545,13 +743,9 @@ if __name__ == '__main__':
             is_lumped_leaves=is_lumped)
         plot_correction_effect2(
             path_source=path_sources,
-            leaf_class='lumped' if is_lumped else 'sunlit-shaded',
+            leaf_class=leaf_type,
             path_outputs=path_fig)
         plot_correction_effect3(
             path_source=path_sources,
-            leaf_class='lumped' if is_lumped else 'sunlit-shaded',
-            path_outputs=path_fig)
-        plot_per_richardson_zone(
-            path_source=path_sources,
-            leaf_class='lumped' if is_lumped else 'sunlit-shaded',
+            leaf_class=leaf_type,
             path_outputs=path_fig)
