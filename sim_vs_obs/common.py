@@ -84,19 +84,21 @@ def calc_absorbed_irradiance(
 class ParamsEnergyBalanceBase(Enum):
     stomatal_sensibility = {
         "leuning": {"d_0": 7},
-        "misson": {"psi_half_aperture": -1, "steepness": 2}}
+        "misson": {
+            "psi_half_aperture": -0.83,
+            "steepness": 4.2}}
     soil_aerodynamic_resistance_shape_parameter = 2.0
     soil_roughness_length_for_momentum = 0.0125
     leaf_characteristic_length = 0.01
     leaf_boundary_layer_shape_parameter = 0.01
     wind_speed_extinction_coef = 0.5
-    maximum_stomatal_conductance = 60.0
+    maximum_stomatal_conductance = 56.6
     residual_stomatal_conductance = 0.1
     diffuse_extinction_coef = None
     leaf_scattering_coefficient = None
     leaf_emissivity = None
     soil_emissivity = None
-    absorbed_par_50 = 43
+    absorbed_par_50 = 12.2
     soil_resistance_to_vapor_shape_parameter_1 = 8
     soil_resistance_to_vapor_shape_parameter_2 = 5
     step_fraction = 0.5
