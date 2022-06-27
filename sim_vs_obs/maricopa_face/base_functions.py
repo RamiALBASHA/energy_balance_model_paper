@@ -70,6 +70,8 @@ def get_weather(raw_data: DataFrame) -> DataFrame:
     raw_df = raw_data.copy()
     raw_df.loc[:, 'RG'] = raw_df['SRAD'] * convert_rg
     raw_df.loc[:, 'PAR'] = raw_df['PARD'] * convert_par
+    # raw_df.loc[:, 'RG'] = raw_df.apply(lambda x: max(0, x['RG']), axis=1)
+    # raw_df.loc[:, 'PAR'] = raw_df.apply(lambda x: max(0, x['PAR']), axis=1)
     raw_df.loc[:, 'diffuse_ratio'] = raw_df.apply(lambda x: calc_diffuse_ratio(hourly_weather=x, latitude=latitude),
                                                   axis=1)
     raw_df.loc[:, 'vapor_pressure'] = raw_df.apply(lambda x: calc_saturated_air_vapor_pressure(x['TDEW']), axis=1)
