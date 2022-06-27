@@ -85,11 +85,12 @@ if __name__ == '__main__':
 
     if SimInfos.leaf_category.value == 'sunlit-shaded':
         vars_to_plot_sunlit_shaded = ('temperature_air', 'temperature_sunlit', 'temperature_shaded')
-        plots.plot_sim_obs_sunlit_shaded(
-            res_wet={k: v for k, v in results_wet.items() if k in vars_to_plot_sunlit_shaded},
-            res_dry={k: v for k, v in results_dry.items() if k in vars_to_plot_sunlit_shaded},
-            figure_dir=path_outputs,
-            is_delta_t=False)
+        for is_delta_t in (True, False):
+            plots.plot_sim_obs_sunlit_shaded(
+                res_wet={k: v for k, v in results_wet.items() if k in vars_to_plot_sunlit_shaded},
+                res_dry={k: v for k, v in results_dry.items() if k in vars_to_plot_sunlit_shaded},
+                figure_dir=path_outputs,
+                is_delta_t=is_delta_t)
 
     plots.plot_comparison_energy_balance(sim_obs=sim_obs_dict, figure_dir=path_outputs)
     plots.plot_errors(res=results_all, leaves_category=SimInfos.leaf_category.value, figure_dir=path_outputs)
