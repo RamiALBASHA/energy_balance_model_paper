@@ -684,11 +684,10 @@ def plot_errors(res: dict, figure_dir: Path, leaves_category: str, is_colormap: 
                     else:
                         pass
 
-            ax.set_xlabel(' '.join(config.UNITS_MAP[explanatory]), **fmt_axes)
+            ax.set_xlabel('\n'.join([MAP_NAMES[explanatory], config.UNITS_MAP[explanatory][1]]), fontsize=8)
 
-        title = ' '.join(config.UNITS_MAP[k])
         for ax in axs[:, 0]:
-            ax.set_ylabel(' '.join((r'$\mathregular{\epsilon}$', title)), **fmt_axes)
+            ax.set_ylabel(f"{MAP_NAMES[k]}\nerror {config.UNITS_MAP['temperature'][1]}", fontsize=8)
 
         for i, ax in enumerate(axs.flatten()):
             ax.tick_params(axis='both', labelsize=9.0)
@@ -698,7 +697,7 @@ def plot_errors(res: dict, figure_dir: Path, leaves_category: str, is_colormap: 
 
         if is_colormap:
             if is_day_night:
-                axs[0, 0].legend(fontsize=8, loc='lower right')
+                axs[-1, 0].legend(loc='lower right', handlelength=1, fontsize=8, framealpha=0)
             else:
                 fig.subplots_adjust(bottom=0.2)
                 cbar_ax = fig.add_axes([0.37, 0.05, 0.30, 0.03])
