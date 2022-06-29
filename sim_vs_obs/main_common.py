@@ -1,6 +1,5 @@
 from pathlib import Path
 from string import ascii_lowercase
-from typing import List
 
 import statsmodels.api as sm
 from matplotlib import pyplot, ticker, collections, gridspec
@@ -697,14 +696,6 @@ if __name__ == '__main__':
             path_source=path_sources,
             stability_option=stability_dir,
             leaf_category=leaf_type)
-        error_df.rename(columns=MAP_NAMES, inplace=True)
-        plot_error_tree(
-            data=error_df,
-            dependent_var=dependent_variable,
-            explanatory_vars=[MAP_NAMES[s] for s in explanatory_variables],
-            path_output_dir=path_fig,
-            is_classify=False,
-            max_leaf_nodes=10)
         plot_error(
             error_data=error_df,
             path_outputs=path_fig,
@@ -755,3 +746,11 @@ if __name__ == '__main__':
             path_source=path_sources,
             leaf_class=leaf_type,
             path_outputs=path_fig)
+        error_df.rename(columns=MAP_NAMES, inplace=True)
+        plot_error_tree(
+            data=error_df,
+            dependent_var=dependent_variable,
+            explanatory_vars=[MAP_NAMES[s] for s in explanatory_variables],
+            path_output_dir=path_fig,
+            is_classify=True,
+            max_leaf_nodes=10)
