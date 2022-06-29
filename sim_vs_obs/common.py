@@ -1,12 +1,17 @@
 from enum import Enum
 from math import radians, log
+from pathlib import Path
+from typing import Union
 
+import graphviz
 from crop_energy_balance.params import Constants
 from crop_energy_balance.solver import Solver
 from crop_irradiance.uniform_crops import inputs, params, shoot
 from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import calc_direct_black_extinction_coefficient, \
     calc_sunlit_fraction_per_leaf_layer, calc_sunlit_fraction
 from matplotlib import colors, colorbar
+from pandas import DataFrame
+from sklearn import tree
 
 IS_BINARY_COLORBAR = True
 if IS_BINARY_COLORBAR:
@@ -182,3 +187,51 @@ def calc_monin_obukhov_obs(friction_velocity: float,
     k = Constants().von_karman
     return - friction_velocity ** 3 / (k * g / (temperature_air + 273.14) * (
             temperature_canopy - temperature_air) / aerodynamic_resistance)
+
+
+class ErrorAnalysisVars:
+    def __init__(self, dependent: Union[list, str] = None, explanatory: Union[list, str] = None):
+        if dependent is None:
+            dependent = 'error_temperature_canopy'
+        if explanatory is None:
+            explanatory = ['absorbed_par_veg', 'absorbed_par_soil', 'wind_speed', 'aerodynamic_resistance',
+                           'temperature_air', 'vapor_pressure_deficit', 'height', 'gai', 'soil_water_potential',
+                           'net_longwave_radiation']
+        self.dependent = dependent
+        self.explanatory = explanatory
+
+
+def plot_error_tree(data: DataFrame, dependent_var: str, explanatory_vars: list[str], path_output_dir: Path,
+                    is_classify: bool = False, **kwargs):
+    params = dict(
+        random_state=0,
+        splitter='best',
+        ccp_alpha=0,
+        max_leaf_nodes=20)
+    params.update(**kwargs)
+    explanatory = data[explanatory_vars]
+
+    if is_classify:
+        # target = ['high' if abs(v) >= 3 else 'medium' if abs(v) >= 1 else 'low' for v in data[dependent_var].values]
+        target = [3 if abs(v) >= 3 else 2 if abs(v) >= 1 else 1 for v in data[dependent_var].values]
+        model = tree.DecisionTreeClassifier(**params)
+        params.update({'criterion': 'squared_error'})
+    else:
+        target = data[dependent_var].values
+        model = tree.DecisionTreeRegressor(**params)
+        params.update({'criterion': 'gini'})
+
+    clf = model.fit(explanatory, target)
+    dot_data = tree.export_graphviz(clf,
+                                    out_file=None,
+                                    feature_names=explanatory.columns,
+                                    class_names=target,
+                                    filled=True, rounded=True,
+                                    special_characters=True)
+    graph = graphviz.Source(dot_data)
+    # graph.view(filename=f'{txt}_{clf.score(explanatory, target):0.3f}')
+    graph.render(
+        directory=path_output_dir,
+        filename=f"{'classification_tree' if is_classify else 'regression_tree'}_{clf.score(explanatory, target):0.3f}",
+        format='png')
+    pass

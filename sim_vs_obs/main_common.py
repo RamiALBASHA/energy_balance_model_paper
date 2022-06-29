@@ -1,14 +1,13 @@
 from pathlib import Path
 from string import ascii_lowercase
+from typing import List
 
-import graphviz
 import statsmodels.api as sm
 from matplotlib import pyplot, ticker, collections, gridspec
 from numpy import full, arange, array, linspace
 from pandas import read_csv, concat, DataFrame
-from sklearn import tree
 
-from sim_vs_obs.common import CMAP, NORM_INCIDENT_PAR
+from sim_vs_obs.common import CMAP, NORM_INCIDENT_PAR, ErrorAnalysisVars, plot_error_tree
 from utils import stats
 from utils.config import UNITS_MAP
 
@@ -565,48 +564,13 @@ def plot_day_night(ax: pyplot.Subplot, explanatory_ls: list, error: list, is_day
     kwargs2.update({'alpha': 1})
 
     try:
-        lim = zip(*[(i, ols.params[0] + ols.params[1] * i) for i in linspace(min(explanatory_ls), max(explanatory_ls), 2)])
+        lim = zip(
+            *[(i, ols.params[0] + ols.params[1] * i) for i in linspace(min(explanatory_ls), max(explanatory_ls), 2)])
         ax.plot(*lim, line_style, linewidth=1.25, label=label)
     except IndexError:
         pass
 
     return im
-
-
-def plot_error_tree(data: DataFrame, dependent_var: str, explanatory_vars: list[str],
-                    path_output_dir: Path, is_classify: bool = False, **kwargs):
-    params = dict(
-        random_state=0,
-        splitter='best',
-        ccp_alpha=0,
-        max_leaf_nodes=20)
-    params.update(**kwargs)
-    explanatory = data[explanatory_vars]
-
-    if is_classify:
-        # target = ['high' if abs(v) >= 3 else 'medium' if abs(v) >= 1 else 'low' for v in data[dependent_var].values]
-        target = [3 if abs(v) >= 3 else 2 if abs(v) >= 1 else 1 for v in data[dependent_var].values]
-        model = tree.DecisionTreeClassifier(**params)
-        params.update({'criterion': 'squared_error'})
-    else:
-        target = data[dependent_var].values
-        model = tree.DecisionTreeRegressor(**params)
-        params.update({'criterion': 'gini'})
-
-    clf = model.fit(explanatory, target)
-    dot_data = tree.export_graphviz(clf,
-                                    out_file=None,
-                                    feature_names=explanatory.columns,
-                                    class_names=target,
-                                    filled=True, rounded=True,
-                                    special_characters=True)
-    graph = graphviz.Source(dot_data)
-    # graph.view(filename=f'{txt}_{clf.score(explanatory, target):0.3f}')
-    graph.render(
-        directory=path_output_dir,
-        filename=f"{'classification_tree' if is_classify else 'regression_tree'}_{clf.score(explanatory, target):0.3f}",
-        format='png')
-    pass
 
 
 def plot_correction_effect_mixed(path_source: Path, path_outputs: Path):
@@ -711,17 +675,16 @@ if __name__ == '__main__':
     path_sources = Path(__file__).parents[1] / 'sources'
     path_fig = path_sources / 'figs'
 
+    error_analysis_vars = ErrorAnalysisVars()
+    dependent_variable = error_analysis_vars.dependent
+    explanatory_variables = error_analysis_vars.explanatory
+
     plot_correction_effect_mixed(path_source=path_sources, path_outputs=path_fig)
     plot_correction_effect(path_source=path_sources, path_outputs=path_fig)
     plot_stability_vs_leaf_category_heatmap(path_source=path_sources, path_outputs=path_fig)
 
-    dependent_variable = 'error_temperature_canopy'
-    explanatory_variables = ['absorbed_par_veg', 'absorbed_par_soil', 'wind_speed', 'aerodynamic_resistance',
-                             'temperature_air', 'vapor_pressure_deficit', 'height', 'gai', 'soil_water_potential',
-                             'net_longwave_radiation']
-
+    stability_dir = 'corrected'
     for is_lumped in (True, False):
-        stability_dir = 'corrected'
         leaf_type = 'lumped' if is_lumped else 'sunlit-shaded'
         plot_per_richardson_zone(
             path_source=path_sources,
@@ -734,10 +697,11 @@ if __name__ == '__main__':
             path_source=path_sources,
             stability_option=stability_dir,
             leaf_category=leaf_type)
+        error_df.rename(columns=MAP_NAMES, inplace=True)
         plot_error_tree(
             data=error_df,
             dependent_var=dependent_variable,
-            explanatory_vars=explanatory_variables,
+            explanatory_vars=[MAP_NAMES[s] for s in explanatory_variables],
             path_output_dir=path_fig,
             is_classify=False,
             max_leaf_nodes=10)
