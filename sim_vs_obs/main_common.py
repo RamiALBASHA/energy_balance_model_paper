@@ -752,5 +752,5 @@ if __name__ == '__main__':
             dependent_var=dependent_variable,
             explanatory_vars=[MAP_NAMES[s] for s in explanatory_variables],
             path_output_dir=path_fig,
-            is_classify=True,
+            is_classify=False,
             max_leaf_nodes=10)
