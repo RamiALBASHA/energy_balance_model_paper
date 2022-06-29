@@ -3,17 +3,16 @@ from datetime import datetime
 from pathlib import Path
 from string import ascii_lowercase
 
-import graphviz
 import statsmodels.api as sm
 from convert_units.converter import convert_unit
 from crop_energy_balance.formalisms.weather import calc_saturated_air_vapor_pressure
 from matplotlib import pyplot, ticker, gridspec, dates, collections
 from numpy import array, linspace
 from pandas import DataFrame, isna, date_range
-from sklearn import tree
 
 from sim_vs_obs.common import (get_canopy_abs_irradiance_from_solver, calc_apparent_temperature,
-                               calc_neutral_aerodynamic_resistance, CMAP, NORM_INCIDENT_PAR, format_binary_colorbar)
+                               calc_neutral_aerodynamic_resistance, CMAP, NORM_INCIDENT_PAR, format_binary_colorbar,
+                               plot_error_tree, ErrorAnalysisVars)
 from sim_vs_obs.maricopa_face import base_functions
 from sim_vs_obs.maricopa_face.config import SensorInfos, PathInfos
 from utils import stats, config
@@ -907,28 +906,14 @@ def export_results_cart(summary_data: dict, path_csv: Path):
 
 
 def plot_classification_and_regression_tree(data: DataFrame, path_output_dir: Path, **kwargs):
-    params = dict(
-        random_state=0,
-        criterion='squared_error',
-        splitter='best',
-        ccp_alpha=0,
-        max_leaf_nodes=20)
-    params.update(**kwargs)
-    target = data['error_temperature_canopy'].values
-    explanatory = data[['wind_speed', 'vapor_pressure_deficit', 'temperature_air', 'soil_water_potential',
-                        'incident_par', 'net_longwave_radiation', 'height', 'gai']]
-
-    model = tree.DecisionTreeRegressor(**params)
-    clf = model.fit(explanatory, target)
-    dot_data = tree.export_graphviz(clf,
-                                    out_file=None,
-                                    feature_names=explanatory.columns,
-                                    class_names=target,
-                                    filled=True, rounded=True,
-                                    special_characters=True)
-    graph = graphviz.Source(dot_data)
-    # graph.view(filename=f'{txt}_{clf.score(explanatory, target):0.3f}')
-    graph.render(directory=path_output_dir, filename=f'cart_{clf.score(explanatory, target):0.3f}', format='png')
+    error_analysis_vars = ErrorAnalysisVars()
+    for tree_type in ('regression', 'classification'):
+        plot_error_tree(data=data,
+                        dependent_var=error_analysis_vars.dependent,
+                        explanatory_vars=error_analysis_vars.explanatory,
+                        is_classify=tree_type == 'classification',
+                        path_output_dir=path_output_dir,
+                        **kwargs)
     pass
 
 
