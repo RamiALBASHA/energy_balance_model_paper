@@ -487,7 +487,8 @@ def plot_sim_obs_sunlit_shaded(res_wet: dict, res_dry: dict, figure_dir: Path, i
                 ax.scatter(obs_t, sim_t, label=label, alpha=0.5)
 
     text_kwargs = dict(fontsize=8, ha='right')
-    for ax, (k, v), s in zip(axs, data.items(), ascii_lowercase):
+    s_ls = ('a', 'b') if not is_delta_t else ('c', 'd')
+    for ax, (k, v), s in zip(axs, data.items(), s_ls):
         ax.text(0.05, 0.875, f'({s})', transform=ax.transAxes)
         obs_ls, sim_ls = v['obs'], v['sim']
         obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
@@ -499,7 +500,7 @@ def plot_sim_obs_sunlit_shaded(res_wet: dict, res_dry: dict, figure_dir: Path, i
         ax.set_aspect(aspect='equal', anchor='C')
 
     axs[0].legend(fontsize=8, loc='lower left', framealpha=0)
-    axs[0].set_ylabel('Simulated leaf temperature (°C)')
+    axs[0].set_ylabel(f'Simulated leaf temperature {"depression " if is_delta_t else ""}(°C)')
     axs[0].set_xlabel('Observed leaf temperature (°C)')
     axs[0].xaxis.set_label_coords(1.05, -0.15, transform=axs[0].transAxes)
     axs[0].yaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
