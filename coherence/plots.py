@@ -137,7 +137,7 @@ def plot_temperature_dynamics(ax: plt.axis,
 
     c_map = {'lumped': 'blue', 'sunlit': 'orange', 'shaded': 'DarkGreen'}
     hours = range(24)
-    ax.plot(hours, temperature_air, label=r"T$_{\rm air}$", color='k', linestyle='--')
+    ax.plot(hours, temperature_air, label=r"T$_{\rm a}$", color='k', linestyle='--')
     ax.plot(hours, [v - 273.15 for v in summary_data[-1]], label=r"T$_{\rm soil}$", color='k')
 
     component_indexes = [cidx for cidx in component_indexes if cidx != -1]
