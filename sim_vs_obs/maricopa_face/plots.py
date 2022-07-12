@@ -501,7 +501,7 @@ def plot_sim_obs_sunlit_shaded(res_wet: dict, res_dry: dict, figure_dir: Path, i
 
     axs[0].legend(fontsize=8, loc='lower left', framealpha=0)
     axs[0].set_ylabel(f'Simulated leaf temperature {"depression " if is_delta_t else ""}(°C)')
-    axs[0].set_xlabel('Observed leaf temperature (°C)')
+    axs[0].set_xlabel(f'Measured leaf temperature {"depression " if is_delta_t else ""}(°C)')
     axs[0].xaxis.set_label_coords(1.05, -0.15, transform=axs[0].transAxes)
     axs[0].yaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
     fig.tight_layout()
