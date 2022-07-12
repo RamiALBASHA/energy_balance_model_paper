@@ -514,7 +514,9 @@ def plot_error(error_data: DataFrame, path_outputs: Path, stability_option: str,
         ax.tick_params(axis='both', labelsize=8)
         ax.text(0.05, 0.9, f'({ascii_lowercase[i]})', transform=ax.transAxes, fontsize=8)
 
-    axs[-1, 0].legend(loc='lower right', framealpha=0, handlelength=1, fontsize=8)
+    handles, labels = axs[0, 0].get_legend_handles_labels()
+    handles, labels = zip(*[(handles[i], labels[i]) for i in (1, 3, 0, 2)])
+    axs[0, 0].legend(handles, labels, loc='lower right', framealpha=0, handlelength=1, fontsize=8)
 
     fig.tight_layout()
     if supp_fig_name_info is None:
