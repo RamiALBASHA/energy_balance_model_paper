@@ -23,7 +23,7 @@ if __name__ == '__main__':
     temp_obs_all = temp_obs_all[temp_obs_all['leaf_level'] != UncertainData.leaf_level.value]
 
     gai_obs_df = get_gai_data(path_obs=path_source / 'gai_percentage.csv')
-    use_sq2_outputs = True
+    use_sq2_outputs = False
     if use_sq2_outputs:
         gai_df = get_canopy_profile_from_sq2(path_sim=PathInfos.sq2_output.value)
         water_df = get_gai_from_sq2(path_sim=PathInfos.sq2_output.value)
