@@ -38,6 +38,13 @@ class CanopyInfo:
         self.is_lumped = True
         self.leaves_category = 'lumped' if self.is_lumped else 'sunlit-shaded'
 
+        self.date_emergence: date = date(2011, 11, 4)  # estimated from SQ2 simulations
+        self.date_stem_elongation: date = date(2012, 3, 24)  # estimated from SQ2 simulations
+        self.date_anthesis: date = date(2012, 5, 27)  # from data_fmt/growth_stages.csv
+        self.height_emergence: float = 0.01
+        self.height_stem_elongation: float = 0.10
+        self.height_anthesis: float = 1.0
+
     def calc_gai_profile_ratios(self):
         path_obs = PathInfos.source_fmt.value / 'leaf_area.csv'
         df = read_csv(path_obs, sep=';', decimal='.', comment='#')

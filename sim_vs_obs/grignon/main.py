@@ -2,7 +2,8 @@ from crop_energy_balance.solver import Solver
 
 from sim_vs_obs.grignon import plots
 from sim_vs_obs.grignon.base_functions import (get_gai_data, build_gai_profile, read_phylloclimate,
-                                               set_energy_balance_inputs, get_gai_from_sq2, get_canopy_profile_from_sq2)
+                                               set_energy_balance_inputs, get_gai_from_sq2, get_canopy_profile_from_sq2,
+                                               build_canopy_height_from_obs)
 from sim_vs_obs.grignon.config import (PathInfos, WeatherInfo, CanopyInfo, UncertainData)
 from sources.demo import get_grignon_weather_data
 
@@ -27,6 +28,14 @@ if __name__ == '__main__':
         gai_df = get_canopy_profile_from_sq2(path_sim=PathInfos.sq2_output.value)
         water_df = get_gai_from_sq2(path_sim=PathInfos.sq2_output.value)
     else:
+        canopy_height_ser = build_canopy_height_from_obs(
+            weather_data=weather_meso_all,
+            date_emergence=canopy_info.date_emergence,
+            date_stem_elongation=canopy_info.date_stem_elongation,
+            date_anthesis=canopy_info.date_anthesis,
+            height_emergence=canopy_info.height_emergence,
+            height_stem_elongation=canopy_info.height_stem_elongation,
+            height_anthesis=canopy_info.height_anthesis)
         gai_df = gai_obs_df.copy()
 
     dates_obs = [d for d in gai_obs_df['date'].unique() if d != UncertainData.temperature_date.value]
@@ -56,7 +65,7 @@ if __name__ == '__main__':
                 plant_available_water_fraction = (
                     water_df[(water_df['date'] == date_obs) & (water_df['treatment'] == treatment)]['FPAWD'].values[0])
             else:
-                canopy_height = 0.7
+                canopy_height = canopy_height_ser.loc[date_obs]
                 plant_available_water_fraction = 0.9
 
             for datetime_obs, hourly_weather in weather_meso.iterrows():

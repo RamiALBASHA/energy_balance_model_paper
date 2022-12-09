@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, date
 from math import log
 from pathlib import Path
 
 from matplotlib import pyplot
-from pandas import DataFrame, read_csv, Series, concat, to_datetime
+from pandas import DataFrame, read_csv, Series, concat, to_datetime, date_range
 
 from sim_vs_obs.common import calc_absorbed_irradiance, ParamsEnergyBalanceBase
 from sim_vs_obs.grignon.config import (ParamsGapFract2Gai, WeatherInfo, SoilInfo, CanopyInfo, PathInfos)
@@ -48,6 +48,23 @@ def build_gai_profile_from_obs(total_gai: float, layer_ratios: list, layer_ids: 
         layer_ids = list(range(len(layer_ratios)))
 
     return {layer_id: total_gai * gai_ratio for layer_id, gai_ratio in zip(layer_ids, layer_ratios)}
+
+
+def build_canopy_height_from_obs(
+        weather_data: DataFrame, date_emergence: date, date_stem_elongation: date, date_anthesis: date,
+        height_emergence: float, height_stem_elongation: float, height_anthesis: float) -> DataFrame:
+    weather_daily = weather_data.loc[
+        date_range(start=date_stem_elongation, end=date_anthesis), 'air_temperature'].resample('D').mean()
+    temperature_cumsum = weather_daily.cumsum()
+    rate_height_increase = (height_anthesis - height_stem_elongation) / temperature_cumsum.max()
+
+    height_ser = temperature_cumsum.apply(lambda x: height_stem_elongation + x * rate_height_increase).rename(
+        'canopy_height', inplace=True)
+    height_ser = height_ser.reindex(date_range(start=date_emergence, end=date_anthesis))
+    height_ser[0] = height_emergence
+    height_ser = height_ser.interpolate('linear')
+    height_ser.index = height_ser.index.date
+    return height_ser
 
 
 def build_gai_profile_from_sq2(gai_df: DataFrame, leaves_measured: list):
