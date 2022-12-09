@@ -243,11 +243,14 @@ def plot_errors(summary_data: dict, path_figs_dir: Path):
             x = sm.add_constant(x)
             y = array(error_ls)
             results = sm.OLS(y, x).fit()
-
-            ax.plot(*zip(*[(i, results.params[0] + results.params[1] * i) for i in
-                           linspace(min(explanatory_ls), max(explanatory_ls), 2)]), 'k--')
-            p_value_slope = results.pvalues[1] / 2.
-            ax.text(0.1, 0.9, '*' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontweight='bold')
+            is_vertical_line = min(explanatory_ls) == max(explanatory_ls)
+            if is_vertical_line:
+                ax.vlines(explanatory_ls[0], min(y), max(y), colors='k', linestyles='--')
+            else:
+                ax.plot(*zip(*[(i, results.params[0] + results.params[1] * i) for i in
+                               linspace(min(explanatory_ls), max(explanatory_ls), 2)]), 'k--')
+                p_value_slope = results.pvalues[1] / 2.
+                ax.text(0.1, 0.9, '*' if p_value_slope < 0.05 else '', transform=ax.transAxes, fontweight='bold')
 
             if i == len(explanatory_vars) - 1:
                 colorbar_ax = axs.flatten()[-1]
