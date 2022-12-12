@@ -1019,3 +1019,42 @@ def plot_resistance2(data: tuple, figs_path: Path):
     fig.savefig(figs_path / 'effect_surface_resistance2.png')
 
     pass
+
+
+def plot_energy_balance_terms_for_ww_and_wd(data: dict, figs_path: Path):
+    models = ['bigleaf_lumped', 'bigleaf_sunlit-shaded', 'layered_lumped', 'layered_sunlit-shaded']
+    eb_components = [
+        'net_radiation', 'sensible_heat_flux', 'total_penman_monteith_evaporative_energy', 'soil_heat_flux',
+        'energy_balance']
+    fig, axs = plt.subplots(ncols=4, nrows=2, sharex='all', sharey='all', figsize=(7.48, 4.8),
+                            gridspec_kw={'wspace': 0, 'hspace': 0})
+    for i_water, water_status in enumerate(('ww', 'wd')):
+        layers, irradiance, irradiance_object, temperature, solver_group, execution_time = data[water_status]
+        for i_model, model in enumerate(models):
+            for eb_component in eb_components:
+                axs[i_water, i_model] = plot_energy_balance_components(
+                    h_solver=solver_group[model],
+                    variable_to_plot=eb_component,
+                    ax=axs[i_water, i_model],
+                    figure_path=Path(),
+                    return_ax=True)
+
+    for i, ax in enumerate(axs.flatten()):
+        ax.text(0.05, 0.875, f'({ascii_lowercase[i]})', transform=ax.transAxes)
+    for model, ax in zip(models, axs[0, :]):
+        ax.set_title('\n'.join(handle_sim_name(model).split(' ')))
+    axs[0, 0].set_ylabel('\n'.join(['Energy balance term', UNITS_MAP['energy_balance'][1]]), fontsize=10)
+    axs[1, 1].set_xlabel('Hour of the day')
+    handles, labels = axs[0, 0].get_legend_handles_labels()
+    l0 = ['balance'] + [l for l in labels if l != 'balance']
+    h0 = [handles[labels.index(s)] for s in l0]
+    axs[0, 0].legend(handles=h0, labels=l0, loc='center left', fontsize=8, handlelength=0.75, ncol=1, framealpha=0)
+
+    axs[0, 0].yaxis.set_label_coords(-0.3, 0, transform=axs[0, 0].transAxes)
+    axs[1, 1].xaxis.set_label_coords(1, -0.2, transform=axs[1, 1].transAxes)
+
+    fig.tight_layout()
+    fig.savefig(figs_path / 'mixed_ww_ws.png')
+    plt.close("all")
+
+    pass

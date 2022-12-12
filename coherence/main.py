@@ -282,13 +282,15 @@ def run_four_canopy_sims_on_ww_and_ws():
                 generate_plots=False)
             res.update({k: res_sim})
 
+        figs_dir = figs_path / weather_file.split('.')[0]
+        plots.plot_energy_balance_terms_for_ww_and_wd(data=res,  figs_path=figs_dir)
         plots.plot_radiation_temperature_profiles(
             hours=[6, 10, 12, 15, 19],
             hourly_weather=weather_data,
             all_cases_absorbed_irradiance=(res['ww'][1], res['ww'][2]),
             all_cases_temperature_ww=res['ww'][3],
             all_cases_temperature_wd=res['wd'][3],
-            figure_path=figs_path / weather_file.split('.')[0])
+            figure_path=figs_dir)
     pass
 
 
