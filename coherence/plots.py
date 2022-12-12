@@ -616,7 +616,7 @@ def plot_energy_balance_components(
         ax.plot(hours, [getattr(h_solver[h].crop[-1], 'heat_flux') for h in hours],
                 label=UNITS_MAP[variable_to_plot][0])
     elif variable_to_plot == 'energy_balance':
-        ax.plot(hours, [h_solver[h].energy_balance for h in hours], 'k--', label=UNITS_MAP[variable_to_plot][0])
+        ax.plot(hours, [h_solver[h].energy_balance for h in hours], 'k:', label=UNITS_MAP[variable_to_plot][0])
     else:
         ax.plot(hours, [getattr(h_solver[h].crop.state_variables, variable_to_plot) for h in hours],
                 label=UNITS_MAP[variable_to_plot][0])
@@ -955,7 +955,7 @@ def plot_mixed(data: tuple, figs_path: Path):
     handles, labels = axs[0, 0].get_legend_handles_labels()
     l0 = ['balance'] + [l for l in labels if l != 'balance']
     h0 = [handles[labels.index(s)] for s in l0]
-    axs[0, 0].legend(handles=h0, labels=l0, loc='center left', fontsize=8, handlelength=1.5, ncol=1, framealpha=0)
+    axs[0, 0].legend(handles=h0, labels=l0, loc='center left', fontsize=8, handlelength=0.75, ncol=1, framealpha=0)
 
     for ax in axs[1, :]:
         ax.legend(loc='lower right', fontsize=8, handlelength=1.5, ncol=1, framealpha=0)
