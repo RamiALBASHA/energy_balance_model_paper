@@ -77,7 +77,8 @@ def plot_dynamic_comparison(solvers: dict,
     fig, ax = plt.subplots()
     plot_canopy_variable(all_cases_solver=solvers, variable_to_plot=variable_to_plot, y_cumsum=False,
                          axes=[ax, ax, ax, ax], figure_path=figure_path, return_axes=True)
-    ax.set(xlabel='hour', ylabel=' '.join(UNITS_MAP[variable_to_plot]), **kwargs)
+    var_name = 'temperature_source' if variable_to_plot == 'source_temperature' else variable_to_plot
+    ax.set(xlabel='hour', ylabel=' '.join(UNITS_MAP[var_name]), **kwargs)
     ax.legend()
 
     fig.tight_layout()
@@ -753,7 +754,7 @@ def plot_properties_profile(solver_data: dict, hours: list, component_props: [st
         ncols += 1
         y_ls = []
 
-    fig, axs = plt.subplots(nrows=n_rows, ncols=ncols, sharey='all')
+    fig, axs = plt.subplots(nrows=n_rows, ncols=ncols, sharey='all', figsize=(7.48, 3))
     for i, hour in enumerate(hours):
         crop = solver_data[hour].crop
         for j, prop in enumerate(component_props):
@@ -770,7 +771,7 @@ def plot_properties_profile(solver_data: dict, hours: list, component_props: [st
             y = [v * multiply_by[j] for v in y]
             ax.plot(y, layers_idx)
             if j == 0:
-                ax.set_ylabel('Component index [-]')
+                ax.set_ylabel('Canopy layer index [-]')
                 if n_rows > 1:
                     ax.text(0.7, 0.1, f'(hour: {hour})', transform=ax.transAxes)
             if i == n_rows - 1:
@@ -782,6 +783,11 @@ def plot_properties_profile(solver_data: dict, hours: list, component_props: [st
             ax_multi = axs[i, -1] if n_rows > 1 else axs[-1]
             ax_multi.plot([prod(v) for v in zip(*y_ls)], layers_idx)
             ax_multi.set_xlabel(xlabels[-1])
+
+    axs[0].yaxis.set_major_locator(MaxNLocator(integer=True))
+    axs[0].set_ylim(-1 + axs[0].get_ylim()[0], axs[0].get_ylim()[1] + 0.5)
+    for i, ax in enumerate(axs):
+        ax.text(0.05, 0.9, f'({ascii_lowercase[i]})', transform=ax.transAxes)
 
     fig.tight_layout()
     plt.savefig(str(figure_path / 'sunlit_props.png'))
