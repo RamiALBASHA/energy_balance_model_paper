@@ -814,9 +814,14 @@ def compare_sunlit_shaded_temperatures(temperature_data: list, figure_path: Path
     plt.close('all')
 
 
-def plot_surface_conductance_profile(surface_conductance: dict, figure_path: Path):
+def plot_surface_conductance_profile(surface_conductance: dict, figure_path: Path = None, ax: plt.Subplot = None,
+                                     is_return_ax: bool = False):
+    if ax is not None:
+        fig = ax.get_figure()
+    else:
+        fig, ax = plt.subplots(figsize=(9 / 2.54, 9 / 2.54))
+
     c = {'lumped': 'blue', 'sunlit': 'orange', 'shaded': 'DarkGreen', 'sunlit+shaded': 'red'}
-    fig, ax = plt.subplots(figsize=(9 / 2.54, 9 / 2.54))
     ax.invert_yaxis()
     ax.clear()
     for k, v in surface_conductance.items():
@@ -830,9 +835,13 @@ def plot_surface_conductance_profile(surface_conductance: dict, figure_path: Pat
     labels = ('lumped', 'sunlit', 'shaded', 'sunlit+shaded')
     handles = [handles[labels_.index(s)] for s in labels]
     ax.legend(handles=handles, labels=labels, framealpha=0, handlelength=1)
-    fig.tight_layout()
-    fig.savefig(figure_path / 'effect_surface_conductance.png')
-    plt.close('all')
+
+    if is_return_ax:
+        return ax
+    else:
+        fig.tight_layout()
+        fig.savefig(figure_path / 'effect_surface_conductance.png')
+        plt.close('all')
 
 
 def examine_soil_saturation_effect(temperature: list, latent_heat: list, figure_path: Path):
@@ -881,8 +890,14 @@ def examine_shift_effect(lumped_temperature_ls: list, figure_path: Path):
     pass
 
 
-def examine_lumped_to_sunlit_shaded_resistance_ratio(resistance_data: dict, diffuse_ratio: list, figure_path: Path):
-    fig, ax = plt.subplots(figsize=(9 / 2.54, 9 / 2.54))
+def examine_lumped_to_sunlit_shaded_resistance_ratio(resistance_data: dict, diffuse_ratio: list,
+                                                     figure_path: Path = None, ax: plt.Subplot = None,
+                                                     is_return_ax: bool = False):
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(9 / 2.54, 9 / 2.54))
+    else:
+        fig = ax.get_figure()
+
     for s, v in resistance_data.items():
         ax.plot(diffuse_ratio,
                 [v_l / v_ss for (v_l, v_ss) in zip(v['lumped'], v['sunlit-shaded'])], label=s)
@@ -891,8 +906,11 @@ def examine_lumped_to_sunlit_shaded_resistance_ratio(resistance_data: dict, diff
 
     ax.set(xlabel='Diffuse to total irradiance ratio (-)',
            ylabel='Lumped to Sunlit-Shaded canopy\nsurface resistance ratio (-)')
-    fig.tight_layout()
-    fig.savefig(figure_path / 'effect_surface_resistance.png')
+    if is_return_ax:
+        return ax
+    else:
+        fig.tight_layout()
+        fig.savefig(figure_path / 'effect_surface_resistance.png')
 
     pass
 
@@ -982,4 +1000,22 @@ def plot_mixed(data: tuple, figs_path: Path):
     fig.tight_layout()
     fig.savefig(figs_path / 'mixed.png')
     plt.close("all")
+    pass
+
+
+def plot_resistance2(data: tuple, figs_path: Path):
+    fig, (ax_cond, ax_res) = plt.subplots(ncols=2, figsize=(7.48, 3.5))
+
+    ax_cond = plot_surface_conductance_profile(surface_conductance=data[0], ax=ax_cond, is_return_ax=True)
+    ax_res = examine_lumped_to_sunlit_shaded_resistance_ratio(resistance_data=data[1][0], diffuse_ratio=data[1][1],
+                                                              ax=ax_res, is_return_ax=True)
+    ax_cond.invert_yaxis()
+    ax_cond.legend(framealpha=0, title_fontsize=8, fontsize=8)
+
+    for i, ax in enumerate((ax_cond, ax_res)):
+        ax.text(0.85, 0.65, f'({ascii_lowercase[i]})', transform=ax.transAxes)
+
+    fig.tight_layout()
+    fig.savefig(figs_path / 'effect_surface_resistance2.png')
+
     pass

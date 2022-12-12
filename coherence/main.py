@@ -292,7 +292,7 @@ def run_four_canopy_sims_on_ww_and_ws():
     pass
 
 
-def demonstrate_surface_conductance_conceptual_difference():
+def demonstrate_surface_conductance_conceptual_difference(is_return_result: bool = False):
     print('running demonstrate_surface_conductance_conceptual_difference()...')
 
     figs_path = Path(__file__).parents[1] / 'figs/coherence'
@@ -333,13 +333,15 @@ def demonstrate_surface_conductance_conceptual_difference():
                 (lumped_leaf_surface_conductance * leaf_fraction, cumulative_leaf_area_index))
         surface_conductance.update({leaves_category: leaf_surface_conductance_per_layer})
 
-    plots.plot_surface_conductance_profile(
-        surface_conductance=surface_conductance,
-        figure_path=figs_path)
-    pass
+    if is_return_result:
+        return surface_conductance
+    else:
+        plots.plot_surface_conductance_profile(
+            surface_conductance=surface_conductance,
+            figure_path=figs_path)
 
 
-def demonstrate_surface_resistance_conceptual_differene():
+def demonstrate_surface_resistance_conceptual_differene(is_return_result: bool = False):
     """Examine how the resistance of Lumped canopies is systematically lower that that of Sunlit-Shaded ones.
     """
     print('running demonstrate_surface_resistance_conceptual_differene()...')
@@ -393,8 +395,22 @@ def demonstrate_surface_resistance_conceptual_differene():
                 surface_resistance_ls.append(surface_resistance)
             res[lai].update({leaf_class: surface_resistance_ls})
 
-    plots.examine_lumped_to_sunlit_shaded_resistance_ratio(
-        resistance_data=res, diffuse_ratio=weather_data['diffuse_ratio'].values, figure_path=figs_path)
+    if is_return_result:
+        return res, weather_data['diffuse_ratio'].values
+    else:
+        plots.examine_lumped_to_sunlit_shaded_resistance_ratio(
+            resistance_data=res, diffuse_ratio=weather_data['diffuse_ratio'].values, figure_path=figs_path)
+
+
+def demonstrate_surface_resistance_conceptual_differene_2():
+    print('demonstrate_surface_resistance_conceptual_differene_2()...')
+
+    figs_path = Path(__file__).parents[1] / 'figs/coherence'
+    figs_path.mkdir(exist_ok=True, parents=True)
+
+    res_conductance = demonstrate_surface_conductance_conceptual_difference(is_return_result=True)
+    res_resistance, diffuse_ratio = demonstrate_surface_resistance_conceptual_differene(is_return_result=True)
+    plots.plot_resistance2(data=(res_conductance, (res_resistance, diffuse_ratio)), figs_path=figs_path)
     pass
 
 
@@ -520,4 +536,5 @@ if __name__ == '__main__':
     examine_shift_effect()
     demonstrate_surface_conductance_conceptual_difference()
     demonstrate_surface_resistance_conceptual_differene()
+    demonstrate_surface_resistance_conceptual_differene_2()
     evaluate_execution_time()
