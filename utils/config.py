@@ -1,8 +1,8 @@
 UNITS_MAP = {
     'net_radiation': (r'$\mathregular{R_n}$', r'$\mathregular{(W\/m^{-2}_{ground})}$'),
     'net_longwave_radiation': (r'$\mathregular{R_{0,\/lw}}}$', r'$\mathregular{(W\/m^{-2}_{ground})}$'),
-    'sensible_heat_flux': ('H', r'$\mathregular{(W\/m^{-2}_{ground})}$'),
-    'total_penman_monteith_evaporative_energy': (r'$\mathregular{\lambda E}$', r'$\mathregular{(W\/m^{-2}_{ground})}$'),
+    'sensible_heat_flux': (r'$\mathregular{H^n}$', r'$\mathregular{(W\/m^{-2}_{ground})}$'),
+    'total_penman_monteith_evaporative_energy': (r'$\mathregular{\lambda E ^n}$', r'$\mathregular{(W\/m^{-2}_{ground})}$'),
     'latent_heat_flux': (r'$\mathregular{\lambda E}$', r'$\mathregular{(W\/m^{-2}_{ground})}$'),
     'soil_heat_flux': ('G', r'$\mathregular{(W\/m^{-2}_{ground})}$'),
     'energy_balance': ('balance', r'$\mathregular{(W\/m^{-2}_{ground})}$'),
