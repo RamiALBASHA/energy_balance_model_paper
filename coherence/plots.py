@@ -862,7 +862,7 @@ def examine_shift_effect(lumped_temperature_ls: list, figure_path: Path):
     cpick.set_array([])
 
     component_indices = list(reversed(lumped_temperature_ls[0][1].keys()))
-    fig, ax = plt.subplots(figsize=(9 / 2.54, 9/2.54))
+    fig, ax = plt.subplots(figsize=(9 / 2.54, 9 / 2.54))
     for saturation_rate, temp_profile in lumped_temperature_ls:
         ax.plot([temp_profile[k]['lumped'] - 273.15 for k in component_indices], component_indices, 'o-',
                 color=cpick.to_rgba(saturation_rate), label=f'{saturation_rate:.2f}')
@@ -878,6 +878,22 @@ def examine_shift_effect(lumped_temperature_ls: list, figure_path: Path):
     fig.subplots_adjust(right=0.98)
     fig.savefig(figure_path / 'effect_shift.png')
     plt.close('all')
+    pass
+
+
+def examine_lumped_to_sunlit_shaded_resistance_ratio(resistance_data: dict, diffuse_ratio: list, figure_path: Path):
+    fig, ax = plt.subplots(figsize=(9 / 2.54, 9 / 2.54))
+    for s, v in resistance_data.items():
+        ax.plot(diffuse_ratio,
+                [v_l / v_ss for (v_l, v_ss) in zip(v['lumped'], v['sunlit-shaded'])], label=s)
+    ax.legend(title='\n'.join(["Total leaf area index", r'$\mathregular{(m^2_{leaf}\/m^{-2}_{ground})}$']),
+              framealpha=0, title_fontsize=8, fontsize=8)
+
+    ax.set(xlabel='Diffuse to total irradiance ratio (-)',
+           ylabel='Lumped to Sunlit-Shaded canopy\nsurface resistance ratio (-)')
+    fig.tight_layout()
+    fig.savefig(figure_path / 'effect_surface_resistance.png')
+
     pass
 
 

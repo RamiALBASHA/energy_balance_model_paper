@@ -339,6 +339,65 @@ def demonstrate_surface_conductance_conceptual_difference():
     pass
 
 
+def demonstrate_surface_resistance_conceptual_differene():
+    """Examine how the resistance of Lumped canopies is systematically lower that that of Sunlit-Shaded ones.
+    """
+    print('running demonstrate_surface_resistance_conceptual_differene()...')
+
+    figs_path = Path(__file__).parents[1] / 'figs/coherence'
+    figs_path.mkdir(exist_ok=True, parents=True)
+
+    leaf_classes = ['lumped', 'sunlit-shaded']
+
+    weather_data = get_grignon_weather_data(filename='grignon_high_rad_high_vpd.csv')
+    weather_data.drop(index=[i for i in weather_data.index if i != 13], inplace=True)
+
+    incident_irradiance = weather_data.loc[13, ['incident_direct_irradiance', 'incident_diffuse_irradiance']].sum()
+
+    weather_data = weather_data.loc[weather_data.index.repeat(11)]
+    weather_data.reset_index(drop=True, inplace=True)
+    weather_data.loc[:, 'diffuse_ratio'] = [i / 10 for i in range(11)]
+    weather_data.loc[10, 'diffuse_ratio'] = 0.99
+    weather_data.loc[:, 'incident_direct_irradiance'] = weather_data.apply(
+        lambda x: incident_irradiance * (1 - x['diffuse_ratio']), axis=1)
+    weather_data.loc[:, 'incident_diffuse_irradiance'] = weather_data.apply(
+        lambda x: incident_irradiance * x['diffuse_ratio'], axis=1)
+
+    res = {}
+    for lai in [0.1, 0.5, 1, 2, 3, 5]:
+        canopy_layers = {0: lai}
+
+        res.update({lai: {}})
+        for leaf_class in leaf_classes:
+            surface_resistance_ls = []
+            for i, w_data in weather_data.iterrows():
+                absorbed_irradiance, _ = sim.calc_absorbed_irradiance(
+                    leaf_layers=canopy_layers,
+                    is_bigleaf=True,
+                    is_lumped=leaf_class == 'lumped',
+                    incident_direct_par_irradiance=w_data['incident_direct_irradiance'],
+                    incident_diffuse_par_irradiance=w_data['incident_diffuse_irradiance'],
+                    solar_inclination_angle=w_data['solar_declination'])
+                energy_balance_solver, _ = sim.solve_energy_balance(
+                    vegetative_layers=canopy_layers,
+                    leaf_class_type=leaf_class,
+                    absorbed_par_irradiance=absorbed_irradiance,
+                    actual_weather_data=w_data,
+                    correct_stability=False)
+                if leaf_class == 'lumped':
+                    surface_resistance = energy_balance_solver.crop[0].surface_resistance
+                else:
+                    surface_resistance = 1. / sum([
+                        1. / energy_balance_solver.crop[0]['sunlit'].surface_resistance,
+                        1. / energy_balance_solver.crop[0]['shaded'].surface_resistance])
+                surface_resistance_ls.append(surface_resistance)
+            res[lai].update({leaf_class: surface_resistance_ls})
+
+    plots.examine_lumped_to_sunlit_shaded_resistance_ratio(
+        resistance_data=res, diffuse_ratio=weather_data['diffuse_ratio'].values, figure_path=figs_path)
+    pass
+
+
 def examine_soil_humidity_effect():
     print('running examine_soil_humidity_effect()...')
 
@@ -460,4 +519,5 @@ if __name__ == '__main__':
     examine_soil_humidity_effect()
     examine_shift_effect()
     demonstrate_surface_conductance_conceptual_difference()
+    demonstrate_surface_resistance_conceptual_differene()
     evaluate_execution_time()
