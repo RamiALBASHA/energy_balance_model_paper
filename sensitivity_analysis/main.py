@@ -1,5 +1,5 @@
 import re
-from json import load
+from json import load, dump
 from pathlib import Path
 from string import ascii_lowercase
 
@@ -232,7 +232,7 @@ def heatmap(data: array, infos: dict, parameter_groups: dict, model: str = None,
             group_row_index += len(params) / 2
             ax.hlines(row_labels.index(params[-1]) + 0.5, *ax.get_xlim(), color='k', linewidth=1)
             if is_text_groups:
-                x_pos = max([len(MAP_PARAMS[s.split('-')[-1]]) for s in params]) / len_label_max * -6 -0.5
+                x_pos = max([len(MAP_PARAMS[s.split('-')[-1]]) for s in params]) / len_label_max * -6 - 0.5
                 ax.annotate(group_name, xytext=(-7.9, group_row_index), xy=(x_pos, group_row_index),
                             arrowprops=dict(arrowstyle=f'-[, widthB={len(params) / 2 - 0.5}', lw=0.5),
                             annotation_clip=False,
@@ -466,4 +466,6 @@ if __name__ == '__main__':
 
             sa_result_all[model_representation].update({soil_water_status: run_result})
 
+    with open(path_figs / 'sensitivity_analysis_summary.json', mode='w') as f:
+        dump(sa_result_all, f)
     plot_grouped_heatmap(sa_data=sa_result_all, path_fig=path_figs, parameter_groups=param_groups)
