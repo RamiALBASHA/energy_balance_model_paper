@@ -202,7 +202,7 @@ class ErrorAnalysisVars:
 
 
 def plot_error_tree(data: DataFrame, dependent_var: str, explanatory_vars: list[str], path_output_dir: Path,
-                    is_classify: bool = False, **kwargs):
+                    leaf_type: str, is_classify: bool = False, **kwargs):
     params = dict(
         random_state=0,
         splitter='best',
@@ -232,6 +232,7 @@ def plot_error_tree(data: DataFrame, dependent_var: str, explanatory_vars: list[
     # graph.view(filename=f'{txt}_{clf.score(explanatory, target):0.3f}')
     graph.render(
         directory=path_output_dir,
-        filename=f"{'classification_tree' if is_classify else 'regression_tree'}_{clf.score(explanatory, target):0.3f}",
+        filename="_".join(['classification_tree' if is_classify else 'regression_tree', leaf_type,
+                           f'{clf.score(explanatory, target):0.3f}']),
         format='png')
     pass
