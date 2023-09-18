@@ -751,11 +751,11 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
     scaling_factor = 100.
 
     fig = pyplot.figure(figsize=(7.48, 9.5))
-    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, hspace=0, height_ratios=[2, 1])
+    gs = gridspec.GridSpec(ncols=1, nrows=2, figure=fig, hspace=0, height_ratios=[1, 2])
 
-    gs_dynamic = gs[0].subgridspec(nrows=len(vars_to_plot_dynamic), ncols=nb_cols, wspace=0.025, hspace=0.)
+    gs_dynamic = gs[-1].subgridspec(nrows=len(vars_to_plot_dynamic), ncols=nb_cols, wspace=0.025, hspace=0.)
     axs_dynamic = array([fig.add_subplot(ss) for ss in gs_dynamic]).reshape(nb_vars_to_plot_dynamic, nb_cols)
-    gs_summary = gs[-1].subgridspec(nrows=1, ncols=nb_vars_to_plot_summary, wspace=0.6)
+    gs_summary = gs[0].subgridspec(nrows=1, ncols=nb_vars_to_plot_summary, wspace=0.6)
     axs_summary = [fig.add_subplot(ss) for ss in gs_summary]
     axs_summary = plot_sim_vs_obs(
         res_all={k: v for k, v in res_all.items() if k in vars_to_plot_summary + ['incident_par']},
@@ -800,12 +800,11 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
                 ax.set_ylabel('\n'.join((var_name, var_unit)), fontsize=8)
         axs_dynamic[0, 1].legend(fontsize=8, loc='lower right')
 
-    _format_summary_axs(axs_summary=axs_summary, var_names=vars_to_plot_summary,
-                        nb_vars_dynamic=len(vars_to_plot_dynamic), scaling_factor=scaling_factor)
+    _format_summary_axs(axs_summary=axs_summary, var_names=vars_to_plot_summary, scaling_factor=scaling_factor)
     _format_dynamic_axs(axs_dynamic=axs_dynamic)
 
     fig.tight_layout()
-    fig.subplots_adjust(bottom=-.04)
+    fig.subplots_adjust(bottom=.1)
     fig.savefig(figure_dir / 'mixed.png')
     pyplot.close('all')
 
@@ -813,7 +812,7 @@ def plot_mixed(sim_obs_dict: dict, res_all: dict, res_wet: dict, res_dry: dict, 
 def _format_dynamic_axs(axs_dynamic: array):
     d_x = .005  # how big to make the diagonal lines in axes coordinates
     d_y = 10 * d_x
-    for s, ax in zip(ascii_lowercase, axs_dynamic[:, 0]):
+    for s, ax in zip(ascii_lowercase[4:], axs_dynamic[:, 0]):
         ax.text(0.025, 0.825, f'({s})', transform=ax.transAxes, fontsize=8)
         ax.yaxis.tick_left()
         ax.spines['right'].set_visible(False)
@@ -847,11 +846,11 @@ def _format_dynamic_axs(axs_dynamic: array):
     pass
 
 
-def _format_summary_axs(axs_summary: array, var_names: list[str], nb_vars_dynamic: int, scaling_factor: float = 1.):
+def _format_summary_axs(axs_summary: array, var_names: list[str], scaling_factor: float = 1.):
     energy_balance_unit = config.UNITS_MAP["energy_balance"][1].replace('(', f'(x{scaling_factor:.0f}\/\/')
     for i, (ax, var_name) in enumerate(zip(axs_summary, var_names)):
         ax.set_title('')
-        ax.text(0.1, 0.85, f'({ascii_lowercase[i + nb_vars_dynamic]})', transform=ax.transAxes, fontsize=8)
+        ax.text(0.1, 0.85, f'({ascii_lowercase[i]})', transform=ax.transAxes, fontsize=8)
         ax.tick_params(axis='both', which='major', labelsize=8)
         ax.set_ylabel(f"Simulated {var_name.lower().replace('_', ' ')}\n{energy_balance_unit}", fontsize=8,
                       labelpad=0.1)
