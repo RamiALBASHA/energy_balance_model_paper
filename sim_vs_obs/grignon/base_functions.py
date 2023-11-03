@@ -135,6 +135,7 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
     eb_params.update({
         "diffuse_extinction_coef": irradiance_obj.params.diffuse_extinction_coefficient,
         "leaf_scattering_coefficient": irradiance_obj.params.leaf_scattering_coefficient})
+    # eb_params.update({'atmospheric_emissivity_model': 'monteith_2013'})
 
     return eb_inputs, eb_params
 
