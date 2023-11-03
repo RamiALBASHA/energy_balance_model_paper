@@ -460,52 +460,54 @@ def plot_daily_dynamic(counter, date_obs, trt_id, gai, hours, par_inc, par_abs_v
     pass
 
 
-def plot_sim_obs_sunlit_shaded(res_wet: dict, res_dry: dict, figure_dir: Path, is_delta_t: bool = False):
+def plot_sim_obs_sunlit_shaded(res_wet: dict, res_dry: dict, figure_dir: Path):
     pyplot.close()
-    fig, axs = pyplot.subplots(ncols=2, figsize=(14 / 2.54, 9 / 2.54), sharex='all', sharey='all',
+    fig, axs = pyplot.subplots(nrows=2, ncols=2, figsize=(14 / 2.54, 16 / 2.54), sharex='row', sharey='row',
                                gridspec_kw=dict(wspace=0))
 
-    data = dict(temperature_sunlit=dict(sim=[], obs=[]),
-                temperature_shaded=dict(sim=[], obs=[]))
+    for i, is_delta_t in enumerate((False, True)):
+        data = dict(temperature_sunlit=dict(sim=[], obs=[]),
+                    temperature_shaded=dict(sim=[], obs=[]))
+        if is_delta_t:
+            for res, label, c in (res_wet, 'Well watered', 'b'), (res_dry, 'Water deficit', 'r'):
+                for ax, s in zip(axs[i], data.keys()):
+                    obs_dt, sim_dt = zip(*[(t_obs - t_air, t_sim - t_air) for t_obs, t_sim, t_air in
+                                           zip(res[s]['obs'], res[s]['sim'], res['temperature_air'])
+                                           if not any(isna([t_obs, t_sim, t_air]))])
+                    data[s]['obs'] += obs_dt
+                    data[s]['sim'] += sim_dt
+                    ax.scatter(obs_dt, sim_dt, label=label, alpha=0.5)
+        else:
+            for res, label, c in (res_wet, 'Well watered', 'b'), (res_dry, 'Water deficit', 'r'):
+                for ax, s in zip(axs[i], data.keys()):
+                    obs_t, sim_t = zip(*[(t_obs, t_sim) for t_obs, t_sim in zip(res[s]['obs'], res[s]['sim'])
+                                         if not any(isna([t_obs, t_sim]))])
+                    data[s]['obs'] += obs_t
+                    data[s]['sim'] += sim_t
+                    ax.scatter(obs_t, sim_t, label=label, alpha=0.5)
 
-    if is_delta_t:
-        for res, label, c in (res_wet, 'Well watered', 'b'), (res_dry, 'Water deficit', 'r'):
-            for ax, s in zip(axs, data.keys()):
-                obs_dt, sim_dt = zip(*[(t_obs - t_air, t_sim - t_air) for t_obs, t_sim, t_air in
-                                       zip(res[s]['obs'], res[s]['sim'], res['temperature_air'])
-                                       if not any(isna([t_obs, t_sim, t_air]))])
-                data[s]['obs'] += obs_dt
-                data[s]['sim'] += sim_dt
-                ax.scatter(obs_dt, sim_dt, label=label, alpha=0.5)
-    else:
-        for res, label, c in (res_wet, 'Well watered', 'b'), (res_dry, 'Water deficit', 'r'):
-            for ax, s in zip(axs, data.keys()):
-                obs_t, sim_t = zip(*[(t_obs, t_sim) for t_obs, t_sim in zip(res[s]['obs'], res[s]['sim'])
-                                     if not any(isna([t_obs, t_sim]))])
-                data[s]['obs'] += obs_t
-                data[s]['sim'] += sim_t
-                ax.scatter(obs_t, sim_t, label=label, alpha=0.5)
+        text_kwargs = dict(fontsize=8, ha='right')
+        s_ls = ('a', 'b') if not is_delta_t else ('c', 'd')
+        for ax, (k, v), s in zip(axs[i], data.items(), s_ls):
+            ax.text(0.05, 0.875, f'({s})', transform=ax.transAxes)
+            obs_ls, sim_ls = v['obs'], v['sim']
+            obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
+            ax.text(0.95, 0.25, f'R²={stats.calc_r2(obs_ls, sim_ls):.2f}', transform=ax.transAxes, **text_kwargs)
+            ax.text(0.95, 0.15, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.1f}', transform=ax.transAxes, **text_kwargs)
+            ax.text(0.95, 0.05, f'nNSE={stats.calc_normaized_nash_sutcliffe(sim=sim_ls, obs=obs_ls):.2f}',
+                    transform=ax.transAxes, **text_kwargs)
+            add_1_1_line(ax, linewidth=0.5)
+            ax.set_aspect(aspect='equal', anchor='C')
 
-    text_kwargs = dict(fontsize=8, ha='right')
-    s_ls = ('a', 'b') if not is_delta_t else ('c', 'd')
-    for ax, (k, v), s in zip(axs, data.items(), s_ls):
-        ax.text(0.05, 0.875, f'({s})', transform=ax.transAxes)
-        obs_ls, sim_ls = v['obs'], v['sim']
-        obs_ls, sim_ls = zip(*[(obs, sim) for obs, sim in zip(obs_ls, sim_ls) if not any(isna([obs, sim]))])
-        ax.text(0.95, 0.25, f'R²={stats.calc_r2(obs_ls, sim_ls):.2f}', transform=ax.transAxes, **text_kwargs)
-        ax.text(0.95, 0.15, f'RMSE={stats.calc_rmse(obs_ls, sim_ls):.1f}', transform=ax.transAxes, **text_kwargs)
-        ax.text(0.95, 0.05, f'nNSE={stats.calc_normaized_nash_sutcliffe(sim=sim_ls, obs=obs_ls):.2f}',
-                transform=ax.transAxes, **text_kwargs)
-        add_1_1_line(ax, linewidth=0.5)
-        ax.set_aspect(aspect='equal', anchor='C')
+        axs[i][0].set_ylabel(f'Simulated\nleaf temperature {"depression " if is_delta_t else ""}(°C)')
+        axs[i][0].set_xlabel(f'Measured leaf temperature {"depression " if is_delta_t else ""}(°C)')
+        axs[i][0].xaxis.set_label_coords(1.05, -0.15, transform=axs[i][0].transAxes)
+        axs[i][0].yaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
+        if i == 1:
+            axs[i][0].legend(fontsize=8, loc='lower left', framealpha=0)
 
-    axs[0].legend(fontsize=8, loc='lower left', framealpha=0)
-    axs[0].set_ylabel(f'Simulated leaf temperature {"depression " if is_delta_t else ""}(°C)')
-    axs[0].set_xlabel(f'Measured leaf temperature {"depression " if is_delta_t else ""}(°C)')
-    axs[0].xaxis.set_label_coords(1.05, -0.15, transform=axs[0].transAxes)
-    axs[0].yaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
     fig.tight_layout()
-    fig.savefig(figure_dir / f"sunlit_shaded{'_dt' if is_delta_t else '_t'}.png")
+    fig.savefig(figure_dir / f"sunlit_shaded_temperature.png")
     pyplot.close("all")
 
     pass
