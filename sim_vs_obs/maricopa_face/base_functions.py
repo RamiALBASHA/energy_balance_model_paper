@@ -332,7 +332,7 @@ def read_portable_infrared_obs_1993() -> DataFrame:
         '902_soil_sunlit': df_raw.iloc[:, 155].to_list(),
         'quality': df_raw.iloc[:, 172].to_list()},
         index=df_raw.apply(lambda x: _calc_date(x), axis=1).to_list())
-    return df[(df['quality'] < 3) & ~isna(df.index)]
+    return df[(df['quality'] < 5) & ~isna(df.index)]
 
 
 def _calc_date(x: Series) -> datetime:
