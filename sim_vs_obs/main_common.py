@@ -504,11 +504,14 @@ def plot_error(error_data: DataFrame, path_outputs: Path, stability_option: str,
                     **kwargs)
             else:
                 pass
-
-            ax.set_xlabel('\n'.join([MAP_NAMES[explanatory], UNITS_MAP[explanatory][1]]), fontsize=8)
+            if explanatory == 'soil_water_potential':
+                ax.set_xlabel('\n'.join([MAP_NAMES[explanatory], '(kPa)']), fontsize=8)
+                ax.set_xticklabels([int(v * 1000.) for v in ax.get_xticks()])
+            else:
+                ax.set_xlabel('\n'.join([MAP_NAMES[explanatory], UNITS_MAP[explanatory][1]]), fontsize=8)
 
     for ax in axs[:, 0]:
-        ax.set_ylabel(f"Temperature error {UNITS_MAP['temperature'][1]}", fontsize=8)
+        ax.set_ylabel(f"Canopy\ntemperature error {UNITS_MAP['temperature'][1]}", fontsize=8)
 
     for i, ax in enumerate(axs.flatten()):
         ax.tick_params(axis='both', labelsize=8)
