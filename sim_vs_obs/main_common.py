@@ -275,13 +275,13 @@ def plot_correction_effect3(path_source: Path, leaf_class: str, path_outputs: Pa
     axs[0].set_yticklabels([v[0] for v in EXPERIMENTS.values()], ha='left')
     axs[0].tick_params(axis='y', which='major', pad=160, length=0)
     axs[0].tick_params(axis='y', which='minor', pad=5, length=0)
-    axs[0].set_xlabel('\n'.join(['Mean squared\nerror', '(°C²)']))
+    axs[0].set_xlabel('\n'.join(['Mean squared error\nfor canopy temperature', '(°C²)']))
 
     axs[1].set_xlabel('\n'.join(['Air\ntemeprature', r'(°C)']))
     axs[1].yaxis.set_visible(False)
 
     axs[2].vlines(0, *axs[1].get_ylim(), color='grey', linestyles='--', linewidth=0.5, zorder=0)
-    axs[2].set_xlabel('\n'.join(['Canopy\ntempreature\ndepression', '(°C)']))
+    axs[2].set_xlabel('\n'.join(['Measured\ntempreature\ndepression', '(°C)']))
     axs[2].set_xlim(-13, 13)
     axs[2].yaxis.set_visible(False)
 
@@ -622,7 +622,8 @@ def plot_correction_effect_mixed(path_source: Path, path_outputs: Path):
 
     cbar_ax = fig.add_axes([box_heatmap.x0, box_heatmap.y0 * 0.925, box_heatmap.x1 - box_heatmap.x0, 0.01])
     cbar = fig.colorbar(im, cax=cbar_ax, orientation="horizontal")
-    cbar.ax.set_ylabel(r'Mean squared error (°C²)', ha="right", va='center', rotation=0, fontsize=8)
+    cbar.ax.set_xlabel(r'Mean squared error (°C²)', fontsize=8)
+    cbar.ax.xaxis.set_label_coords(-1.65, 1., transform=cbar.ax.transAxes)
 
     for ax_errors, s in zip(axs_errors, ascii_lowercase[1:]):
         ax_errors.set_ylim([3.5, -0.5])
@@ -670,7 +671,7 @@ def plot_correction_effect_mixed(path_source: Path, path_outputs: Path):
         ax_richardsons.tick_params(axis='y', which='major', pad=275, length=0)
         ax_richardsons.text(0.85, 0.925, f'({s})', transform=ax_richardsons.transAxes)
 
-    fig.savefig(path_outputs / 'correction_effect_mixed.png')
+    fig.savefig(path_outputs / 'figure_13.png')
     pyplot.close('all')
     pass
 
