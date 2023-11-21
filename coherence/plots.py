@@ -1022,7 +1022,7 @@ def plot_resistance2(data: tuple, figs_path: Path):
         ax.text(0.85, 0.65, f'({ascii_lowercase[i]})', transform=ax.transAxes)
 
     fig.tight_layout()
-    fig.savefig(figs_path / 'effect_surface_resistance2.png')
+    fig.savefig(figs_path / 'figure_4.png')
 
     pass
 
