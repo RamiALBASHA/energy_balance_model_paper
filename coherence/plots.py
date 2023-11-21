@@ -884,15 +884,16 @@ def examine_shift_effect(lumped_temperature_ls: list, figure_path: Path):
                 color=cpick.to_rgba(saturation_rate), label=f'{saturation_rate:.2f}')
 
     ax.set_yticks(component_indices)
-    ax.set_yticklabels([v + 1 for v in component_indices])
-    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.set_yticklabels(['soil\nsurface'] + list(reversed([v + 1 for v in component_indices[1:]])))
+    #ax.yaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set(xlabel=f"Surface temperature {UNITS_MAP['temperature'][1]}",
            ylabel='Canopy layer index (-)')
+    ax.yaxis.set_label_coords(-0.175, 0.5, transform=ax.transAxes)
     ax.legend(title="Actual to saturated\nsoil water content (-)",
               framealpha=0, title_fontsize=8, fontsize=8)
     fig.tight_layout()
     fig.subplots_adjust(right=0.98)
-    fig.savefig(figure_path / 'effect_shift.png')
+    fig.savefig(figure_path / 'figure_6.png')
     plt.close('all')
     pass
 
