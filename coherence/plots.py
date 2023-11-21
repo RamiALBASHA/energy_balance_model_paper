@@ -317,7 +317,8 @@ def plot_radiation_temperature_profiles(hours: list,
     axes[0, 0].set_ylim((-0.25, max(component_indices) + 2))
     axes[0, 0].yaxis.set_major_locator(MaxNLocator(integer=True))
     axes[0, 0].set_yticks(component_indices + [0])
-    axes[2, 0].set_ylabel('Canopy layer index (-)', rotation=90, ha='center')
+    axes[0, 0].set_yticklabels(list(reversed(component_indices)) + ['soil surface'])
+    axes[2, 0].set_ylabel('Layer index (-)', rotation=90, ha='center')
 
     axes[-1, 1].xaxis.set_major_locator(MultipleLocator(0.5))
     axes[-1, 1].set_xlim(-0.1, 1.2)
@@ -359,10 +360,10 @@ def plot_radiation_temperature_profiles(hours: list,
         labels=['Air temperature', 'Incident direct PAR', 'Incident diffuse PAR',
                 'Bigleaf Lumped', 'Bigleaf Sunlit', 'Bigleaf Shaded',
                 'Layered Lumped', 'Layered Sunlit', 'Layered Shaded',
-                'soil', ''],
-        bbox_to_anchor=(2.65, -0.6, 1, .102), ncol=4, prop={'size': 8})
-
-    fig.savefig(str(figure_path / f'temperature_profiles.png'), dpi=600)
+                'soil surface', ''],
+        bbox_to_anchor=(2.85, -0.6, 1, .102), ncol=4, prop={'size': 8})
+    fig_name = f'{"figure_5" if figure_path.name == "grignon_high_rad_high_vpd" else "temperature_profiles.png"}'
+    fig.savefig(str(figure_path / fig_name), dpi=600)
     plt.close()
 
 
