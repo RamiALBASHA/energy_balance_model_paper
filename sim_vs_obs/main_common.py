@@ -759,4 +759,5 @@ if __name__ == '__main__':
             explanatory_vars=[MAP_NAMES[s] for s in explanatory_variables],
             path_output_dir=path_fig,
             is_classify=False,
-            max_leaf_nodes=10)
+            max_leaf_nodes=10,
+            leaf_type=leaf_type)
