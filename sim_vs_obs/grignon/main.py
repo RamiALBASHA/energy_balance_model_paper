@@ -10,7 +10,6 @@ from sources.demo import get_grignon_weather_data
 if __name__ == '__main__':
     is_stability_corrected = True
     canopy_info = CanopyInfo()
-    number_layers = canopy_info.number_layers_sim
 
     outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
     outputs_sub_dir = '_'.join(['bigleaf' if canopy_info.is_big_leaf else 'layered', canopy_info.leaves_category])
