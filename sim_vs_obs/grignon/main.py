@@ -12,6 +12,11 @@ if __name__ == '__main__':
     canopy_info = CanopyInfo()
     number_layers = canopy_info.number_layers_sim
 
+    outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
+    outputs_sub_dir = '_'.join(['bigleaf' if canopy_info.is_big_leaf else 'layered', canopy_info.leaves_category])
+    path_outputs = PathInfos.outputs.value / outputs_dir / outputs_sub_dir
+    path_outputs.mkdir(parents=True, exist_ok=True)
+
     path_source = PathInfos.source_fmt.value
 
     weather_meso_all = get_grignon_weather_data(
@@ -85,11 +90,6 @@ if __name__ == '__main__':
                         'solver': solver,
                         'obs': temp_obs[temp_obs['time'] == datetime_obs].drop(['time', 'treatment'], axis=1)}})
                 print(f'{datetime_obs}\t{treatment}')
-
-    outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
-    outputs_sub_dir = '_'.join(['bigleaf' if canopy_info.is_big_leaf else 'layered', canopy_info.leaves_category])
-    path_outputs = PathInfos.source_fmt.value.parent / 'outputs' / outputs_dir / outputs_sub_dir
-    path_outputs.mkdir(parents=True, exist_ok=True)
 
     plots.plot_dynamic(data=sim_obs_dict, path_figs_dir=path_outputs)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=path_outputs)
