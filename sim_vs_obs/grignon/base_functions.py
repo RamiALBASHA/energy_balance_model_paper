@@ -122,6 +122,7 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
         "leaf_layers": leaf_layers,
         "solar_inclination": weather_data['solar_declination'],
         "wind_speed": weather_data['wind_speed'],
+        "relative_humidity": weather_data['relative_humidity'],
         "vapor_pressure": weather_data['vapor_pressure'],
         "vapor_pressure_deficit": weather_data['vapor_pressure_deficit'],
         "air_temperature": weather_data['air_temperature'],
