@@ -68,7 +68,7 @@ if __name__ == '__main__':
 
     outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
     outputs_sub_dir = '_'.join(('bigleaf' if SimInfos.is_bigleaf.value else 'layered', leaf_category))
-    outputs_path = PathInfos.source_fmt.value.parent / 'outputs' / outputs_dir / outputs_sub_dir
+    outputs_path = PathInfos.outputs.value / outputs_dir / outputs_sub_dir
     outputs_path.mkdir(parents=True, exist_ok=True)
 
     plots.plot_dynamic_result(sim_obs=sim_obs_dict, path_figs=outputs_path)

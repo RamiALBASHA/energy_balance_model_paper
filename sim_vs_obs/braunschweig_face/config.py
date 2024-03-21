@@ -4,11 +4,12 @@ from pathlib import Path
 
 
 class PathInfos(Enum):
-    _source_dir = Path(__file__).parents[2] / 'sources/braunschweig_face'
+    path_root = Path(__file__).parent
+    _source_dir = path_root.parents[1] / 'sources/braunschweig_face'
     source_raw = _source_dir / 'data_raw'
     source_raw_file = source_raw / '16397-Data Set-19233-1-10-20200728.xlsx'
     source_fmt = _source_dir / 'data_fmt'
-    source_figs = _source_dir / 'figs'
+    outputs = path_root / 'outputs'
 
 
 class SimInfos(Enum):
