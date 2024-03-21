@@ -121,11 +121,11 @@ def get_grignon_weather_data(filename: str = None, file_path: Path = None, latit
     raw_data.loc[:, 'vapor_pressure'] = raw_data.apply(
         lambda x: x['vapor_pressure_deficit'] * x['U'] / 100., axis=1)
 
-    raw_data.rename(columns={'T': 'air_temperature'}, inplace=True)
+    raw_data.rename(columns={'T': 'air_temperature', 'U': 'relative_humidity'}, inplace=True)
     if keep_vars is None:
-        raw_data.drop([s for s in ['VT', 'RR', 'RG', 'U', 'PAR_H', 'VX']], axis=1, inplace=True)
+        raw_data.drop([s for s in ['VT', 'RR', 'RG', 'PAR_H', 'VX']], axis=1, inplace=True)
     else:
-        raw_data.drop([s for s in ['VT', 'RR', 'RG', 'U', 'PAR_H', 'VX'] if s not in keep_vars], axis=1, inplace=True)
+        raw_data.drop([s for s in ['VT', 'RR', 'RG', 'PAR_H', 'VX'] if s not in keep_vars], axis=1, inplace=True)
 
     return raw_data
 
