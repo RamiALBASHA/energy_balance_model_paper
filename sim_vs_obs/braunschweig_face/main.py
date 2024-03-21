@@ -10,6 +10,11 @@ if __name__ == '__main__':
     is_stability_corrected = True
     leaf_category = SimInfos.leaf_category.value
 
+    outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
+    outputs_sub_dir = '_'.join(('bigleaf' if SimInfos.is_bigleaf.value else 'layered', leaf_category))
+    outputs_path = PathInfos.outputs.value / outputs_dir / outputs_sub_dir
+    outputs_path.mkdir(parents=True, exist_ok=True)
+
     repetition_ids = ExpInfos.nb_repetitions.value
 
     sim_obs_dict = {}
@@ -65,11 +70,6 @@ if __name__ == '__main__':
                                     trt_temperature=trt_temperature_ser,
                                     datetime_obs=sim_datetime)}
                         })
-
-    outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
-    outputs_sub_dir = '_'.join(('bigleaf' if SimInfos.is_bigleaf.value else 'layered', leaf_category))
-    outputs_path = PathInfos.outputs.value / outputs_dir / outputs_sub_dir
-    outputs_path.mkdir(parents=True, exist_ok=True)
 
     # plots.plot_dynamic_result(sim_obs=sim_obs_dict, path_figs=outputs_path)
     plots.plot_all_1_1(sim_obs=sim_obs_dict, path_figs=outputs_path)
