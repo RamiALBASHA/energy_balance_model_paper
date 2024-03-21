@@ -90,7 +90,7 @@ if __name__ == '__main__':
                         'obs': temp_obs[temp_obs['time'] == datetime_obs].drop(['time', 'treatment'], axis=1)}})
                 print(f'{datetime_obs}\t{treatment}')
 
-    plots.plot_dynamic(data=sim_obs_dict, path_figs_dir=path_outputs)
+    # plots.plot_dynamic(data=sim_obs_dict, path_figs_dir=path_outputs)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=path_outputs)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=path_outputs, relative_layer_index=-1)
     plots.plot_sim_vs_obs(data=sim_obs_dict, path_figs_dir=path_outputs, relative_layer_index=0)
