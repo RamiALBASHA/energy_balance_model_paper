@@ -71,7 +71,7 @@ if __name__ == '__main__':
     outputs_path = PathInfos.outputs.value / outputs_dir / outputs_sub_dir
     outputs_path.mkdir(parents=True, exist_ok=True)
 
-    plots.plot_dynamic_result(sim_obs=sim_obs_dict, path_figs=outputs_path)
+    # plots.plot_dynamic_result(sim_obs=sim_obs_dict, path_figs=outputs_path)
     plots.plot_all_1_1(sim_obs=sim_obs_dict, path_figs=outputs_path)
     summary_data = plots.extract_sim_obs_data(sim_obs=sim_obs_dict)
     plots.plot_error(summary_data=summary_data, path_figs=outputs_path)
