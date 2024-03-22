@@ -61,7 +61,7 @@ def examine_diffuse_ratio_effect():
 
     plots.compare_sunlit_shaded_temperatures(
         temperature_data=temperature_ls,
-        figure_path=Path(__file__).parents[1] / 'figs/coherence/effect_diffusion_ratio.png',
+        figure_path=PATH_OUTPUTS / 'effect_diffusion_ratio.png',
         xlabel='diffuse ratio [-]')
 
     pass
@@ -99,7 +99,7 @@ def examine_lai_effect():
 
     plots.compare_sunlit_shaded_temperatures(
         temperature_data=temperature_ls,
-        figure_path=Path(__file__).parents[1] / 'figs/coherence/effect_lai.png',
+        figure_path=PATH_OUTPUTS / 'effect_lai.png',
         xlabel=' '.join(UNITS_MAP['LAI']))
 
 
@@ -207,14 +207,15 @@ def sim_general(canopy_representations: tuple, leaf_layers: dict, correct_for_st
 
 
 def run_four_canopy_sims():
-    figs_path = Path(__file__).parents[1] / 'figs/coherence'
-    figs_path.mkdir(exist_ok=True, parents=True)
     weather_files = {'sunny': 'grignon_high_rad_high_vpd.csv', 'cloudy': 'grignon_low_rad_low_vpd.csv'}
     plot_weather(
         weather_data={k: get_grignon_weather_data(v) for k, v in weather_files.items()},
-        figure_path=figs_path / 'weather.png')
+        figure_path=PATH_OUTPUTS / 'weather.png')
 
     for weather_file in weather_files.values():
+        path_figs = PATH_OUTPUTS / weather_file.split('.')[0]
+        path_figs.mkdir(exist_ok=True, parents=True)
+
         sim_general(
             canopy_representations=(('bigleaf', 'lumped'),
                                     ('bigleaf', 'sunlit-shaded'),
@@ -223,18 +224,18 @@ def run_four_canopy_sims():
             leaf_layers={4: 1.0, 3: 1.0, 2: 1.0, 1: 1.0},
             weather_file_name=weather_file,
             correct_for_stability=False,
-            figures_path=figs_path / weather_file.split('.')[0])
+            figures_path=path_figs)
     pass
 
 
 def run_four_canopy_sims_mixed(is_sunny: True):
-    figs_path = Path(__file__).parents[1] / 'figs/coherence'
-    figs_path.mkdir(exist_ok=True, parents=True)
     weather_files = {'sunny': 'grignon_high_rad_high_vpd.csv', 'cloudy': 'grignon_low_rad_low_vpd.csv'}
     if is_sunny:
         weather_files.pop('cloudy')
 
     for weather_name, weather_file in weather_files.items():
+        path_figs = PATH_OUTPUTS / weather_file.split('.')[0]
+        path_figs.mkdir(exist_ok=True, parents=True)
         sim_result = sim_general(
             canopy_representations=(('bigleaf', 'lumped'),
                                     ('bigleaf', 'sunlit-shaded'),
@@ -245,20 +246,20 @@ def run_four_canopy_sims_mixed(is_sunny: True):
             correct_for_stability=False,
             generate_plots=False,
             return_results=True,
-            figures_path=figs_path / weather_file.split('.')[0])
-        plots.plot_mixed(data=sim_result, figs_path=figs_path / weather_file.split('.')[0])
+            figures_path=path_figs)
+        plots.plot_mixed(data=sim_result, figs_path=path_figs)
     pass
 
 
 def run_four_canopy_sims_on_ww_and_ws():
-    figs_path = Path(__file__).parents[1] / 'figs/coherence'
-    figs_path.mkdir(exist_ok=True, parents=True)
-
     soil_class = 'Silt'
     _, theta_sat, *_ = getattr(VanGenuchtenParams, soil_class).value
     weather_files = {'sunny': 'grignon_high_rad_high_vpd.csv', 'cloudy': 'grignon_low_rad_low_vpd.csv'}
     saturation_ratio = {'ww': 1, 'wd': 0.1}
     for weather_file in weather_files.values():
+        path_figs = PATH_OUTPUTS / weather_file.split('.')[0]
+        path_figs.mkdir(exist_ok=True, parents=True)
+
         res = {}
         weather_data = get_grignon_weather_data(weather_file)
         for k, v in saturation_ratio.items():
@@ -282,23 +283,20 @@ def run_four_canopy_sims_on_ww_and_ws():
                 generate_plots=False)
             res.update({k: res_sim})
 
-        figs_dir = figs_path / weather_file.split('.')[0]
-        plots.plot_energy_balance_terms_for_ww_and_wd(data=res,  figs_path=figs_dir)
+        plots.plot_energy_balance_terms_for_ww_and_wd(data=res, figs_path=path_figs)
         plots.plot_radiation_temperature_profiles(
             hours=[6, 10, 12, 15, 19],
             hourly_weather=weather_data,
             all_cases_absorbed_irradiance=(res['ww'][1], res['ww'][2]),
             all_cases_temperature_ww=res['ww'][3],
             all_cases_temperature_wd=res['wd'][3],
-            figure_path=figs_dir)
+            figure_path=path_figs)
     pass
 
 
 def demonstrate_surface_conductance_conceptual_difference(is_return_result: bool = False):
     print('running demonstrate_surface_conductance_conceptual_difference()...')
 
-    figs_path = Path(__file__).parents[1] / 'figs/coherence'
-    figs_path.mkdir(exist_ok=True, parents=True)
     leaves_categories = ('sunlit', 'shaded', 'lumped')
     surface_conductance = {}
     for leaves_category in leaves_categories:
@@ -340,16 +338,13 @@ def demonstrate_surface_conductance_conceptual_difference(is_return_result: bool
     else:
         plots.plot_surface_conductance_profile(
             surface_conductance=surface_conductance,
-            figure_path=figs_path)
+            figure_path=PATH_OUTPUTS)
 
 
 def demonstrate_surface_resistance_conceptual_differene(is_return_result: bool = False):
     """Examine how the resistance of Lumped canopies is systematically lower that that of Sunlit-Shaded ones.
     """
     print('running demonstrate_surface_resistance_conceptual_differene()...')
-
-    figs_path = Path(__file__).parents[1] / 'figs/coherence'
-    figs_path.mkdir(exist_ok=True, parents=True)
 
     leaf_classes = ['lumped', 'sunlit-shaded']
 
@@ -401,26 +396,20 @@ def demonstrate_surface_resistance_conceptual_differene(is_return_result: bool =
         return res, weather_data['diffuse_ratio'].values
     else:
         plots.examine_lumped_to_sunlit_shaded_resistance_ratio(
-            resistance_data=res, diffuse_ratio=weather_data['diffuse_ratio'].values, figure_path=figs_path)
+            resistance_data=res, diffuse_ratio=weather_data['diffuse_ratio'].values, figure_path=PATH_OUTPUTS)
 
 
 def demonstrate_surface_resistance_conceptual_differene_2():
     print('demonstrate_surface_resistance_conceptual_differene_2()...')
 
-    figs_path = Path(__file__).parents[1] / 'figs/coherence'
-    figs_path.mkdir(exist_ok=True, parents=True)
-
     res_conductance = demonstrate_surface_conductance_conceptual_difference(is_return_result=True)
     res_resistance, diffuse_ratio = demonstrate_surface_resistance_conceptual_differene(is_return_result=True)
-    plots.plot_resistance2(data=(res_conductance, (res_resistance, diffuse_ratio)), figs_path=figs_path)
+    plots.plot_resistance2(data=(res_conductance, (res_resistance, diffuse_ratio)), figs_path=PATH_OUTPUTS)
     pass
 
 
 def examine_soil_humidity_effect():
     print('running examine_soil_humidity_effect()...')
-
-    figs_path = Path(__file__).parents[1] / 'figs/coherence'
-    figs_path.mkdir(exist_ok=True, parents=True)
 
     leaf_class_type = 'sunlit-shaded'
     w_data = get_grignon_weather_data(filename='grignon_high_rad_high_vpd.csv').loc[13]
@@ -451,14 +440,11 @@ def examine_soil_humidity_effect():
             (saturation_ratio, energy_balance_solver.crop.state_variables.total_penman_monteith_evaporative_energy))
 
     plots.examine_soil_saturation_effect(temperature=temperature_ls, latent_heat=latent_heat_ls,
-                                         figure_path=figs_path)
+                                         figure_path=PATH_OUTPUTS)
 
 
 def examine_shift_effect():
     print('running examine_shift_effect()...')
-
-    figs_path = Path(__file__).parents[1] / 'figs/coherence'
-    figs_path.mkdir(exist_ok=True, parents=True)
 
     leaf_class_type = 'lumped'
     w_data = get_grignon_weather_data(filename='grignon_high_rad_high_vpd.csv').loc[13]
@@ -489,13 +475,10 @@ def examine_shift_effect():
                  one_step_solver=energy_balance_solver,
                  leaf_class_type=leaf_class_type)))
 
-    plots.examine_shift_effect(lumped_temperature_ls=temperature_ls, figure_path=figs_path)
+    plots.examine_shift_effect(lumped_temperature_ls=temperature_ls, figure_path=PATH_OUTPUTS)
 
 
 def evaluate_execution_time():
-    figs_path = Path(__file__).parents[1] / 'figs/coherence'
-    figs_path.mkdir(exist_ok=True, parents=True)
-
     canopy_representations = (('bigleaf', 'lumped'),
                               ('bigleaf', 'sunlit-shaded'),
                               ('layered', 'lumped'),
@@ -504,6 +487,9 @@ def evaluate_execution_time():
     weather_files = {'sunny': 'grignon_high_rad_high_vpd.csv', 'cloudy': 'grignon_low_rad_low_vpd.csv'}
     time_data = {}
     for case, weather_file in weather_files.items():
+        path_figs = PATH_OUTPUTS / weather_file.split('.')[0]
+        path_figs.mkdir(exist_ok=True, parents=True)
+
         weather_data = get_grignon_weather_data(filename='grignon_high_rad_high_vpd.csv')
         run_times = 1000
         res = {'_'.join([k, v]): [[] for _ in range(len(weather_data.index))] for (k, v) in canopy_representations}
@@ -514,7 +500,7 @@ def evaluate_execution_time():
                 leaf_layers={3: 1.0, 2: 1.0, 1: 1.0, 0: 1.0},
                 weather_data=weather_data,
                 correct_for_stability=False,
-                figures_path=figs_path / weather_file.split('.')[0],
+                figures_path=path_figs,
                 return_results=True,
                 generate_plots=False)[-1]
             for k, v in res.items():
@@ -523,12 +509,15 @@ def evaluate_execution_time():
 
         time_data.update({case: res})
 
-    plots.evaluate_execution_time(time_data=time_data, figure_path=figs_path)
+    plots.evaluate_execution_time(time_data=time_data, figure_path=PATH_OUTPUTS)
 
     pass
 
 
 if __name__ == '__main__':
+    PATH_OUTPUTS = Path(__file__).parent / 'figs'
+    PATH_OUTPUTS.mkdir(exist_ok=True, parents=True)
+
     run_four_canopy_sims_mixed(is_sunny=True)
     run_four_canopy_sims()
     run_four_canopy_sims_on_ww_and_ws()
