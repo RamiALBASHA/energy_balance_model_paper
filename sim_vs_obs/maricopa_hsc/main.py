@@ -91,7 +91,7 @@ if __name__ == '__main__':
                 'solvers': solvers,
                 'temp_obs': crop_weather['canopy_temperature'].tolist()}})
 
-    plots.plot_dynamic(all_solvers=all_solvers, path_figs=path_outputs)
+    # plots.plot_dynamic(all_solvers=all_solvers, path_figs=path_outputs)
 
     results = plots.extract_results(all_solvers=all_solvers)
     plots.plot_summary(results=results, path_figs=path_outputs)
