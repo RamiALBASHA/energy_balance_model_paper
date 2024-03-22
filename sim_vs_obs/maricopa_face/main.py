@@ -102,5 +102,5 @@ if __name__ == '__main__':
         figure_dir=path_outputs)
     plots.export_results(summary_data=results_all, path_csv=path_outputs)
     df_cart = plots.export_results_cart(summary_data=results_all, path_csv=path_outputs)
-    plots.plot_classification_and_regression_tree(data=df_cart, path_output_dir=path_outputs)
+    # plots.plot_classification_and_regression_tree(data=df_cart, path_output_dir=path_outputs)
     plots.export_weather_summary(treatment_ids=treatments, weather_data=weather_df, path_csv=path_outputs)
