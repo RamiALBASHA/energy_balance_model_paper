@@ -361,14 +361,14 @@ def plot_mixed2(data: dict, path_figs_dir: Path):
             obs = {layer: obs_data[obs_data['leaf_level'] == layer]['temperature'].to_list() for layer in layer_idx[j]}
 
             for v in obs.values():
-                axs_dynamic[j].scatter([dt_obs] * len(v), v, marker='s', c='red', alpha=0.3, label='Measured')
-            axs_dynamic[j].scatter([dt_obs] * len(sim.values()), sim.values(), marker='.', c='blue', label='Simulated')
+                axs_dynamic[j].scatter([dt_obs] * len(v), v, marker='.', c='red', alpha=0.3, label='Measured')
+            axs_dynamic[j].scatter([dt_obs] * len(sim.values()), sim.values(), marker='+', c='blue', label='Simulated')
 
             if dt_obs.hour in hours:
                 ax_profile = axs_profile[hours.index(dt_obs.hour), j]
                 for k, v in obs.items():
-                    ax_profile.scatter(v, [k] * len(v), marker='s', c='red', alpha=0.3, label='Measured')
-                ax_profile.scatter(*zip(*[(v, k) for (k, v) in sim.items()]), marker='.', c='blue', label='Simulated')
+                    ax_profile.scatter(v, [k] * len(v), marker='.', c='red', alpha=0.3, label='Measured')
+                ax_profile.scatter(*zip(*[(v, k) for (k, v) in sim.items()]), marker='+', c='blue', label='Simulated')
 
     t_lims = [sorted(v for ax in axs_dynamic for v in ax.get_ylim())[i] for i in (0, -1)]
 
