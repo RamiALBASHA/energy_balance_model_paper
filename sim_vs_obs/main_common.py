@@ -679,6 +679,7 @@ def plot_correction_effect_mixed(path_source: Path, path_outputs: Path):
 if __name__ == '__main__':
     path_sources = Path(__file__).parent
     path_fig = path_sources / 'figs'
+    path_fig.mkdir(exist_ok=True)
 
     error_analysis_vars = ErrorAnalysisVars()
     dependent_variable = error_analysis_vars.dependent
