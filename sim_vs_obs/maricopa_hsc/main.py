@@ -19,7 +19,7 @@ if __name__ == '__main__':
     path_source_fmt = PathInfos.source_fmt.value
 
     outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
-    path_outputs = PathInfos.source_fmt.value.parent / 'outputs' / outputs_dir / crop_representation
+    path_outputs = PathInfos.outputs.value / outputs_dir / crop_representation
     path_outputs.mkdir(parents=True, exist_ok=True)
 
     if is_bigleaf:
