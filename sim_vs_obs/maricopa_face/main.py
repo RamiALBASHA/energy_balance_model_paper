@@ -7,6 +7,12 @@ from sim_vs_obs.maricopa_face.config import SimInfos, PathInfos
 if __name__ == '__main__':
     is_stability_corrected = True
 
+    outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
+    outputs_sub_dir = '_'.join(['bigleaf' if SimInfos.is_bigleaf.value else 'layered', SimInfos.leaf_category.value])
+
+    path_outputs = PathInfos.outputs.value / outputs_dir / outputs_sub_dir
+    path_outputs.mkdir(parents=True, exist_ok=True)
+
     weather_df = base_functions.read_weather()
     soil_df = base_functions.read_soil_moisture()
     area_df = base_functions.get_area_data()
@@ -72,12 +78,6 @@ if __name__ == '__main__':
 
     vars_to_plot = ('temperature_canopy', 'temperature_soil', 'net_radiation', 'sensible_heat_flux',
                     'latent_heat_flux', 'soil_heat_flux', 'incident_par')
-
-    outputs_dir = 'corrected' if is_stability_corrected else 'neutral'
-    outputs_sub_dir = '_'.join(['bigleaf' if SimInfos.is_bigleaf.value else 'layered', SimInfos.leaf_category.value])
-
-    path_outputs = PathInfos.source_outputs.value / outputs_dir / outputs_sub_dir
-    path_outputs.mkdir(parents=True, exist_ok=True)
 
     plots.plot_sim_vs_obs(
         res_all={k: v for k, v in results_all.items() if k in vars_to_plot},

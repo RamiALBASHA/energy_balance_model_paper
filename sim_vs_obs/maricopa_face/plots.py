@@ -632,7 +632,7 @@ def plot_irradiance(shoot_obj: dict, obs_df: DataFrame):
     for ax in axs.flatten():
         ax.legend()
 
-    fig.savefig(PathInfos.source_outputs.value / 'irradiance.png')
+    fig.savefig(PathInfos.outputs.value / 'irradiance.png')
     pyplot.close(fig)
     pass
 

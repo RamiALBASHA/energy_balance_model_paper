@@ -6,10 +6,11 @@ from utils.van_genuchten_params import VanGenuchtenParams
 
 
 class PathInfos(Enum):
-    source_dir = Path(__file__).parents[2] / 'sources/maricopa_face'
+    path_root = Path(__file__).parent
+    source_dir = path_root.parents[1] / 'sources/maricopa_face'
     source_raw = source_dir / 'data_raw'
     source_fmt = source_dir / 'data_fmt'
-    source_outputs = source_dir / 'outputs'
+    outputs = path_root / 'outputs'
 
 
 class SimInfos(Enum):
