@@ -814,7 +814,7 @@ def compare_sunlit_shaded_temperatures(temperature_data: list, figure_path: Path
         lower_layer.append(item[min(component_keys)]['sunlit'] - item[min(component_keys)]['shaded'])
     for label, y in {'upper_layer': upper_layer, 'lower_layer': lower_layer}.items():
         ax.plot(x, y, label=label)
-        ax.set(ylabel=r'$\mathregular{T_{sunlit}-T_{shaded}}$' + f" {UNITS_MAP['source_temperature'][1]}", **kwargs)
+        ax.set(ylabel=r'$\mathregular{T_{sunlit}-T_{shaded}}$' + f" {UNITS_MAP['temperature_source'][1]}", **kwargs)
         ax.legend()
     fig.tight_layout()
     fig.savefig(figure_path)
@@ -842,6 +842,7 @@ def plot_surface_conductance_profile(surface_conductance: dict, figure_path: Pat
     labels = ('lumped', 'sunlit', 'shaded', 'sunlit+shaded')
     handles = [handles[labels_.index(s)] for s in labels]
     ax.legend(handles=handles, labels=labels, framealpha=0, handlelength=1)
+    ax.invert_yaxis()
 
     if is_return_ax:
         return ax
@@ -854,8 +855,8 @@ def plot_surface_conductance_profile(surface_conductance: dict, figure_path: Pat
 def examine_soil_saturation_effect(temperature: list, latent_heat: list, figure_path: Path):
     fig, ax_temperature = plt.subplots()
     ax_latent_heat = ax_temperature.twinx()
-    ax_temperature.plot(*zip(*temperature), 'r-', label=UNITS_MAP['source_temperature'][0])
-    ax_temperature.set_ylabel(' '.join(UNITS_MAP['source_temperature']))
+    ax_temperature.plot(*zip(*temperature), 'r-', label=UNITS_MAP['temperature_source'][0])
+    ax_temperature.set_ylabel(' '.join(UNITS_MAP['temperature_source']))
 
     ax_latent_heat.plot(*zip(*latent_heat), 'b-', label=UNITS_MAP['total_penman_monteith_evaporative_energy'][0])
     ax_latent_heat.set_ylabel(' '.join(UNITS_MAP['total_penman_monteith_evaporative_energy']))
@@ -1017,7 +1018,6 @@ def plot_resistance2(data: tuple, figs_path: Path):
     ax_cond = plot_surface_conductance_profile(surface_conductance=data[0], ax=ax_cond, is_return_ax=True)
     ax_res = examine_lumped_to_sunlit_shaded_resistance_ratio(resistance_data=data[1][0], diffuse_ratio=data[1][1],
                                                               ax=ax_res, is_return_ax=True)
-    ax_cond.invert_yaxis()
     ax_cond.legend(framealpha=0, title_fontsize=8, fontsize=8)
 
     for i, ax in enumerate((ax_cond, ax_res)):
