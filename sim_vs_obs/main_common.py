@@ -677,7 +677,7 @@ def plot_correction_effect_mixed(path_source: Path, path_outputs: Path):
 
 
 if __name__ == '__main__':
-    path_sources = Path(__file__).parents[1] / 'sources'
+    path_sources = Path(__file__).parent
     path_fig = path_sources / 'figs'
 
     error_analysis_vars = ErrorAnalysisVars()
