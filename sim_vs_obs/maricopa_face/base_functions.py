@@ -75,8 +75,12 @@ def get_weather(raw_data: DataFrame) -> DataFrame:
     raw_df.loc[:, 'diffuse_ratio'] = raw_df.apply(lambda x: calc_diffuse_ratio(hourly_weather=x, latitude=latitude),
                                                   axis=1)
     raw_df.loc[:, 'vapor_pressure'] = raw_df.apply(lambda x: calc_saturated_air_vapor_pressure(x['TDEW']), axis=1)
+    raw_df.loc[:, 'saturated_vapor_pressure'] = raw_df.apply(lambda x: calc_saturated_air_vapor_pressure(x['TDRY']),
+                                                             axis=1)
     raw_df.loc[:, 'vapor_pressure_deficit'] = raw_df.apply(
-        lambda x: max(0., calc_saturated_air_vapor_pressure(x['TDRY']) - x['vapor_pressure']), axis=1)
+        lambda x: max(0., x['saturated_vapor_pressure'] - x['vapor_pressure']), axis=1)
+
+    raw_df.loc[:, 'relative_humidity'] = 100 * raw_df['vapor_pressure'] / raw_df['saturated_vapor_pressure']
 
     raw_df.loc[:, 'incident_diffuse_par_irradiance'] = raw_df.apply(lambda x: x['PAR'] * x['diffuse_ratio'], axis=1)
     raw_df.loc[:, 'incident_direct_par_irradiance'] = raw_df.apply(lambda x: x['PAR'] * (1 - x['diffuse_ratio']),
@@ -94,6 +98,7 @@ def get_weather(raw_data: DataFrame) -> DataFrame:
         'atmospheric_pressure',
         'wind_speed',
         'air_temperature',
+        'relative_humidity',
         'vapor_pressure_deficit',
         'vapor_pressure',
         'solar_declination')], axis=1, inplace=True)
@@ -121,6 +126,7 @@ def set_energy_balance_inputs(leaf_layers: dict, is_lumped: bool, weather_data: 
         "leaf_layers": leaf_layers,
         "solar_inclination": weather_data['solar_declination'],
         "wind_speed": weather_data['wind_speed'],
+        "relative_humidity": weather_data['relative_humidity'],
         "vapor_pressure": weather_data['vapor_pressure'],
         "vapor_pressure_deficit": weather_data['vapor_pressure_deficit'],
         "air_temperature": weather_data['air_temperature'],
