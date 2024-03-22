@@ -87,6 +87,7 @@ def get_energy_balance_inputs_and_params(
         {"leaf_layers": vegetative_layers,
          "solar_inclination": actual_weather_data['solar_declination'],
          "wind_speed": actual_weather_data['wind_speed'],
+         "relative_humidity": actual_weather_data['relative_humidity'],
          "vapor_pressure": actual_weather_data['vapor_pressure'],
          "vapor_pressure_deficit": actual_weather_data['vapor_pressure_deficit'],
          "air_temperature": actual_weather_data['air_temperature'],
