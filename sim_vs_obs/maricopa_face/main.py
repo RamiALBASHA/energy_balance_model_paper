@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
             if date_min <= date_obs <= date_max and date_obs in weather_dates:
                 weather_at_date = base_functions.get_weather(
-                    raw_data=weather_df[weather_df['DATE'].dt.date == date_obs])
+                    raw_data=weather_df[weather_df['DATE'].dt.date == date_obs.date()])
 
                 gai_profile = base_functions.build_area_profile(
                     treatment_data=row, is_bigleaf=SimInfos.is_bigleaf.value)
