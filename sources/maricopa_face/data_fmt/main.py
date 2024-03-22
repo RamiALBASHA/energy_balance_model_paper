@@ -18,6 +18,7 @@ def concat_weather():
         df_ls.append(weather_df)
 
     df = concat(df_ls, ignore_index=True)
+    df = df[df['PARD'] >= 0]
     df.loc[:, 'DATE'] = df.apply(
         lambda x: datetime(int(x['YEAR']) - 1, 12, 31) + timedelta(days=x['DOY'], hours=x['HOUR'] - 1) + timedelta(
             hours=1), axis=1)

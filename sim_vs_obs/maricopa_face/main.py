@@ -1,4 +1,5 @@
 from crop_energy_balance.solver import Solver
+from pandas import Timestamp
 
 from sim_vs_obs.maricopa_face import base_functions, plots
 from sim_vs_obs.maricopa_face.config import SimInfos, PathInfos
@@ -18,6 +19,7 @@ if __name__ == '__main__':
     treatments = area_df['TRNO'].unique()
     sim_obs_dict = {k: {} for k in treatments}
 
+    weather_dates = [Timestamp(x) for x in weather_df['DATE'].dt.date]
     for treatment in treatments:
         trt_area_df = base_functions.interpolate_area_df(df=area_df[area_df['TRNO'] == treatment])
 
@@ -29,7 +31,7 @@ if __name__ == '__main__':
                  soil_df.index,
                  heights[treatment].index])
 
-            if date_min <= date_obs <= date_max:
+            if date_min <= date_obs <= date_max and date_obs in weather_dates:
                 weather_at_date = base_functions.get_weather(
                     raw_data=weather_df[weather_df['DATE'].dt.date == date_obs])
 
