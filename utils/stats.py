@@ -1,5 +1,6 @@
 from typing import Union
 
+import statsmodels.api as sm
 from numpy import corrcoef, array
 
 Vector = Union[list, tuple, array]
@@ -73,3 +74,12 @@ def calc_slope(sim: Vector, obs: Vector) -> float:
         numerator_ls.append((v_sim - sim_mean) * (v_obs - obs_mean))
         denominator_ls.append((v_sim - sim_mean) ** 2)
     return sum(numerator_ls) / sum(denominator_ls)
+
+
+def calc_linear_regression(
+        explanatory_ls: list[float],
+        error: list[float]) -> sm.regression.linear_model.RegressionResultsWrapper:
+    x = array(explanatory_ls)
+    x = sm.add_constant(x)
+    y = array(error)
+    return sm.OLS(y, x).fit()

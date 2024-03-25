@@ -1,7 +1,6 @@
 from pathlib import Path
 from string import ascii_lowercase
 
-import statsmodels.api as sm
 from matplotlib import pyplot, ticker, collections, gridspec
 from numpy import full, arange, array, linspace
 from pandas import read_csv, concat, DataFrame
@@ -559,10 +558,7 @@ def plot_day_night(ax: pyplot.Subplot, explanatory_ls: list, error: list, is_day
         label = 'night'
     im = ax.scatter(explanatory_ls, error, marker='.', edgecolor='none', label=label, **kwargs)
 
-    x = array(explanatory_ls)
-    x = sm.add_constant(x)
-    y = array(error)
-    ols = sm.OLS(y, x).fit()
+    ols = stats.calc_linear_regression(explanatory_ls=explanatory_ls, error=error)
 
     kwargs2 = {k: v for k, v in kwargs.items()}
     kwargs2.update({'alpha': 1})
