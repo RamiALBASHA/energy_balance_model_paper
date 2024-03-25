@@ -5,7 +5,8 @@ from matplotlib import pyplot, ticker, collections, gridspec
 from numpy import full, arange, array, linspace
 from pandas import read_csv, concat, DataFrame
 
-from sim_vs_obs.common import CMAP, NORM_INCIDENT_PAR, ErrorAnalysisVars, plot_error_tree
+from sim_vs_obs.common import (CMAP, NORM_INCIDENT_PAR, ErrorAnalysisVars, plot_error_tree,
+                               plot_error_tree_features_importance)
 from utils import stats
 from utils.config import UNITS_MAP
 
@@ -757,4 +758,11 @@ if __name__ == '__main__':
             path_output_dir=path_fig,
             is_classify=False,
             max_leaf_nodes=10,
+            leaf_type=leaf_type)
+        plot_error_tree_features_importance(
+            data=error_df,
+            dependent_var=dependent_variable,
+            explanatory_vars=[MAP_NAMES[s] for s in explanatory_variables],
+            path_output_dir=path_fig,
+            is_classify=False,
             leaf_type=leaf_type)

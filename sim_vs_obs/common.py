@@ -9,7 +9,7 @@ from crop_energy_balance.solver import Solver
 from crop_irradiance.uniform_crops import inputs, params, shoot
 from crop_irradiance.uniform_crops.formalisms.sunlit_shaded_leaves import calc_direct_black_extinction_coefficient, \
     calc_sunlit_fraction_per_leaf_layer, calc_sunlit_fraction
-from matplotlib import colors, colorbar
+from matplotlib import colors, colorbar, pyplot
 from pandas import DataFrame
 from sklearn import tree
 
@@ -235,4 +235,33 @@ def plot_error_tree(data: DataFrame, dependent_var: str, explanatory_vars: list[
         filename="_".join(['classification_tree' if is_classify else 'regression_tree', leaf_type,
                            f'{clf.score(explanatory, target):0.3f}']),
         format='png')
+    pass
+
+
+def plot_error_tree_features_importance(data: DataFrame, dependent_var: str, explanatory_vars: list[str],
+                                        path_output_dir: Path,
+                                        leaf_type: str, is_classify: bool = False):
+    params = dict(
+        random_state=0,
+        splitter='best',
+        ccp_alpha=0)
+    explanatory = data[explanatory_vars]
+
+    if is_classify:
+        # target = ['high' if abs(v) >= 3 else 'medium' if abs(v) >= 1 else 'low' for v in data[dependent_var].values]
+        target = [3 if abs(v) >= 3 else 2 if abs(v) >= 1 else 1 for v in data[dependent_var].values]
+        model = tree.DecisionTreeClassifier(**params)
+    else:
+        target = data[dependent_var].values
+        model = tree.DecisionTreeRegressor(**params)
+
+    clf = model.fit(explanatory, target)
+    fig, ax = pyplot.subplots(figsize=(14 / 2.54, 10 / 2.54))
+    sorted_importance, sorted_vars = zip(*sorted(zip(clf.feature_importances_, explanatory_vars)))
+    ax.barh(sorted_vars, [v * 100 for v in sorted_importance])
+    ax.set_xlabel('Contribution to total error (%)')
+    fig.tight_layout()
+    ax.text(-0.5, 1, "(k)", transform=ax.transAxes)
+    fig.savefig(path_output_dir / f'regression_tree_features_importance_{leaf_type}.png')
+
     pass
