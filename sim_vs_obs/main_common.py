@@ -510,6 +510,15 @@ def plot_error(error_data: DataFrame, path_outputs: Path, stability_option: str,
             else:
                 ax.set_xlabel('\n'.join([MAP_NAMES[explanatory], UNITS_MAP[explanatory][1]]), fontsize=8)
 
+    for i_explanatory, explanatory in enumerate(explanatory_vars):
+        ax = axs[i_explanatory % n_rows, i_explanatory // n_rows]
+
+        ols = stats.calc_linear_regression(
+            explanatory_ls=error_data[explanatory],
+            error=error_data[dependent_var])
+        p_value = ols.pvalues.sum()
+        ax.text(0.9, 0.9, '*' if p_value < 0.05 else '', transform=ax.transAxes, fontsize=8)
+
     for ax in axs[:, 0]:
         ax.set_ylabel(f"Canopy\ntemperature error {UNITS_MAP['temperature'][1]}", fontsize=8)
 
