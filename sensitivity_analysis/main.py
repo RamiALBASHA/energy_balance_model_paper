@@ -348,7 +348,7 @@ def run_sensitivity_analysis(veg_layers: dict, canopy_type: str, leaf_type: str,
         # plot_barh(sa_dict=sa_result, shift_bars=False, model=f'{canopy_type}_{leaf_type}',
         #           parameter_groups=parameter_groups, suptitle=weather_scenario.split('.')[0], path_fig=path_figs)
     if is_plot_heatmap:
-        plot_heatmap(sa_dict=sa_dict, fig_path=path_figs, model=f'{canopy_type}_{leaf_type}',
+        plot_heatmap(sa_dict=sa_dict, fig_path=path_outputs, model=f'{canopy_type}_{leaf_type}',
                      parameter_groups=parameter_groups, name_info=f'soil_sat_ratio_{saturation_ratio}')
     if is_return:
         return sa_dict
@@ -409,13 +409,12 @@ def plot_grouped_heatmap(sa_data: dict, path_fig: Path, parameter_groups: dict =
 
 if __name__ == '__main__':
     path_root = Path(__file__).parent
-    path_sources = path_root.parent / 'sources/sensitivity_analysis'
-    path_figs = path_sources / 'figs'
-    path_figs.mkdir(parents=True, exist_ok=True)
+    path_outputs = path_root / 'outputs'
+    path_outputs.mkdir(parents=True, exist_ok=True)
 
-    with open(path_sources / 'base_inputs.json', mode='r') as f:
+    with open(path_root / 'base_inputs.json', mode='r') as f:
         base_inputs = load(f)
-    with open(path_sources / 'base_params.json', mode='r') as f:
+    with open(path_root / 'base_params.json', mode='r') as f:
         base_params = load(f)
 
     param_groups = {
@@ -438,7 +437,7 @@ if __name__ == '__main__':
                                           'free_convection_shape_parameter']
     }
 
-    problem, param_values = sample(config_path=path_sources / 'param_fields.json')
+    problem, param_values = sample(config_path=path_root / 'param_fields.json')
 
     leaf_layers = {str(d): 1 for d in range(4)}
     saturation_ratios = {'Well-watered': 1, 'Mild water deficit': 0.3, 'Severe water deficit': 0.1}
@@ -466,6 +465,6 @@ if __name__ == '__main__':
 
             sa_result_all[model_representation].update({soil_water_status: run_result})
 
-    with open(path_figs / 'sensitivity_analysis_summary.json', mode='w') as f:
+    with open(path_outputs / 'sensitivity_analysis_summary.json', mode='w') as f:
         dump(sa_result_all, f)
-    plot_grouped_heatmap(sa_data=sa_result_all, path_fig=path_figs, parameter_groups=param_groups)
+    plot_grouped_heatmap(sa_data=sa_result_all, path_fig=path_outputs, parameter_groups=param_groups)
